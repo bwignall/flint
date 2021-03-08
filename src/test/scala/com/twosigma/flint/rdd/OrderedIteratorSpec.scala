@@ -28,18 +28,32 @@ class OrderedIteratorSpec extends FlatSpec {
   it should "filter on a range correctly" in {
     val data = (1 to 10).map { x => (x, x) }.toArray
     var range = CloseOpen(0, Some(1))
-    assert(OrderedIterator(data.iterator).filterByRange(range).length == 0)
+    assert(OrderedIterator(data.iterator).filterByRange(range).isEmpty)
 
     range = CloseOpen(0, Some(2))
-    assert(OrderedIterator(data.iterator).filterByRange(range).toArray.deep == Array((1, 1)).deep)
+    assert(
+      OrderedIterator(data.iterator).filterByRange(range).toArray.deep == Array(
+        (1, 1)
+      ).deep
+    )
 
     range = CloseOpen(3, Some(5))
-    assert(OrderedIterator(data.iterator).filterByRange(range).toArray.deep == Array((3, 3), (4, 4)).deep)
+    assert(
+      OrderedIterator(data.iterator).filterByRange(range).toArray.deep == Array(
+        (3, 3),
+        (4, 4)
+      ).deep
+    )
 
     range = CloseOpen(9, Some(20))
-    assert(OrderedIterator(data.iterator).filterByRange(range).toArray.deep == Array((9, 9), (10, 10)).deep)
+    assert(
+      OrderedIterator(data.iterator).filterByRange(range).toArray.deep == Array(
+        (9, 9),
+        (10, 10)
+      ).deep
+    )
 
     range = CloseOpen(11, Some(20))
-    assert(OrderedIterator(data.iterator).filterByRange(range).length == 0)
+    assert(OrderedIterator(data.iterator).filterByRange(range).isEmpty)
   }
 }

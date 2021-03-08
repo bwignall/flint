@@ -24,7 +24,7 @@ import org.apache.spark.NarrowDependency
 import org.apache.spark.rdd.RDD
 import org.scalatest.FlatSpec
 import org.scalatest.concurrent.Timeouts
-import org.scalatest.time.{ Seconds, Span }
+import org.scalatest.time.{Seconds, Span}
 
 import scala.concurrent.Future
 
@@ -51,25 +51,32 @@ class ConversionSpec extends FlatSpec with SharedSparkContext with Timeouts {
     (1002L, (9, 8.91))
   )
 
-  def genRandomSortedRdd(numRows: Int, max: Int, numPartitions: Int): RDD[(Long, Long)] = {
+  def genRandomSortedRdd(
+      numRows: Int,
+      max: Int,
+      numPartitions: Int
+  ): RDD[(Long, Long)] = {
     val rand = new Random()
 
-    val times = (0 until numRows).map{ _ => rand.nextInt(max).toLong }.sorted
-    val rdd = sc.parallelize(times, numPartitions).map{ t => (t, t) }
+    val times = (0 until numRows).map { _ => rand.nextInt(max).toLong }.sorted
+    val rdd = sc.parallelize(times, numPartitions).map { t => (t, t) }
     rdd
   }
 
   override def beforeAll() {
     super.beforeAll()
     // RDD with 2 empty partitions
-    sortedRDDWithEmptyPartitions = sc.parallelize(sortedData, sortedData.length + 2)
-    sortedNonNormalizedRDD = sc.parallelize(nonNormalizedData, nonNormalizedData.length)
+    sortedRDDWithEmptyPartitions =
+      sc.parallelize(sortedData, sortedData.length + 2)
+    sortedNonNormalizedRDD =
+      sc.parallelize(nonNormalizedData, nonNormalizedData.length)
   }
 
   "Conversion" should "handle normalized RDD with empty partitions" in {
     assert(sortedRDDWithEmptyPartitions.getNumPartitions == 10)
 
-    val orderedRdd = Conversion.fromNormalizedSortedRDD(sortedRDDWithEmptyPartitions)
+    val orderedRdd =
+      Conversion.fromNormalizedSortedRDD(sortedRDDWithEmptyPartitions)
     assert(orderedRdd.collect.length == sortedData.length)
     assert(orderedRdd.getNumPartitions == 8)
     assert(orderedRdd.count() == 8)
@@ -100,7 +107,7 @@ class ConversionSpec extends FlatSpec with SharedSparkContext with Timeouts {
     val orddC1 = Conversion.fromRDD(rddC, depsA, rangeSplitsA)
     val orddC2 = OrderedRDD.fromRDD(rddC, KeyPartitioningType.Sorted)
     assert(orddC1.collect().deep == orddC2.collect().deep)
-    assert(orddC1.rangeSplits.size == orddA.rangeSplits.size)
+    assert(orddC1.rangeSplits.length == orddA.rangeSplits.length)
 
     val depA = orddA.deps.head.asInstanceOf[NarrowDependency[_]]
     val depC = orddC1.deps.head.asInstanceOf[NarrowDependency[_]]
@@ -118,11 +125,14 @@ class ConversionSpec extends FlatSpec with SharedSparkContext with Timeouts {
         val parentsC = depC.getParents(splitC.partition.index)
 
         val parentsA = depA.getParents(splitA.partition.index)
-        assert(parentsC == parentsA, s"Dependencies are not the same. Parents1: $parentsC, Parent2: $parentsA")
+        assert(
+          parentsC == parentsA,
+          s"Dependencies are not the same. Parents1: $parentsC, Parent2: $parentsA"
+        )
     }
   }
 
-  import scala.util.{ Success, Failure }
+  import scala.util.{Success, Failure}
 
   it should "be able to be interrupted correctly" in {
     import scala.concurrent.ExecutionContext.Implicits.global
@@ -133,11 +143,12 @@ class ConversionSpec extends FlatSpec with SharedSparkContext with Timeouts {
 
     val elapse = 3
 
-    val slowOrderedRDD = OrderedRDD.fromRDD(rdd, KeyPartitioningType.Sorted).mapValues {
-      case kv =>
-        Thread.sleep(elapse * 1000L)
-        kv
-    }
+    val slowOrderedRDD =
+      OrderedRDD.fromRDD(rdd, KeyPartitioningType.Sorted).mapValues {
+        case kv =>
+          Thread.sleep(elapse * 1000L)
+          kv
+      }
 
     val allowCancellation = new LinkedBlockingDeque[Long](1)
 
@@ -156,7 +167,11 @@ class ConversionSpec extends FlatSpec with SharedSparkContext with Timeouts {
     val stageId = stageIds(0)
 
     // Make sure there are some active tasks.
-    while (sc.statusTracker.getExecutorInfos.map(info => info.numRunningTasks()).sum < 1) {
+    while (
+      sc.statusTracker.getExecutorInfos
+        .map(info => info.numRunningTasks())
+        .sum < 1
+    ) {
       Thread.sleep(500)
     }
 
@@ -164,7 +179,11 @@ class ConversionSpec extends FlatSpec with SharedSparkContext with Timeouts {
     sc.cancelStage(stageId, "Manual cancellation")
 
     failAfter(Span(10 * elapse, Seconds)) {
-      while (sc.statusTracker.getExecutorInfos.map(info => info.numRunningTasks()).sum > 0) {
+      while (
+        sc.statusTracker.getExecutorInfos
+          .map(info => info.numRunningTasks())
+          .sum > 0
+      ) {
         Thread.sleep(500)
       }
     }

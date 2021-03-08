@@ -169,7 +169,7 @@ private[timeseries] object TimeSeriesStore {
       s"Time attribute is not unique. $timeAttributes"
     )
 
-    return timeAttributes.head
+    timeAttributes.head
   }
 }
 

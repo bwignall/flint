@@ -115,7 +115,7 @@ class ArrowWriter(
 
   def write(row: InternalRow): Unit = {
     var i = 0
-    while (i < fields.size) {
+    while (i < fields.length) {
       // println(s"writing original field ${inputIndices(i)} for field ${i}")
       fields(i).write(row, inputIndices(i))
       i += 1

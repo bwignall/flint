@@ -80,7 +80,7 @@ object WeightedLabeledPoint {
       }
       .collect()
       .unzip
-    (t._1.toArray, t._2.toArray)
+    (t._1, t._2)
   }
 
   /**

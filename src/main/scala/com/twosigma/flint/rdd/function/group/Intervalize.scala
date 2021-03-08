@@ -58,7 +58,7 @@ object Intervalize {
 
     // ensure ordering
     var i = 0
-    while (i < clock.size - 1) {
+    while (i < clock.length - 1) {
       require(
         ord.lt(clock(i), clock(i + 1)),
         s"Invalid interval. clock[n] must < clock[n + 1] for all n. " +
