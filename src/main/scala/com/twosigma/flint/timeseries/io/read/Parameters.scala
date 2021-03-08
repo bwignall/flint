@@ -66,6 +66,10 @@ private[read] case class BeginEndRange(
       throw new IllegalArgumentException("'end' range must be set")
     )
 
+  def endNanosOpt: Option[Long] = {
+    rawEndNanosOpt.map(_ + expandEndNanosOpt.getOrElse(0L))
+  }
+
   @PythonApi
   private[read] def beginNanosOrNull: java.lang.Long =
     beginNanosOpt.map(Long.box).orNull
@@ -77,8 +81,4 @@ private[read] case class BeginEndRange(
   @PythonApi
   private[read] def endNanosOrNull: java.lang.Long =
     endNanosOpt.map(Long.box).orNull
-
-  def endNanosOpt: Option[Long] = {
-    rawEndNanosOpt.map(_ + expandEndNanosOpt.getOrElse(0L))
-  }
 }

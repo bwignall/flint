@@ -16,6 +16,7 @@
 
 package com.twosigma.flint.timeseries.summarize.summarizer
 
+import com.twosigma.flint.rdd.function.summarize.summarizer
 import com.twosigma.flint.rdd.function.summarize.summarizer.{
   ArrowSummarizerResult,
   ArrowSummarizerState,

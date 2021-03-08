@@ -293,6 +293,8 @@ case class LinearRegressionModel(
    */
   def calculateHC1(): DenseMatrix[Double] = hc0 *:* (1.0 * getN / (getN - getK))
 
+  def getN: Long = n
+
   /**
    * Calculate the White's (1980) heteroskedasticity robust standard errors which is defined as
    * <pre><code>sqrt(diag(hc<sub>0</sub>))</code>
@@ -382,8 +384,6 @@ case class LinearRegressionModel(
   def calculateBayesianInformationCriterion(): Double =
     -2.0 * logLikelihood + getK * math.log(getN.toDouble)
 
-  def getN: Long = n
-
   /**
    * Calculates the Akaike information criterion of the linear model given the input data and assuming no prior is
    * applied to the parameters
@@ -404,6 +404,8 @@ case class LinearRegressionModel(
    */
   def calculateAkaikeInformationCriterion(): Double =
     -2.0 * logLikelihood + 2.0 * getK
+
+  def getK: Int = beta.length
 
   /**
    * Calculates the regression coefficients using OLS.
@@ -512,8 +514,6 @@ case class LinearRegressionModel(
     )
     invXX * sigma * invXX
   }
-
-  def getK: Int = beta.length
 
   /**
    * Calculates the variance of Y.

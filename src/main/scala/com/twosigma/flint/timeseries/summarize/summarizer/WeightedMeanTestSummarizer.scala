@@ -44,11 +44,6 @@ case class WeightedMeanTestSummarizer(
   override type T = (Double, Double)
   override type U = WeightedMeanTestState
   override type V = WeightedMeanTestOutput
-
-  private val valueColumnIndex = inputSchema.fieldIndex(valueColumn)
-  private val weightColumnIndex = inputSchema.fieldIndex(weightColumn)
-  private val columnPrefix = s"${valueColumn}_${weightColumn}"
-
   private final val valueExtractor =
     asDoubleExtractor(inputSchema(valueColumnIndex).dataType, valueColumnIndex)
   private final val weightExtractor = asDoubleExtractor(
@@ -56,7 +51,6 @@ case class WeightedMeanTestSummarizer(
     weightColumnIndex
   )
   override val summarizer = WMSummarizer()
-
   override val schema = Schema.of(
     s"${columnPrefix}_weightedMean" -> DoubleType,
     s"${columnPrefix}_weightedStandardDeviation" -> DoubleType,
@@ -64,6 +58,9 @@ case class WeightedMeanTestSummarizer(
     s"${columnPrefix}_observationCount" -> LongType
   )
   val Sequence(Seq(valueColumn, weightColumn)) = requiredColumns
+  private val valueColumnIndex = inputSchema.fieldIndex(valueColumn)
+  private val weightColumnIndex = inputSchema.fieldIndex(weightColumn)
+  private val columnPrefix = s"${valueColumn}_${weightColumn}"
 
   override def toT(r: InternalRow): T =
     (

@@ -17,9 +17,9 @@
 package com.twosigma.flint.hadoop
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{ FileSystem, Path }
-import org.apache.hadoop.io.{ LongWritable, Text, Writable }
-import org.apache.hadoop.mapreduce.{ InputFormat, InputSplit, Job, RecordReader }
+import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.io.{LongWritable, Text, Writable}
+import org.apache.hadoop.mapreduce.{InputFormat, InputSplit, Job, RecordReader}
 import org.apache.hadoop.mapreduce.lib.input.{
   FileInputFormat,
   FileSplit,
@@ -45,9 +45,9 @@ trait InputFormatConf[K, V] extends Serializable {
 
   // TODO do we want to require typing of the RecordReader as well?
   final def createRecordReader(
-    hadoopConf: Configuration,
-    split: Split,
-    inputFormat: IF = makeInputFormat()
+      hadoopConf: Configuration,
+      split: Split,
+      inputFormat: IF = makeInputFormat()
   ): RecordReader[K, V] = {
     val tac = ConfOnlyTAC(hadoopConf)
     val recordReader = inputFormat.createRecordReader(split, tac)
@@ -57,7 +57,7 @@ trait InputFormatConf[K, V] extends Serializable {
 }
 
 case class TextInputFormatConf(file: String, partitions: Int)
-  extends InputFormatConf[LongWritable, Text] {
+    extends InputFormatConf[LongWritable, Text] {
   type IF = TextInputFormat
   type Split = FileSplit
   type KExtract = internalK.type
@@ -70,7 +70,7 @@ case class TextInputFormatConf(file: String, partitions: Int)
 
   def makeInputFormat() = new TextInputFormat()
   def makeSplits(
-    hadoopConf: Configuration
+      hadoopConf: Configuration
   ): immutable.IndexedSeq[WriSer[FileSplit]] = {
     val job = Job.getInstance(hadoopConf)
     FileInputFormat.setInputPaths(job, file)
@@ -90,7 +90,7 @@ case class TextInputFormatConf(file: String, partitions: Int)
 // TODO do we really get much from having this as its own class? consider just making a def csv method in TextInputFormatConf
 object CSVInputFormatConf {
   def apply[V](
-    ifc: InputFormatConf[LongWritable, V] { type Split = FileSplit }
+      ifc: InputFormatConf[LongWritable, V] { type Split = FileSplit }
   ): InputFormatConf[LongWritable, V] {
     type IF = ifc.IF
     type Split = ifc.Split

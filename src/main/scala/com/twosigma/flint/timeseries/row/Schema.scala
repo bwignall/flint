@@ -42,26 +42,6 @@ private[timeseries] object Schema {
     newSchema
   }
 
-  /**
-   * Check if the names of columns are unique and throw [[IllegalArgumentException]] otherwise.
-   *
-   * @param schema The schema expected to check the uniqueness.
-   */
-  def requireUniqueColumnNames(schema: StructType): Unit = {
-    val duplicates = schema.fieldNames
-      .groupBy { name => name }
-      .filter { case (_, group) => group.length > 1 }
-      .keys
-      .toSeq
-
-    if (duplicates.nonEmpty) {
-      throw new DuplicateColumnsException(
-        s"Found duplicate columns $duplicates in schema $schema",
-        duplicates
-      )
-    }
-  }
-
   def add(schema: StructType, columns: Seq[(String, DataType)]): StructType = {
     val newSchema = StructType(schema.fields ++ columns.map {
       case (n, t) => StructField(n, t)
@@ -88,6 +68,26 @@ private[timeseries] object Schema {
     val newSchema = StructType(oldFields ++ newFields)
     requireUniqueColumnNames(newSchema)
     newSchema
+  }
+
+  /**
+   * Check if the names of columns are unique and throw [[IllegalArgumentException]] otherwise.
+   *
+   * @param schema The schema expected to check the uniqueness.
+   */
+  def requireUniqueColumnNames(schema: StructType): Unit = {
+    val duplicates = schema.fieldNames
+      .groupBy { name => name }
+      .filter { case (_, group) => group.length > 1 }
+      .keys
+      .toSeq
+
+    if (duplicates.nonEmpty) {
+      throw new DuplicateColumnsException(
+        s"Found duplicate columns $duplicates in schema $schema",
+        duplicates
+      )
+    }
   }
 
   /**

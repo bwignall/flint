@@ -23,7 +23,8 @@ package com.twosigma.flint.rdd
 case class MergeIterator[K, A, B](
   leftIter: PeekableIterator[(K, A)],
   rightIter: PeekableIterator[(K, B)]
-)(implicit ord: Ordering[K]) extends Iterator[(K, Either[A, B])] {
+)(implicit ord: Ordering[K])
+  extends Iterator[(K, Either[A, B])] {
 
   override def hasNext: Boolean = leftIter.hasNext || rightIter.hasNext
 

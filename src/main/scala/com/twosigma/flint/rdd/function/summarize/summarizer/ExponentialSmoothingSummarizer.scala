@@ -156,25 +156,6 @@ case class ExponentialSmoothingSummarizer(
     }
   }
 
-  override def add(
-    u: ExponentialSmoothingState,
-    row: SmoothingRow
-  ): ExponentialSmoothingState = {
-    // Don't update here, we will account for priming periods at the end
-    if (u.count == 0L) {
-      u.firstRow = Some(row)
-    } else {
-      val periods = timestampsToPeriods(u.prevRow.get.time, row.time)
-      u.primaryESValue = decayForInterval(u.primaryESValue, periods) +
-        interpolateForInterval(u.prevRow.get.x, row.x, periods)
-      u.auxiliaryESValue = decayForInterval(u.auxiliaryESValue, periods) +
-        interpolateForInterval(1.0, 1.0, periods)
-    }
-    u.prevRow = Some(row)
-    u.count += 1L
-    u
-  }
-
   @inline
   private def decayForInterval(
     esValue: Double,
@@ -206,4 +187,23 @@ case class ExponentialSmoothingSummarizer(
           (1.0 - decay) * endVal
       }
     }
+
+  override def add(
+    u: ExponentialSmoothingState,
+    row: SmoothingRow
+  ): ExponentialSmoothingState = {
+    // Don't update here, we will account for priming periods at the end
+    if (u.count == 0L) {
+      u.firstRow = Some(row)
+    } else {
+      val periods = timestampsToPeriods(u.prevRow.get.time, row.time)
+      u.primaryESValue = decayForInterval(u.primaryESValue, periods) +
+        interpolateForInterval(u.prevRow.get.x, row.x, periods)
+      u.auxiliaryESValue = decayForInterval(u.auxiliaryESValue, periods) +
+        interpolateForInterval(1.0, 1.0, periods)
+    }
+    u.prevRow = Some(row)
+    u.count += 1L
+    u
+  }
 }

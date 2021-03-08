@@ -60,6 +60,14 @@ class ReadBuilder(
     option(key, value.toString)
 
   /**
+   * Add multiple input options for the underlying data source using a map.
+   */
+  def options(map: Map[String, String]): this.type = {
+    map.foreach { case (key, value) => option(key, value) }
+    this
+  }
+
+  /**
    * Add an input option for the underlying data source.
    *
    * If the value is null, then the option for `key` will be unset.
@@ -67,14 +75,6 @@ class ReadBuilder(
   @PythonApi
   def option(key: String, @Nullable value: String): this.type = {
     parameters.option(key, Option(value))
-    this
-  }
-
-  /**
-   * Add multiple input options for the underlying data source using a map.
-   */
-  def options(map: Map[String, String]): this.type = {
-    map.foreach { case (key, value) => option(key, value) }
     this
   }
 
@@ -100,20 +100,6 @@ class ReadBuilder(
   }
 
   /**
-   * Set the begin / end date range using nullable [[java.lang.Long]] parameters.
-   *
-   * @param beginNanos Inclusive begin time in nanoseconds, or null for none, e.g., "20170101"
-   * @param endNanos   Exclusive end time in nanoseconds, or null for none, e.g., "20170201"
-   * @return this [[ReadBuilder]]
-   */
-  @PythonApi
-  def range(
-    @Nullable beginNanos: java.lang.Long,
-    @Nullable endNanos: java.lang.Long
-  ): this.type =
-    range(Option(beginNanos).map(_.toLong), Option(endNanos).map(_.toLong))
-
-  /**
    * Set the begin / end date range using ``Option[Long]``.
    *
    * @param beginNanosOpt If defined, the inclusive end time in nanoseconds.
@@ -128,6 +114,20 @@ class ReadBuilder(
       .copy(rawBeginNanosOpt = beginNanosOpt, rawEndNanosOpt = endNanosOpt)
     this
   }
+
+  /**
+   * Set the begin / end date range using nullable [[java.lang.Long]] parameters.
+   *
+   * @param beginNanos Inclusive begin time in nanoseconds, or null for none, e.g., "20170101"
+   * @param endNanos   Exclusive end time in nanoseconds, or null for none, e.g., "20170201"
+   * @return this [[ReadBuilder]]
+   */
+  @PythonApi
+  def range(
+    @Nullable beginNanos: java.lang.Long,
+    @Nullable endNanos: java.lang.Long
+  ): this.type =
+    range(Option(beginNanos).map(_.toLong), Option(endNanos).map(_.toLong))
 
   /**
    * Set the time distance to expand begin / end date range.

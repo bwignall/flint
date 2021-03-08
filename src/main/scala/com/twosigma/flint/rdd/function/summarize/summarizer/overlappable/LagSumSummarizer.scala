@@ -17,12 +17,16 @@
 package com.twosigma.flint.rdd.function.summarize.summarizer.overlappable
 
 case class LagSumSummarizerState(
-  lagSum: Double,
-  sum: Double
+    lagSum: Double,
+    sum: Double
 )
 
 class LagSumSummarizer
-  extends OverlappableSummarizer[Double, LagSumSummarizerState, LagSumSummarizerState] {
+    extends OverlappableSummarizer[
+      Double,
+      LagSumSummarizerState,
+      LagSumSummarizerState
+    ] {
 
   def zero(): LagSumSummarizerState = LagSumSummarizerState(0.0, 0.0)
 
@@ -31,8 +35,8 @@ class LagSumSummarizer
   }
 
   def addOverlapped(
-    u: LagSumSummarizerState,
-    t: (Double, Boolean)
+      u: LagSumSummarizerState,
+      t: (Double, Boolean)
   ): LagSumSummarizerState = {
     val (value, isOverlapped) = t
     if (isOverlapped) {
@@ -43,8 +47,8 @@ class LagSumSummarizer
   }
 
   def merge(
-    u1: LagSumSummarizerState,
-    u2: LagSumSummarizerState
+      u1: LagSumSummarizerState,
+      u2: LagSumSummarizerState
   ): LagSumSummarizerState =
     LagSumSummarizerState(u1.lagSum + u2.lagSum, u1.sum + u2.sum)
 

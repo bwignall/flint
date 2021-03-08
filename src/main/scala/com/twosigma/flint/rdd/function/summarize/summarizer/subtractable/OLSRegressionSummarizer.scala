@@ -23,57 +23,61 @@ import com.twosigma.flint.rdd.function.summarize.summarizer.{
 }
 
 import scala.util.control.Exception._
-import scala.util.{ Failure, Success }
+import scala.util.{Failure, Success}
 
 case class OLSRegressionState(
-  var count: Long,
-  var matrixOfXX: DenseMatrix[Double],
-  var vectorOfXY: DenseVector[Double],
-  var sumOfYSquared: Double,
-  var sumOfWeights: Double,
-  var sumOfLogWeights: Double,
-  var sumOfY: Double,
-  var variancesOfPrimaryX: Array[NthCentralMomentState]
+    var count: Long,
+    var matrixOfXX: DenseMatrix[Double],
+    var vectorOfXY: DenseVector[Double],
+    var sumOfYSquared: Double,
+    var sumOfWeights: Double,
+    var sumOfLogWeights: Double,
+    var sumOfY: Double,
+    var variancesOfPrimaryX: Array[NthCentralMomentState]
 )
 
 case class OLSRegressionOutput(
-  count: Long,
-  beta: Array[Double], // beta without intercept
-  intercept: Double,
-  hasIntercept: Boolean,
-  stdErrOfBeta: Array[Double],
-  stdErrOfIntercept: Double,
-  rSquared: Double,
-  r: Double,
-  tStatOfIntercept: Double,
-  tStatOfBeta: Array[Double],
-  logLikelihood: Double,
-  akaikeIC: Double,
-  bayesIC: Double,
-  cond: Double,
-  constantsCoordinates: Array[Int]
+    count: Long,
+    beta: Array[Double], // beta without intercept
+    intercept: Double,
+    hasIntercept: Boolean,
+    stdErrOfBeta: Array[Double],
+    stdErrOfIntercept: Double,
+    rSquared: Double,
+    r: Double,
+    tStatOfIntercept: Double,
+    tStatOfBeta: Array[Double],
+    logLikelihood: Double,
+    akaikeIC: Double,
+    bayesIC: Double,
+    cond: Double,
+    constantsCoordinates: Array[Int]
 )
 
 /**
- * @param dimensionOfX          The dimension of raw data input as predictors which doesn't include the intercept.
- * @param shouldIntercept       Whether should include intercept in the regression.
- * @param isWeighted            Whether should use given weight. All predictors and responses will be multiplied by
- *                              sqrt-weight if it is true.
- * @param shouldIgnoreConstants Whether the regression should ignore columns of X that are constants.
- *                              When true, the scalar fields of regression result are the same as if
- *                              the constant columns are removed from X. The output beta, tStat, stdErr
- *                              still have the same dimension as that of rows in X. However, entries
- *                              corresponding to constant columns will have 0.0 for beta and stdErr;
- *                              and Double.NaN for tStat. When false, the regression will throw an
- *                              exception if X has constant columns.
- */
+  * @param dimensionOfX          The dimension of raw data input as predictors which doesn't include the intercept.
+  * @param shouldIntercept       Whether should include intercept in the regression.
+  * @param isWeighted            Whether should use given weight. All predictors and responses will be multiplied by
+  *                              sqrt-weight if it is true.
+  * @param shouldIgnoreConstants Whether the regression should ignore columns of X that are constants.
+  *                              When true, the scalar fields of regression result are the same as if
+  *                              the constant columns are removed from X. The output beta, tStat, stdErr
+  *                              still have the same dimension as that of rows in X. However, entries
+  *                              corresponding to constant columns will have 0.0 for beta and stdErr;
+  *                              and Double.NaN for tStat. When false, the regression will throw an
+  *                              exception if X has constant columns.
+  */
 class OLSRegressionSummarizer(
-  dimensionOfX: Int,
-  shouldIntercept: Boolean,
-  isWeighted: Boolean,
-  shouldIgnoreConstants: Boolean = false,
-  constantErrorBound: Double
-) extends LeftSubtractableSummarizer[RegressionRow, OLSRegressionState, OLSRegressionOutput] {
+    dimensionOfX: Int,
+    shouldIntercept: Boolean,
+    isWeighted: Boolean,
+    shouldIgnoreConstants: Boolean = false,
+    constantErrorBound: Double
+) extends LeftSubtractableSummarizer[
+      RegressionRow,
+      OLSRegressionState,
+      OLSRegressionOutput
+    ] {
 
   import RegressionSummarizer._
 
@@ -86,8 +90,8 @@ class OLSRegressionSummarizer(
   private val varianceSummarizer = NthCentralMomentSummarizer(2)
 
   override def merge(
-    u1: OLSRegressionState,
-    u2: OLSRegressionState
+      u1: OLSRegressionState,
+      u2: OLSRegressionState
   ): OLSRegressionState =
     if (u1.count == 0) {
       u2
@@ -159,8 +163,8 @@ class OLSRegressionSummarizer(
   }
 
   override def add(
-    u: OLSRegressionState,
-    t: RegressionRow
+      u: OLSRegressionState,
+      t: RegressionRow
   ): OLSRegressionState = {
     val (xt, yt, yw) =
       RegressionSummarizer.transform(t, shouldIntercept, isWeighted)
@@ -202,8 +206,8 @@ class OLSRegressionSummarizer(
   }
 
   override def subtract(
-    u: OLSRegressionState,
-    t: RegressionRow
+      u: OLSRegressionState,
+      t: RegressionRow
   ): OLSRegressionState = {
     require(u.count > 0L)
     if (u.count == 1L) {
@@ -263,15 +267,15 @@ class OLSRegressionSummarizer(
       .map(_._2)
 
   /**
-   * @return a `dim`-dimension array where the value of `coordinates`(i)-th entry is `values`(i)
-   *         otherwise `defaultValue`.
-   */
+    * @return a `dim`-dimension array where the value of `coordinates`(i)-th entry is `values`(i)
+    *         otherwise `defaultValue`.
+    */
   private def stretch(
-    coordinates: IndexedSeq[Int],
-    dim: Int
+      coordinates: IndexedSeq[Int],
+      dim: Int
   )(
-    values: Array[Double],
-    defaultValue: Double
+      values: Array[Double],
+      defaultValue: Double
   ): Array[Double] = {
     assert(coordinates.length == values.length)
     val stretched = Array.fill[Double](dim)(defaultValue)
@@ -284,12 +288,12 @@ class OLSRegressionSummarizer(
   }
 
   /**
-   * @return a new state by taking the sub-matrix of matrixOfXX and sub-vector of vectorOfXY
-   *         from the given state. Also return a function to stretch beta, tStat etc. back to their
-   *         original raw dimension.
-   */
+    * @return a new state by taking the sub-matrix of matrixOfXX and sub-vector of vectorOfXY
+    *         from the given state. Also return a function to stretch beta, tStat etc. back to their
+    *         original raw dimension.
+    */
   private def shrink(
-    u: OLSRegressionState
+      u: OLSRegressionState
   ): (OLSRegressionState, (Array[Double], Double) => Array[Double]) = {
     if (shouldIgnoreConstants) {
       val primCoordinates =
@@ -347,7 +351,7 @@ class OLSRegressionSummarizer(
       stdErrOfPrimeBeta,
       tStatOfIntercept,
       tStatOfPrimeBeta
-      ) =
+    ) =
       if (shouldIntercept) {
         (beta(0), beta.tail, stdErrs(0), stdErrs.tail, tStat(0), tStat.tail)
       } else {

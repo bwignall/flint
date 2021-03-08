@@ -93,6 +93,20 @@ private[timeseries] object InternalRowUtils {
     InternalRow.fromSeq(selectFn(columns)(row))
   }
 
+  private def selectFn(
+    columns: Seq[(Int, DataType)]
+  ): InternalRow => Array[Any] = { (row: InternalRow) =>
+    val size = columns.size
+    val newValues = new Array[Any](size)
+    var i = 0
+    while (i < size) {
+      newValues(i) = row.get(columns(i)._1, columns(i)._2)
+      i += 1
+    }
+
+    newValues
+  }
+
   def select(
     schema: StructType,
     toSelect: Seq[String]
@@ -249,20 +263,6 @@ private[timeseries] object InternalRowUtils {
     }
 
     selectFn(columnsWithTypes)
-  }
-
-  private def selectFn(
-    columns: Seq[(Int, DataType)]
-  ): InternalRow => Array[Any] = { (row: InternalRow) =>
-    val size = columns.size
-    val newValues = new Array[Any](size)
-    var i = 0
-    while (i < size) {
-      newValues(i) = row.get(columns(i)._1, columns(i)._2)
-      i += 1
-    }
-
-    newValues
   }
 
   // Update values with given indices, and returns a new object

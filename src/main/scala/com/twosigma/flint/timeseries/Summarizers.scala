@@ -220,36 +220,6 @@ object Summarizers {
       .reduce(Summarizers.compose(_, _))
 
   /**
-   * Compute correlations between all possible pairs of columns where the left is one of `columns` and the right is
-   * one of `others`.
-   *
-   * The output schema is:
-   *   - "<column1>_<column2>_correlation": [[DoubleType]], the correlation of column "column1" and column "column2"
-   *     where "column1" is one of columns in `xColumns` and "column2" is one of columns in `yColumns`.
-   *   - "<column1>_<column2>_correlationTStat": [[DoubleType]], the t-stats of correlation between column "column1" and
-   *     column "column2" where "column1" is one of columns in `xColumns` and "column2" is one of columns in `yColumns`.
-   *
-   * @param xColumns A sequence of column names.
-   * @param yColumns A sequence of column names which are expected to have distinct names to `xColumns`.
-   * @return a [[SummarizerFactory]] which could provide a summarizer to calculate correlation
-   *         between all different columns.
-   */
-  def correlation(
-    xColumns: Seq[String],
-    yColumns: Seq[String]
-  ): SummarizerFactory = {
-    val duplicateColumns = xColumns.intersect(yColumns)
-    require(
-      duplicateColumns.isEmpty,
-      s"Found duplicate input columns: $duplicateColumns"
-    )
-    (for (xColumn <- xColumns; yColumn <- yColumns)
-      yield CorrelationSummarizerFactory(xColumn, yColumn)
-      .asInstanceOf[SummarizerFactory])
-      .reduce(Summarizers.compose(_, _))
-  }
-
-  /**
    * Return a summarizer that is composed of multiple summarizers.
    *
    * The output rows of the composite summarizer is a concatenation of the output rows of input summarizers
@@ -281,6 +251,36 @@ object Summarizers {
           s"Can't compose overlappable and non-overlappable summarizers."
         )
     }
+  }
+
+  /**
+   * Compute correlations between all possible pairs of columns where the left is one of `columns` and the right is
+   * one of `others`.
+   *
+   * The output schema is:
+   *   - "<column1>_<column2>_correlation": [[DoubleType]], the correlation of column "column1" and column "column2"
+   *     where "column1" is one of columns in `xColumns` and "column2" is one of columns in `yColumns`.
+   *   - "<column1>_<column2>_correlationTStat": [[DoubleType]], the t-stats of correlation between column "column1" and
+   *     column "column2" where "column1" is one of columns in `xColumns` and "column2" is one of columns in `yColumns`.
+   *
+   * @param xColumns A sequence of column names.
+   * @param yColumns A sequence of column names which are expected to have distinct names to `xColumns`.
+   * @return a [[SummarizerFactory]] which could provide a summarizer to calculate correlation
+   *         between all different columns.
+   */
+  def correlation(
+    xColumns: Seq[String],
+    yColumns: Seq[String]
+  ): SummarizerFactory = {
+    val duplicateColumns = xColumns.intersect(yColumns)
+    require(
+      duplicateColumns.isEmpty,
+      s"Found duplicate input columns: $duplicateColumns"
+    )
+    (for (xColumn <- xColumns; yColumn <- yColumns)
+      yield CorrelationSummarizerFactory(xColumn, yColumn)
+      .asInstanceOf[SummarizerFactory])
+      .reduce(Summarizers.compose(_, _))
   }
 
   /**

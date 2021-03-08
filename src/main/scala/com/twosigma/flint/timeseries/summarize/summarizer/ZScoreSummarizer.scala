@@ -50,11 +50,9 @@ case class ZScoreSummarizer(
   override type U = ZScoreState
   override type V = Double
   override val summarizer = ZSSummarizer(includeCurrentObservation)
-
+  override val schema = Schema.of(s"${column}_zScore" -> DoubleType)
   private val Sequence(Seq(column)) = requiredColumns
   private val columnIndex = inputSchema.fieldIndex(column)
-
-  override val schema = Schema.of(s"${column}_zScore" -> DoubleType)
 
   override def toT(r: InternalRow): T = r.getDouble(columnIndex)
 

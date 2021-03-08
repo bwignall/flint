@@ -32,10 +32,11 @@ case class KVSumSummarizer()
 
   override def add(u: Double, t: (Int, Double)): Double = sum.add(u, toT(t))
 
-  def toT(input: (Int, Double)): Double = input._2
-
   override def subtract(u: Double, t: (Int, Double)): Double =
     sum.subtract(u, toT(t))
+
+  def toT(input: (Int, Double)): Double = input._2
+
   override def merge(u1: Double, u2: Double): Double = sum.merge(u1, u2)
   override def render(u: Double): Double = sum.render(u)
 }

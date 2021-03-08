@@ -212,6 +212,234 @@ object TimeSeriesRDD {
   }
 
   /**
+   * Read a parquet file into a [[TimeSeriesRDD]].
+   *
+   * @param sc         The [[org.apache.spark.SparkContext]].
+   * @param paths      The paths of the parquet file.
+   * @param isSorted   flag specifies if the rows in the file have been sorted by their timestamps.
+   * @param timeUnit   The unit of time under time column which could be NANOSECONDS, MILLISECONDS, etc.
+   * @param begin      Optional. Inclusive. Support most common date format. Default timeZone is UTC.
+   * @param end        Optional. Exclusive. Support most common date format. Default timeZone is UTC.
+   * @param columns    Optional. Column in the parquet file to read into [[TimeSeriesRDD]]. IMPORTANT: This is critical
+   *                   for performance. Reading small amounts of columns can easily increase performance by 10x
+   *                   comparing to reading all columns in the file.
+   * @param timeColumn Optional. Column in parquet file that specifies time.
+   * @return a [[TimeSeriesRDD]]
+   * @example
+   * {{{
+   * val tsRdd = TimeSeriesRDD.fromParquet(
+   *   sqlContext,
+   *   path = "hdfs://foo/bar/"
+   * )(
+   *   isSorted = true,
+   *   timeUnit = scala.concurrent.duration.MILLISECONDS,
+   *   columns = Seq("time", "id", "price"),  // By default, null for all columns
+   *   begin = "20100101",                    // By default, null for no boundary at begin
+   *   end = "20150101"                       // By default, null for no boundary at end
+   * )
+   * }}}
+   */
+  def fromParquet(
+    sc: SparkContext,
+    paths: String*
+  )(
+    isSorted: Boolean,
+    timeUnit: TimeUnit,
+    @Nullable begin: String = null,
+    @Nullable end: String = null,
+    @Nullable columns: Seq[String] = null,
+    timeColumn: String = timeColumnName
+  ): TimeSeriesRDD = {
+    fromParquet(
+      sc,
+      paths,
+      isSorted = isSorted,
+      beginNanos = Option(begin).map(TimeFormat.parse(_, timeUnit = timeUnit)),
+      endNanos = Option(end).map(TimeFormat.parse(_, timeUnit = timeUnit)),
+      columns = Option(columns),
+      timeUnit = timeUnit,
+      timeColumn = timeColumn
+    )
+  }
+
+  /**
+   * Read a Parquet file into a [[TimeSeriesRDD]] using optional nanoseconds for begin and end.
+   *
+   * Used by [[com.twosigma.flint.timeseries.io.read.ReadBuilder]].
+   *
+   * @param sc         The [[org.apache.spark.SparkContext]].
+   * @param paths      The paths of the parquet file.
+   * @param isSorted   flag specifies if the rows in the file have been sorted by their timestamps.
+   * @param beginNanos Optional. Inclusive nanoseconds.
+   * @param endNanos   Optional. Exclusive nanoseconds.
+   * @param columns    Optional. Column in the parquet file to read into [[TimeSeriesRDD]]. IMPORTANT: This is critical
+   *                   for performance. Reading small amounts of columns can easily increase performance by 10x
+   *                   comparing to reading all columns in the file.
+   * @param timeColumn Optional. Column in parquet file that specifies time.
+   * @return a [[TimeSeriesRDD]]
+   */
+  private[timeseries] def fromParquet(
+    sc: SparkContext,
+    paths: Seq[String],
+    isSorted: Boolean,
+    beginNanos: Option[Long],
+    endNanos: Option[Long],
+    columns: Option[Seq[String]],
+    timeUnit: TimeUnit,
+    timeColumn: String
+  ): TimeSeriesRDD = {
+    val sqlContext = SparkSession.builder.config(sc.getConf).getOrCreate
+    val df = sqlContext.read.parquet(paths: _*)
+
+    val prunedDf = columns
+      .map { columnNames =>
+        df.select(columnNames.map(col): _*)
+      }
+      .getOrElse(df)
+
+    fromDF(DFBetween(prunedDf, beginNanos, endNanos, timeColumn))(
+      isSorted = isSorted,
+      timeUnit = timeUnit,
+      timeColumn = timeColumn
+    )
+  }
+
+  /**
+   * Create a [[TimeSeriesRDD]] from a sorted [[DataFrame]] and partition time ranges.
+   *
+   * @param dataFrame The sorted [[DataFrame]] expected to convert
+   * @param ranges    Time ranges for each partition
+   * @return a [[TimeSeriesRDD]]
+   */
+  def fromDFWithRanges(
+    dataFrame: DataFrame,
+    ranges: Array[CloseOpen[Long]]
+  ): TimeSeriesRDD = {
+    val rangeSplits = ranges.zipWithIndex.map {
+      case (range, index) => RangeSplit(OrderedRDDPartition(index), range)
+    }
+    val partInfo = PartitionInfo(rangeSplits, Seq(new OneToOneDependency(null)))
+    TimeSeriesRDD.fromDFWithPartInfo(dataFrame, Some(partInfo))
+  }
+
+  /**
+   * The field for the time column.
+   */
+  private[flint] def timeField(timeType: TimeType) = {
+    timeType match {
+      case TimeType.LongType => StructField(timeColumnName, LongType)
+      case TimeType.TimestampType => StructField(timeColumnName, TimestampType)
+    }
+  }
+
+  /**
+   * Provides a function to extract the timestamp from [[org.apache.spark.sql.Row]] as NANOSECONDS and convert
+   * an external row object into an internal object. The input schema is expected
+   * to contain a time column with Long type whose time unit is specified by `timeUnit`.
+   *
+   * @param schema   The schema of the rows as input of returning function.
+   * @param timeUnit The unit of time (as Long type) under the time column in the rows as input of the returning
+   *                 function.
+   * @return a function to extract the timestamps from [[org.apache.spark.sql.Row]].
+   * @note  if timeUnit is different from [[NANOSECONDS]] then the function needs to make an extra copy
+   *        of the row value.
+   */
+  private[this] def getExternalRowConverter(
+    schema: StructType,
+    timeUnit: TimeUnit
+  ): Row => (Long, InternalRow) = {
+    val timeColumnIndex = schema.fieldIndex(timeColumnName)
+    val toInternalRow =
+      CatalystTypeConvertersWrapper.toCatalystRowConverter(schema)
+
+    if (timeUnit == NANOSECONDS) { (row: Row) =>
+      (row.getLong(timeColumnIndex), toInternalRow(row))
+    } else { (row: Row) =>
+      val values = row.toSeq.toArray
+      val t =
+        TimeUnit.NANOSECONDS.convert(row.getLong(timeColumnIndex), timeUnit)
+      values.update(timeColumnIndex, t)
+      val updatedRow = new GenericRow(values)
+
+      (t, toInternalRow(updatedRow))
+    }
+  }
+
+  private[timeseries] def fromSeq(
+    sc: SparkContext,
+    rows: Seq[InternalRow],
+    schema: StructType,
+    isSorted: Boolean,
+    numSlices: Int = 1
+  ): TimeSeriesRDD = {
+    requireSchema(schema)
+
+    val timeType =
+      TimeType.get(SparkSession.builder.config(sc.getConf).getOrCreate)
+    val timeIndex = schema.fieldIndex(timeColumnName)
+    val rdd = sc.parallelize(
+      rows.map { row =>
+        (timeType.internalToNanos(row.getLong(timeIndex)), row)
+      },
+      numSlices
+    )
+    TimeSeriesRDD.fromInternalOrderedRDD(Conversion.fromSortedRDD(rdd), schema)
+  }
+
+  /**
+   * Convert an [[OrderedRDD]] to a [[TimeSeriesRDD]].
+   *
+   * @param rdd    An [[OrderedRDD]] whose ordered keys are of Long types representing timestamps in NANOSECONDS.
+   * @param schema The schema of rows in the give ordered `rdd`.
+   * @return a [[TimeSeriesRDD]].
+   */
+  private[flint] def fromOrderedRDD(
+    rdd: OrderedRDD[Long, Row],
+    schema: StructType
+  ): TimeSeriesRDD = {
+    val converter = CatalystTypeConvertersWrapper.toCatalystRowConverter(schema)
+    TimeSeriesRDD.fromInternalOrderedRDD(
+      rdd.mapValues {
+        case (_, row) => converter(row)
+      },
+      schema
+    )
+  }
+
+  /**
+   * Convert an [[OrderedRDD]] with internal rows to a [[TimeSeriesRDD]].
+   *
+   * @param orderedRdd  An [[OrderedRDD]] with timestamps in NANOSECONDS and internal rows.
+   * @param schema      The schema of the input `rdd`.
+   * @return a [[TimeSeriesRDD]].
+   */
+  def fromInternalOrderedRDD(
+    orderedRdd: OrderedRDD[Long, InternalRow],
+    schema: StructType
+  ): TimeSeriesRDD = {
+    val dataStore = TimeSeriesStore(orderedRdd, schema)
+
+    new TimeSeriesRDDImpl(dataStore)
+  }
+
+  @PythonApi
+  private[flint] def fromDFUnSafe(
+    dataFrame: DataFrame
+  )(
+    timeUnit: TimeUnit,
+    timeColumn: String,
+    deps: Seq[Dependency[_]],
+    rangeSplits: Array[RangeSplit[Long]]
+  ): TimeSeriesRDD = {
+    val canonizedDf =
+      canonizeDF(dataFrame, isSorted = true, timeUnit, timeColumn)
+    val partitionInfo = PartitionInfo(rangeSplits, deps)
+    TimeSeriesRDD.fromDFWithPartInfo(canonizedDf, Some(partitionInfo))
+  }
+
+  // Two functions below are factory methods. Only they call TimeSeriesRDDImpl constructor directly.
+
+  /**
    * Prepare [[DataFrame]] for conversion to [[TimeSeriesRDD]]. The list of requirements:
    * 1) Time column should exist, and it should be named `time`.
    * 2) [[DataFrame]] should be sorted by `time`.
@@ -334,117 +562,6 @@ object TimeSeriesRDD {
   }
 
   /**
-   * Read a parquet file into a [[TimeSeriesRDD]].
-   *
-   * @param sc         The [[org.apache.spark.SparkContext]].
-   * @param paths      The paths of the parquet file.
-   * @param isSorted   flag specifies if the rows in the file have been sorted by their timestamps.
-   * @param timeUnit   The unit of time under time column which could be NANOSECONDS, MILLISECONDS, etc.
-   * @param begin      Optional. Inclusive. Support most common date format. Default timeZone is UTC.
-   * @param end        Optional. Exclusive. Support most common date format. Default timeZone is UTC.
-   * @param columns    Optional. Column in the parquet file to read into [[TimeSeriesRDD]]. IMPORTANT: This is critical
-   *                   for performance. Reading small amounts of columns can easily increase performance by 10x
-   *                   comparing to reading all columns in the file.
-   * @param timeColumn Optional. Column in parquet file that specifies time.
-   * @return a [[TimeSeriesRDD]]
-   * @example
-   * {{{
-   * val tsRdd = TimeSeriesRDD.fromParquet(
-   *   sqlContext,
-   *   path = "hdfs://foo/bar/"
-   * )(
-   *   isSorted = true,
-   *   timeUnit = scala.concurrent.duration.MILLISECONDS,
-   *   columns = Seq("time", "id", "price"),  // By default, null for all columns
-   *   begin = "20100101",                    // By default, null for no boundary at begin
-   *   end = "20150101"                       // By default, null for no boundary at end
-   * )
-   * }}}
-   */
-  def fromParquet(
-    sc: SparkContext,
-    paths: String*
-  )(
-    isSorted: Boolean,
-    timeUnit: TimeUnit,
-    @Nullable begin: String = null,
-    @Nullable end: String = null,
-    @Nullable columns: Seq[String] = null,
-    timeColumn: String = timeColumnName
-  ): TimeSeriesRDD = {
-    fromParquet(
-      sc,
-      paths,
-      isSorted = isSorted,
-      beginNanos = Option(begin).map(TimeFormat.parse(_, timeUnit = timeUnit)),
-      endNanos = Option(end).map(TimeFormat.parse(_, timeUnit = timeUnit)),
-      columns = Option(columns),
-      timeUnit = timeUnit,
-      timeColumn = timeColumn
-    )
-  }
-
-  /**
-   * Read a Parquet file into a [[TimeSeriesRDD]] using optional nanoseconds for begin and end.
-   *
-   * Used by [[com.twosigma.flint.timeseries.io.read.ReadBuilder]].
-   *
-   * @param sc         The [[org.apache.spark.SparkContext]].
-   * @param paths      The paths of the parquet file.
-   * @param isSorted   flag specifies if the rows in the file have been sorted by their timestamps.
-   * @param beginNanos Optional. Inclusive nanoseconds.
-   * @param endNanos   Optional. Exclusive nanoseconds.
-   * @param columns    Optional. Column in the parquet file to read into [[TimeSeriesRDD]]. IMPORTANT: This is critical
-   *                   for performance. Reading small amounts of columns can easily increase performance by 10x
-   *                   comparing to reading all columns in the file.
-   * @param timeColumn Optional. Column in parquet file that specifies time.
-   * @return a [[TimeSeriesRDD]]
-   */
-  private[timeseries] def fromParquet(
-    sc: SparkContext,
-    paths: Seq[String],
-    isSorted: Boolean,
-    beginNanos: Option[Long],
-    endNanos: Option[Long],
-    columns: Option[Seq[String]],
-    timeUnit: TimeUnit,
-    timeColumn: String
-  ): TimeSeriesRDD = {
-    val sqlContext = SparkSession.builder.config(sc.getConf).getOrCreate
-    val df = sqlContext.read.parquet(paths: _*)
-
-    val prunedDf = columns
-      .map { columnNames =>
-        df.select(columnNames.map(col): _*)
-      }
-      .getOrElse(df)
-
-    fromDF(DFBetween(prunedDf, beginNanos, endNanos, timeColumn))(
-      isSorted = isSorted,
-      timeUnit = timeUnit,
-      timeColumn = timeColumn
-    )
-  }
-
-  /**
-   * Create a [[TimeSeriesRDD]] from a sorted [[DataFrame]] and partition time ranges.
-   *
-   * @param dataFrame The sorted [[DataFrame]] expected to convert
-   * @param ranges    Time ranges for each partition
-   * @return a [[TimeSeriesRDD]]
-   */
-  def fromDFWithRanges(
-    dataFrame: DataFrame,
-    ranges: Array[CloseOpen[Long]]
-  ): TimeSeriesRDD = {
-    val rangeSplits = ranges.zipWithIndex.map {
-      case (range, index) => RangeSplit(OrderedRDDPartition(index), range)
-    }
-    val partInfo = PartitionInfo(rangeSplits, Seq(new OneToOneDependency(null)))
-    TimeSeriesRDD.fromDFWithPartInfo(dataFrame, Some(partInfo))
-  }
-
-  /**
    * Creates a [[TimeSeriesRDD]] from a sorted [[DataFrame]] and partition info.
    *
    * @param dataFrame   A sorted [[DataFrame]].
@@ -455,123 +572,6 @@ object TimeSeriesRDD {
     dataFrame: DataFrame,
     partInfo: Option[PartitionInfo]
   ): TimeSeriesRDD = new TimeSeriesRDDImpl(TimeSeriesStore(dataFrame, partInfo))
-
-  /**
-   * The field for the time column.
-   */
-  private[flint] def timeField(timeType: TimeType) = {
-    timeType match {
-      case TimeType.LongType => StructField(timeColumnName, LongType)
-      case TimeType.TimestampType => StructField(timeColumnName, TimestampType)
-    }
-  }
-
-  /**
-   * Provides a function to extract the timestamp from [[org.apache.spark.sql.Row]] as NANOSECONDS and convert
-   * an external row object into an internal object. The input schema is expected
-   * to contain a time column with Long type whose time unit is specified by `timeUnit`.
-   *
-   * @param schema   The schema of the rows as input of returning function.
-   * @param timeUnit The unit of time (as Long type) under the time column in the rows as input of the returning
-   *                 function.
-   * @return a function to extract the timestamps from [[org.apache.spark.sql.Row]].
-   * @note  if timeUnit is different from [[NANOSECONDS]] then the function needs to make an extra copy
-   *        of the row value.
-   */
-  private[this] def getExternalRowConverter(
-    schema: StructType,
-    timeUnit: TimeUnit
-  ): Row => (Long, InternalRow) = {
-    val timeColumnIndex = schema.fieldIndex(timeColumnName)
-    val toInternalRow =
-      CatalystTypeConvertersWrapper.toCatalystRowConverter(schema)
-
-    if (timeUnit == NANOSECONDS) { (row: Row) =>
-      (row.getLong(timeColumnIndex), toInternalRow(row))
-    } else { (row: Row) =>
-      val values = row.toSeq.toArray
-      val t =
-        TimeUnit.NANOSECONDS.convert(row.getLong(timeColumnIndex), timeUnit)
-      values.update(timeColumnIndex, t)
-      val updatedRow = new GenericRow(values)
-
-      (t, toInternalRow(updatedRow))
-    }
-  }
-
-  // Two functions below are factory methods. Only they call TimeSeriesRDDImpl constructor directly.
-
-  private[timeseries] def fromSeq(
-    sc: SparkContext,
-    rows: Seq[InternalRow],
-    schema: StructType,
-    isSorted: Boolean,
-    numSlices: Int = 1
-  ): TimeSeriesRDD = {
-    requireSchema(schema)
-
-    val timeType =
-      TimeType.get(SparkSession.builder.config(sc.getConf).getOrCreate)
-    val timeIndex = schema.fieldIndex(timeColumnName)
-    val rdd = sc.parallelize(
-      rows.map { row =>
-        (timeType.internalToNanos(row.getLong(timeIndex)), row)
-      },
-      numSlices
-    )
-    TimeSeriesRDD.fromInternalOrderedRDD(Conversion.fromSortedRDD(rdd), schema)
-  }
-
-  /**
-   * Convert an [[OrderedRDD]] with internal rows to a [[TimeSeriesRDD]].
-   *
-   * @param orderedRdd  An [[OrderedRDD]] with timestamps in NANOSECONDS and internal rows.
-   * @param schema      The schema of the input `rdd`.
-   * @return a [[TimeSeriesRDD]].
-   */
-  def fromInternalOrderedRDD(
-    orderedRdd: OrderedRDD[Long, InternalRow],
-    schema: StructType
-  ): TimeSeriesRDD = {
-    val dataStore = TimeSeriesStore(orderedRdd, schema)
-
-    new TimeSeriesRDDImpl(dataStore)
-  }
-
-  /**
-   * Convert an [[OrderedRDD]] to a [[TimeSeriesRDD]].
-   *
-   * @param rdd    An [[OrderedRDD]] whose ordered keys are of Long types representing timestamps in NANOSECONDS.
-   * @param schema The schema of rows in the give ordered `rdd`.
-   * @return a [[TimeSeriesRDD]].
-   */
-  private[flint] def fromOrderedRDD(
-    rdd: OrderedRDD[Long, Row],
-    schema: StructType
-  ): TimeSeriesRDD = {
-    val converter = CatalystTypeConvertersWrapper.toCatalystRowConverter(schema)
-    TimeSeriesRDD.fromInternalOrderedRDD(
-      rdd.mapValues {
-        case (_, row) => converter(row)
-      },
-      schema
-    )
-  }
-
-  @PythonApi
-  private[flint] def fromDFUnSafe(
-    dataFrame: DataFrame
-  )(
-    timeUnit: TimeUnit,
-    timeColumn: String,
-    deps: Seq[Dependency[_]],
-    rangeSplits: Array[RangeSplit[Long]]
-  ): TimeSeriesRDD = {
-    val canonizedDf =
-      canonizeDF(dataFrame, isSorted = true, timeUnit, timeColumn)
-    val partitionInfo = PartitionInfo(rangeSplits, deps)
-    TimeSeriesRDD.fromDFWithPartInfo(canonizedDf, Some(partitionInfo))
-  }
 
   private[flint] def createSafeGetAsAny(
     schema: StructType
@@ -1553,6 +1553,14 @@ class TimeSeriesRDDImpl private[timeseries] (
       dataStore.dataFrame.select(newColumns: _*)
     }
 
+  // this method reuses partition information of the current TSRDD
+  @inline private def withUnshuffledDataFrame(
+    dataFrame: => DataFrame
+  ): TimeSeriesRDD = {
+    val newDataStore = TimeSeriesStore(dataFrame, dataStore.partInfo)
+    new TimeSeriesRDDImpl(newDataStore)
+  }
+
   def deleteColumns(columns: String*): TimeSeriesRDD =
     withUnshuffledDataFrame {
       require(
@@ -1585,14 +1593,6 @@ class TimeSeriesRDDImpl private[timeseries] (
 
       dataStore.dataFrame.select(newColumns: _*)
     }
-
-  // this method reuses partition information of the current TSRDD
-  @inline private def withUnshuffledDataFrame(
-    dataFrame: => DataFrame
-  ): TimeSeriesRDD = {
-    val newDataStore = TimeSeriesStore(dataFrame, dataStore.partInfo)
-    new TimeSeriesRDDImpl(newDataStore)
-  }
 
   def addColumns(columns: ((String, DataType), Row => Any)*): TimeSeriesRDD = {
     val (add, newSchema) =

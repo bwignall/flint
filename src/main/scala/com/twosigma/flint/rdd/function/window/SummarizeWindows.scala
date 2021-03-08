@@ -174,18 +174,6 @@ object SummarizeWindows {
     range
   }
 
-  private[rdd] def getWindowRange[K](
-    windowFn: K => (K, K)
-  )(k: K)(implicit ord: Ordering[K]): Range[K] = {
-    val (b, e) = windowFn(k)
-    val range = Range.closeClose(b, e)
-    require(
-      range.contains(k),
-      s"The window function produces a window [$b, $e] which doesn't include key $k."
-    )
-    range
-  }
-
   def applyBatch[K: ClassTag, SK: ClassTag, V: ClassTag, U, V2: ClassTag](
     rdd: OrderedRDD[K, V],
     window: K => (K, K),
@@ -221,6 +209,18 @@ object SummarizeWindows {
         )
       }
     )
+  }
+
+  private[rdd] def getWindowRange[K](
+    windowFn: K => (K, K)
+  )(k: K)(implicit ord: Ordering[K]): Range[K] = {
+    val (b, e) = windowFn(k)
+    val range = Range.closeClose(b, e)
+    require(
+      range.contains(k),
+      s"The window function produces a window [$b, $e] which doesn't include key $k."
+    )
+    range
   }
 
   // this function helps to avoid unnecessary memory allocations

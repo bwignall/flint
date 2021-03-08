@@ -233,10 +233,10 @@ trait Summarizer
   final override def merge(u1: Any, u2: Any): Any =
     summarizer.merge(toU(u1), toU(u2))
 
-  final protected def toU(any: Any): U = any.asInstanceOf[U]
-
   final override def render(u: Any): InternalRow =
     fromV(summarizer.render(toU(u)))
+
+  final protected def toU(any: Any): U = any.asInstanceOf[U]
 
   final override def close(u: Any): Unit = summarizer.close(toU(u))
 
