@@ -19,14 +19,14 @@ package com.twosigma.flint.rdd.function.summarize.summarizer.overlappable
 import com.twosigma.flint.rdd.function.summarize.summarizer.Summarizer
 
 /**
-  * Very similar to [[Summarizer]] interface. The only difference is that it has an additional `add` operator where
-  * each row is associated with a flag to indicate whether it is overlapped.
-  *
-  * @note When an [[OverlappableSummarizer]] is applied, it should be treated exclusively either a [[Summarizer]] or
-  *       a [[OverlappableSummarizer]], i.e. only one of the `add` operators could be invoked during the summarization.
-  *       Thus the implementation of [[OverlappableSummarizer]] should decide if it is safe to use an
-  *       [[OverlappableSummarizer]] as a [[Summarizer]] which could give meaningful result.
-  */
+ * Very similar to [[Summarizer]] interface. The only difference is that it has an additional `add` operator where
+ * each row is associated with a flag to indicate whether it is overlapped.
+ *
+ * @note When an [[OverlappableSummarizer]] is applied, it should be treated exclusively either a [[Summarizer]] or
+ *       a [[OverlappableSummarizer]], i.e. only one of the `add` operators could be invoked during the summarization.
+ *       Thus the implementation of [[OverlappableSummarizer]] should decide if it is safe to use an
+ *       [[OverlappableSummarizer]] as a [[Summarizer]] which could give meaningful result.
+ */
 trait OverlappableSummarizer[T, U, V] extends Summarizer[T, U, V] {
 
   def addOverlapped(u: U, t: (T, Boolean)): U

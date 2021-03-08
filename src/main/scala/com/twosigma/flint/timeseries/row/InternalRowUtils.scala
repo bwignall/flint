@@ -29,11 +29,11 @@ import org.apache.spark.sql.types._
 import collection.JavaConverters._
 
 /**
-  * A set of functions to manipulate Catalyst InternalRow objects.
-  */
+ * A set of functions to manipulate Catalyst InternalRow objects.
+ */
 private[timeseries] object InternalRowUtils {
   def selectIndices(
-      columns: Seq[(Int, DataType)]
+    columns: Seq[(Int, DataType)]
   )(row: InternalRow): Array[Any] = {
     var i = 0
     val size = columns.length
@@ -74,8 +74,8 @@ private[timeseries] object InternalRowUtils {
   }
 
   def delete(
-      schema: StructType,
-      toDelete: Seq[String]
+    schema: StructType,
+    toDelete: Seq[String]
   ): (InternalRow => InternalRow, StructType) = {
     val fields = schema.zipWithIndex.filterNot {
       case (field: StructField, i) => toDelete.contains(field.name)
@@ -88,14 +88,14 @@ private[timeseries] object InternalRowUtils {
   }
 
   private def selectFnRow(
-      columns: Seq[(Int, DataType)]
+    columns: Seq[(Int, DataType)]
   ): InternalRow => InternalRow = { (row: InternalRow) =>
     InternalRow.fromSeq(selectFn(columns)(row))
   }
 
   def select(
-      schema: StructType,
-      toSelect: Seq[String]
+    schema: StructType,
+    toSelect: Seq[String]
   ): (InternalRow => InternalRow, StructType) = {
     val fields = schema.zipWithIndex.filter {
       case (field: StructField, i) => toSelect.contains(field.name)
@@ -108,8 +108,8 @@ private[timeseries] object InternalRowUtils {
   }
 
   def add(
-      schema: StructType,
-      toAdd: Seq[(String, DataType)]
+    schema: StructType,
+    toAdd: Seq[(String, DataType)]
   ): ((InternalRow, Seq[Any]) => InternalRow, StructType) =
     (
       { (row, values) => concatSeq(row.toSeq(schema), values) },
@@ -117,15 +117,14 @@ private[timeseries] object InternalRowUtils {
     )
 
   def addOrUpdate(
-      schema: StructType,
-      toAdd: Seq[(String, DataType)]
+    schema: StructType,
+    toAdd: Seq[(String, DataType)]
   ): ((InternalRow, Seq[Any]) => InternalRow, StructType) = {
     val namesToIndex = schema.fieldNames.zipWithIndex.toMap
     val indices = toAdd.map { case (name, _) => namesToIndex.get(name) }
     val dataTypes = toAdd.map(_._2)
     val converters = dataTypes.map(dataType =>
-      CatalystTypeConvertersWrapper.toCatalystConverter(dataType)
-    )
+      CatalystTypeConvertersWrapper.toCatalystConverter(dataType))
 
     val newSchema = Schema.addOrUpdate(schema, toAdd.zip(indices))
     val fn = { (row: InternalRow, values: Seq[Any]) =>
@@ -143,8 +142,8 @@ private[timeseries] object InternalRowUtils {
 
   // updates existing elements, or appends a new element to the end if index isn't provided
   private def updateOrAppend(
-      original: Array[Any],
-      newValues: Array[(Option[Int], Any)]
+    original: Array[Any],
+    newValues: Array[(Option[Int], Any)]
   ): InternalRow = {
     var i = 0
     var j = 0
@@ -177,17 +176,17 @@ private[timeseries] object InternalRowUtils {
   }
 
   def concat2(
-      schema1: StructType,
-      schema2: StructType
+    schema1: StructType,
+    schema2: StructType
   ): ((InternalRow, InternalRow) => InternalRow, StructType) =
     concat2(schema1, schema2, None, None, Set.empty)
 
   def concat2(
-      schema1: StructType,
-      schema2: StructType,
-      alias1: Option[String],
-      alias2: Option[String],
-      duplicates: Set[String]
+    schema1: StructType,
+    schema2: StructType,
+    alias1: Option[String],
+    alias2: Option[String],
+    duplicates: Set[String]
   ): ((InternalRow, InternalRow) => InternalRow, StructType) = {
 
     val schemas = Seq(schema1, schema2)
@@ -242,8 +241,8 @@ private[timeseries] object InternalRowUtils {
   }
 
   private def selectFn(
-      schema: StructType,
-      columns: Seq[Int]
+    schema: StructType,
+    columns: Seq[Int]
   ): InternalRow => Array[Any] = {
     val columnsWithTypes = columns.map { index =>
       (index, schema(index).dataType)
@@ -253,7 +252,7 @@ private[timeseries] object InternalRowUtils {
   }
 
   private def selectFn(
-      columns: Seq[(Int, DataType)]
+    columns: Seq[(Int, DataType)]
   ): InternalRow => Array[Any] = { (row: InternalRow) =>
     val size = columns.size
     val newValues = new Array[Any](size)
@@ -268,9 +267,9 @@ private[timeseries] object InternalRowUtils {
 
   // Update values with given indices, and returns a new object
   def update(
-      iRow: InternalRow,
-      schema: StructType,
-      updates: (Int, Any)*
+    iRow: InternalRow,
+    schema: StructType,
+    updates: (Int, Any)*
   ): InternalRow = {
     val values = Array(iRow.toSeq(schema): _*)
     var i = 0
@@ -282,17 +281,17 @@ private[timeseries] object InternalRowUtils {
   }
 
   /**
-    * Takes a time and multiple value arrays and creates a row with time and then the values.
-    * This is just a more efficient method to create the row, rather than concatting the seqs
-    *
-    * @param time the value for the first column, which will be a Long time column
-    * @param totalNumColumns the number of columns, including the time column to pull out of the sequences
-    * @param valuesSeqs sequences of values to be concatenated
-    */
+   * Takes a time and multiple value arrays and creates a row with time and then the values.
+   * This is just a more efficient method to create the row, rather than concatting the seqs
+   *
+   * @param time the value for the first column, which will be a Long time column
+   * @param totalNumColumns the number of columns, including the time column to pull out of the sequences
+   * @param valuesSeqs sequences of values to be concatenated
+   */
   def concatTimeWithValues(
-      time: Long,
-      totalNumColumns: Int,
-      valuesSeqs: Seq[Any]*
+    time: Long,
+    totalNumColumns: Int,
+    valuesSeqs: Seq[Any]*
   ): InternalRow = {
     val array = new Array[Any](totalNumColumns)
     array(0) = time
@@ -312,14 +311,14 @@ private[timeseries] object InternalRowUtils {
   }
 
   def concatArrowColumns(
-      allocator: BufferAllocator,
-      baseRows: ArrayData,
-      baseRowSchema: StructType,
-      arrowBatches: Seq[Array[Byte]],
-      timeColumnIndex: Int,
-      numBaseRowColumns: Int,
-      numArrowColumns: Int,
-      timeType: TimeType
+    allocator: BufferAllocator,
+    baseRows: ArrayData,
+    baseRowSchema: StructType,
+    arrowBatches: Seq[Array[Byte]],
+    timeColumnIndex: Int,
+    numBaseRowColumns: Int,
+    numArrowColumns: Int,
+    timeType: TimeType
   ): Array[(Long, InternalRow)] = {
 
     val totalColumns = numBaseRowColumns + numArrowColumns

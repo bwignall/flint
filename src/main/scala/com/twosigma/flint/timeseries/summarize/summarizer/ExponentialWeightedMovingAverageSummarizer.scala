@@ -36,15 +36,15 @@ object ExponentialWeightedMovingAverageConvention extends Enumeration {
 }
 
 case class ExponentialWeightedMovingAverageSummarizerFactory(
-    xColumn: String,
-    timeColumn: String,
-    alpha: Double,
-    timestampsToPeriods: (Long, Long) => Double,
-    constantPeriods: Boolean,
-    exponentialWeightedMovingAverageConvention: ExponentialWeightedMovingAverageConvention.Value
+  xColumn: String,
+  timeColumn: String,
+  alpha: Double,
+  timestampsToPeriods: (Long, Long) => Double,
+  constantPeriods: Boolean,
+  exponentialWeightedMovingAverageConvention: ExponentialWeightedMovingAverageConvention.Value
 ) extends BaseSummarizerFactory(xColumn, timeColumn) {
   override def apply(
-      inputSchema: StructType
+    inputSchema: StructType
   ): ExponentialWeightedMovingAverageSummarizer =
     ExponentialWeightedMovingAverageSummarizer(
       inputSchema,
@@ -58,16 +58,16 @@ case class ExponentialWeightedMovingAverageSummarizerFactory(
 }
 
 case class ExponentialWeightedMovingAverageSummarizer(
-    override val inputSchema: StructType,
-    override val prefixOpt: Option[String],
-    override val requiredColumns: ColumnList,
-    alpha: Double,
-    timestampsToPeriods: (Long, Long) => Double,
-    constantPeriods: Boolean,
-    exponentialWeightedMovingAverageConvention: ExponentialWeightedMovingAverageConvention.Value
+  override val inputSchema: StructType,
+  override val prefixOpt: Option[String],
+  override val requiredColumns: ColumnList,
+  alpha: Double,
+  timestampsToPeriods: (Long, Long) => Double,
+  constantPeriods: Boolean,
+  exponentialWeightedMovingAverageConvention: ExponentialWeightedMovingAverageConvention.Value
 ) extends LeftSubtractableSummarizer
-    with FilterNullInput
-    with TimeAwareSummarizer {
+  with FilterNullInput
+  with TimeAwareSummarizer {
 
   override type T = EWMARow
   override type U = ExponentialWeightedMovingAverageState
@@ -92,7 +92,7 @@ case class ExponentialWeightedMovingAverageSummarizer(
     )
 
   override def fromV(
-      o: ExponentialWeightedMovingAverageOutput
+    o: ExponentialWeightedMovingAverageOutput
   ): GenericInternalRow = {
     new GenericInternalRow(
       Array[Any](

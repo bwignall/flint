@@ -23,11 +23,11 @@ import com.twosigma.flint.timeseries.summarize.{
   ColumnList
 }
 import org.apache.spark.sql.catalyst.expressions.GenericInternalRow
-import org.apache.spark.sql.types.{DoubleType, StructType}
+import org.apache.spark.sql.types.{ DoubleType, StructType }
 
 case class VarianceSummarizerFactory(
-    column: String,
-    applyBesselCorrection: Boolean = true
+  column: String,
+  applyBesselCorrection: Boolean = true
 ) extends BaseSummarizerFactory(column) {
   override def apply(inputSchema: StructType): VarianceSummarizer =
     new VarianceSummarizer(
@@ -40,16 +40,16 @@ case class VarianceSummarizerFactory(
 }
 
 class VarianceSummarizer(
-    override val inputSchema: StructType,
-    override val prefixOpt: Option[String],
-    override val requiredColumns: ColumnList,
-    val applyBesselCorrection: Boolean
+  override val inputSchema: StructType,
+  override val prefixOpt: Option[String],
+  override val requiredColumns: ColumnList,
+  val applyBesselCorrection: Boolean
 ) extends NthCentralMomentSummarizer(
-      inputSchema,
-      prefixOpt,
-      requiredColumns,
-      2
-    ) {
+  inputSchema,
+  prefixOpt,
+  requiredColumns,
+  2
+) {
   override val schema = Schema.of(s"${column}_variance" -> DoubleType)
   private val Sequence(Seq(column)) = requiredColumns
 

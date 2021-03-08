@@ -25,17 +25,17 @@ import com.twosigma.flint.timeseries.TimeSeriesRDD.timeColumnName
 import com.twosigma.flint.timeseries.summarize.ColumnList.Sequence
 
 case class CountSummarizerFactory(col: String = timeColumnName)
-    extends BaseSummarizerFactory(col) {
+  extends BaseSummarizerFactory(col) {
   override def apply(inputSchema: StructType): CountSummarizer =
     CountSummarizer(inputSchema, prefixOpt, requiredColumns)
 }
 
 case class CountSummarizer(
-    override val inputSchema: StructType,
-    override val prefixOpt: Option[String],
-    override val requiredColumns: ColumnList
+  override val inputSchema: StructType,
+  override val prefixOpt: Option[String],
+  override val requiredColumns: ColumnList
 ) extends LeftSubtractableSummarizer
-    with FilterNullInput {
+  with FilterNullInput {
   override type T = Any
   override type U = Long
   override type V = Long

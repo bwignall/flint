@@ -23,8 +23,8 @@ import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.types.StructType
 
 /**
-  * Functions to convert an RDD with internal rows to DataFrame.
-  */
+ * Functions to convert an RDD with internal rows to DataFrame.
+ */
 object DFConverter {
 
   def newDataFrame(df: DataFrame): DataFrame = {
@@ -32,8 +32,8 @@ object DFConverter {
   }
 
   def toDataFrame(
-      rdd: OrderedRDD[Long, InternalRow],
-      schema: StructType
+    rdd: OrderedRDD[Long, InternalRow],
+    schema: StructType
   ): DataFrame = {
     val spark = SparkSession.builder().getOrCreate()
     val internalRows = rdd.values

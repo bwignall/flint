@@ -27,10 +27,10 @@ import org.apache.arrow.vector.types.{
   FloatingPointPrecision,
   TimeUnit => ArrowTimeUnit
 }
-import org.apache.arrow.vector.types.pojo.{ArrowType, Schema}
+import org.apache.arrow.vector.types.pojo.{ ArrowType, Schema }
 
 import org.apache.spark.sql.catalyst.expressions.UnsafeRow
-import org.apache.spark.sql.catalyst.expressions.codegen.{UnsafeRowWriter}
+import org.apache.spark.sql.catalyst.expressions.codegen.{ UnsafeRowWriter }
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
 
@@ -42,9 +42,9 @@ trait RowFieldWriter[T <: BaseValueVector] {
 }
 
 abstract class PrimitiveRowFieldWriter[T <: BaseValueVector](
-    val ordinal: Int,
-    override val unsafeRowWriter: UnsafeRowWriter,
-    override val valueVector: T
+  val ordinal: Int,
+  override val unsafeRowWriter: UnsafeRowWriter,
+  override val valueVector: T
 ) extends RowFieldWriter[T] {
   override def write(rowIndex: Int): Unit = {
     if (valueVector.isNull(rowIndex)) {
@@ -58,9 +58,9 @@ abstract class PrimitiveRowFieldWriter[T <: BaseValueVector](
 }
 
 class BooleanRowFieldWriter(
-    override val ordinal: Int,
-    override val unsafeRowWriter: UnsafeRowWriter,
-    override val valueVector: BitVector
+  override val ordinal: Int,
+  override val unsafeRowWriter: UnsafeRowWriter,
+  override val valueVector: BitVector
 ) extends PrimitiveRowFieldWriter(ordinal, unsafeRowWriter, valueVector) {
   override def writeValue(rowIndex: Int): Unit = {
     unsafeRowWriter.write(ordinal, valueVector.get(rowIndex))
@@ -68,9 +68,9 @@ class BooleanRowFieldWriter(
 }
 
 class ShortRowFieldWriter(
-    override val ordinal: Int,
-    override val unsafeRowWriter: UnsafeRowWriter,
-    override val valueVector: SmallIntVector
+  override val ordinal: Int,
+  override val unsafeRowWriter: UnsafeRowWriter,
+  override val valueVector: SmallIntVector
 ) extends PrimitiveRowFieldWriter(ordinal, unsafeRowWriter, valueVector) {
   override def writeValue(rowIndex: Int): Unit = {
     unsafeRowWriter.write(ordinal, valueVector.get(rowIndex))
@@ -78,9 +78,9 @@ class ShortRowFieldWriter(
 }
 
 class IntegerRowFieldWriter(
-    override val ordinal: Int,
-    override val unsafeRowWriter: UnsafeRowWriter,
-    override val valueVector: IntVector
+  override val ordinal: Int,
+  override val unsafeRowWriter: UnsafeRowWriter,
+  override val valueVector: IntVector
 ) extends PrimitiveRowFieldWriter(ordinal, unsafeRowWriter, valueVector) {
   override def writeValue(rowIndex: Int): Unit = {
     unsafeRowWriter.write(ordinal, valueVector.get(rowIndex))
@@ -88,9 +88,9 @@ class IntegerRowFieldWriter(
 }
 
 class LongRowFieldWriter(
-    override val ordinal: Int,
-    override val unsafeRowWriter: UnsafeRowWriter,
-    override val valueVector: BigIntVector
+  override val ordinal: Int,
+  override val unsafeRowWriter: UnsafeRowWriter,
+  override val valueVector: BigIntVector
 ) extends PrimitiveRowFieldWriter(ordinal, unsafeRowWriter, valueVector) {
   override def writeValue(rowIndex: Int): Unit = {
     unsafeRowWriter.write(ordinal, valueVector.get(rowIndex))
@@ -98,9 +98,9 @@ class LongRowFieldWriter(
 }
 
 class FloatRowFieldWriter(
-    override val ordinal: Int,
-    override val unsafeRowWriter: UnsafeRowWriter,
-    override val valueVector: Float4Vector
+  override val ordinal: Int,
+  override val unsafeRowWriter: UnsafeRowWriter,
+  override val valueVector: Float4Vector
 ) extends PrimitiveRowFieldWriter(ordinal, unsafeRowWriter, valueVector) {
   override def writeValue(rowIndex: Int): Unit = {
     unsafeRowWriter.write(ordinal, valueVector.get(rowIndex))
@@ -108,9 +108,9 @@ class FloatRowFieldWriter(
 }
 
 class DoubleRowFieldWriter(
-    override val ordinal: Int,
-    override val unsafeRowWriter: UnsafeRowWriter,
-    override val valueVector: Float8Vector
+  override val ordinal: Int,
+  override val unsafeRowWriter: UnsafeRowWriter,
+  override val valueVector: Float8Vector
 ) extends PrimitiveRowFieldWriter(ordinal, unsafeRowWriter, valueVector) {
   override def writeValue(rowIndex: Int): Unit = {
     unsafeRowWriter.write(ordinal, valueVector.get(rowIndex))
@@ -118,9 +118,9 @@ class DoubleRowFieldWriter(
 }
 
 class ByteRowFieldWriter(
-    override val ordinal: Int,
-    override val unsafeRowWriter: UnsafeRowWriter,
-    override val valueVector: TinyIntVector
+  override val ordinal: Int,
+  override val unsafeRowWriter: UnsafeRowWriter,
+  override val valueVector: TinyIntVector
 ) extends PrimitiveRowFieldWriter(ordinal, unsafeRowWriter, valueVector) {
   override def writeValue(rowIndex: Int): Unit = {
     unsafeRowWriter.write(ordinal, valueVector.get(rowIndex))
@@ -128,9 +128,9 @@ class ByteRowFieldWriter(
 }
 
 class UTF8StringRowFieldWriter(
-    override val ordinal: Int,
-    override val unsafeRowWriter: UnsafeRowWriter,
-    override val valueVector: VarCharVector
+  override val ordinal: Int,
+  override val unsafeRowWriter: UnsafeRowWriter,
+  override val valueVector: VarCharVector
 ) extends PrimitiveRowFieldWriter(ordinal, unsafeRowWriter, valueVector) {
   override def writeValue(rowIndex: Int): Unit = {
     unsafeRowWriter.write(
@@ -141,9 +141,9 @@ class UTF8StringRowFieldWriter(
 }
 
 class BinaryRowFieldWriter(
-    override val ordinal: Int,
-    override val unsafeRowWriter: UnsafeRowWriter,
-    override val valueVector: VarBinaryVector
+  override val ordinal: Int,
+  override val unsafeRowWriter: UnsafeRowWriter,
+  override val valueVector: VarBinaryVector
 ) extends PrimitiveRowFieldWriter(ordinal, unsafeRowWriter, valueVector) {
   override def writeValue(rowIndex: Int): Unit = {
     unsafeRowWriter.write(ordinal, valueVector.get(rowIndex))
@@ -151,9 +151,9 @@ class BinaryRowFieldWriter(
 }
 
 class DateDayRowFieldWriter(
-    override val ordinal: Int,
-    override val unsafeRowWriter: UnsafeRowWriter,
-    override val valueVector: DateDayVector
+  override val ordinal: Int,
+  override val unsafeRowWriter: UnsafeRowWriter,
+  override val valueVector: DateDayVector
 ) extends PrimitiveRowFieldWriter(ordinal, unsafeRowWriter, valueVector) {
   override protected def writeValue(rowIndex: Int): Unit = {
     unsafeRowWriter.write(ordinal, valueVector.get(rowIndex))
@@ -161,9 +161,9 @@ class DateDayRowFieldWriter(
 }
 
 class DateMilliRowFieldWriter(
-    override val ordinal: Int,
-    override val unsafeRowWriter: UnsafeRowWriter,
-    override val valueVector: DateMilliVector
+  override val ordinal: Int,
+  override val unsafeRowWriter: UnsafeRowWriter,
+  override val valueVector: DateMilliVector
 ) extends PrimitiveRowFieldWriter(ordinal, unsafeRowWriter, valueVector) {
   override protected def writeValue(rowIndex: Int): Unit = {
     unsafeRowWriter.write(
@@ -176,9 +176,9 @@ class DateMilliRowFieldWriter(
 
 // Timestamps
 class TimestampSecRowFieldWriter(
-    override val ordinal: Int,
-    override val unsafeRowWriter: UnsafeRowWriter,
-    override val valueVector: TimeStampSecVector
+  override val ordinal: Int,
+  override val unsafeRowWriter: UnsafeRowWriter,
+  override val valueVector: TimeStampSecVector
 ) extends PrimitiveRowFieldWriter(ordinal, unsafeRowWriter, valueVector) {
   override protected def writeValue(rowIndex: Int): Unit = {
     unsafeRowWriter.write(
@@ -189,9 +189,9 @@ class TimestampSecRowFieldWriter(
 }
 
 class TimestampSecTZRowFieldWriter(
-    override val ordinal: Int,
-    override val unsafeRowWriter: UnsafeRowWriter,
-    override val valueVector: TimeStampSecTZVector
+  override val ordinal: Int,
+  override val unsafeRowWriter: UnsafeRowWriter,
+  override val valueVector: TimeStampSecTZVector
 ) extends PrimitiveRowFieldWriter(ordinal, unsafeRowWriter, valueVector) {
   override protected def writeValue(rowIndex: Int): Unit = {
     unsafeRowWriter.write(
@@ -202,9 +202,9 @@ class TimestampSecTZRowFieldWriter(
 }
 
 class TimestampMilliRowFieldWriter(
-    override val ordinal: Int,
-    override val unsafeRowWriter: UnsafeRowWriter,
-    override val valueVector: TimeStampMilliVector
+  override val ordinal: Int,
+  override val unsafeRowWriter: UnsafeRowWriter,
+  override val valueVector: TimeStampMilliVector
 ) extends PrimitiveRowFieldWriter(ordinal, unsafeRowWriter, valueVector) {
   override protected def writeValue(rowIndex: Int): Unit = {
     unsafeRowWriter.write(
@@ -215,9 +215,9 @@ class TimestampMilliRowFieldWriter(
 }
 
 class TimestampMilliTZRowFieldWriter(
-    override val ordinal: Int,
-    override val unsafeRowWriter: UnsafeRowWriter,
-    override val valueVector: TimeStampMilliTZVector
+  override val ordinal: Int,
+  override val unsafeRowWriter: UnsafeRowWriter,
+  override val valueVector: TimeStampMilliTZVector
 ) extends PrimitiveRowFieldWriter(ordinal, unsafeRowWriter, valueVector) {
   override protected def writeValue(rowIndex: Int): Unit = {
     unsafeRowWriter.write(
@@ -228,9 +228,9 @@ class TimestampMilliTZRowFieldWriter(
 }
 
 class TimestampMicroRowFieldWriter(
-    override val ordinal: Int,
-    override val unsafeRowWriter: UnsafeRowWriter,
-    override val valueVector: TimeStampMicroVector
+  override val ordinal: Int,
+  override val unsafeRowWriter: UnsafeRowWriter,
+  override val valueVector: TimeStampMicroVector
 ) extends PrimitiveRowFieldWriter(ordinal, unsafeRowWriter, valueVector) {
   override protected def writeValue(rowIndex: Int): Unit = {
     unsafeRowWriter.write(ordinal, valueVector.get(rowIndex))
@@ -238,9 +238,9 @@ class TimestampMicroRowFieldWriter(
 }
 
 class TimestampMicroTZRowFieldWriter(
-    override val ordinal: Int,
-    override val unsafeRowWriter: UnsafeRowWriter,
-    override val valueVector: TimeStampMicroTZVector
+  override val ordinal: Int,
+  override val unsafeRowWriter: UnsafeRowWriter,
+  override val valueVector: TimeStampMicroTZVector
 ) extends PrimitiveRowFieldWriter(ordinal, unsafeRowWriter, valueVector) {
   override protected def writeValue(rowIndex: Int): Unit = {
     unsafeRowWriter.write(ordinal, valueVector.get(rowIndex))
@@ -248,9 +248,9 @@ class TimestampMicroTZRowFieldWriter(
 }
 
 class TimestampNanoRowFieldWriter(
-    override val ordinal: Int,
-    override val unsafeRowWriter: UnsafeRowWriter,
-    override val valueVector: TimeStampNanoVector
+  override val ordinal: Int,
+  override val unsafeRowWriter: UnsafeRowWriter,
+  override val valueVector: TimeStampNanoVector
 ) extends PrimitiveRowFieldWriter(ordinal, unsafeRowWriter, valueVector) {
   override protected def writeValue(rowIndex: Int): Unit = {
     unsafeRowWriter.write(
@@ -261,9 +261,9 @@ class TimestampNanoRowFieldWriter(
 }
 
 class TimestampNanoTZRowFieldWriter(
-    override val ordinal: Int,
-    override val unsafeRowWriter: UnsafeRowWriter,
-    override val valueVector: TimeStampNanoTZVector
+  override val ordinal: Int,
+  override val unsafeRowWriter: UnsafeRowWriter,
+  override val valueVector: TimeStampNanoTZVector
 ) extends PrimitiveRowFieldWriter(ordinal, unsafeRowWriter, valueVector) {
   override protected def writeValue(rowIndex: Int): Unit = {
     unsafeRowWriter.write(
@@ -274,9 +274,9 @@ class TimestampNanoTZRowFieldWriter(
 }
 
 class ArrowBackendUnsafeRowIterator(
-    root: VectorSchemaRoot,
-    schema: Schema,
-    rowCount: Int
+  root: VectorSchemaRoot,
+  schema: Schema,
+  rowCount: Int
 ) extends ClosableIterator[UnsafeRow] {
   private[this] val columnCount = schema.getFields.size()
   private[this] val unsafeRowWriter = new UnsafeRowWriter(columnCount)
@@ -284,11 +284,11 @@ class ArrowBackendUnsafeRowIterator(
   private[this] val rowFieldWriters =
     for (i <- 0 until columnCount)
       yield RowFieldWriter(
-        i,
-        unsafeRowWriter,
-        valueVectors(i),
-        schema.getFields.get(i).getType
-      )
+      i,
+      unsafeRowWriter,
+      valueVectors(i),
+      schema.getFields.get(i).getType
+    )
   private[this] var rowIndex = 0
 
   override def hasNext: Boolean = rowIndex < rowCount
@@ -310,10 +310,10 @@ class ArrowBackendUnsafeRowIterator(
 
 object RowFieldWriter {
   def apply(
-      ordinal: Int,
-      unsafeRowWriter: UnsafeRowWriter,
-      valueVector: ValueVector,
-      dataType: ArrowType
+    ordinal: Int,
+    unsafeRowWriter: UnsafeRowWriter,
+    valueVector: ValueVector,
+    dataType: ArrowType
   ): RowFieldWriter[_] = {
     dataType match {
       case ArrowType.Bool.INSTANCE =>
@@ -328,7 +328,7 @@ object RowFieldWriter {
           ordinal,
           unsafeRowWriter,
           valueVector
-            .asInstanceOf[TinyIntVector]
+          .asInstanceOf[TinyIntVector]
         )
       case int: ArrowType.Int if int.getIsSigned && int.getBitWidth == 16 =>
         new ShortRowFieldWriter(
@@ -349,15 +349,13 @@ object RowFieldWriter {
           valueVector.asInstanceOf[BigIntVector]
         )
 
-      case float: ArrowType.FloatingPoint
-          if float.getPrecision() == FloatingPointPrecision.SINGLE =>
+      case float: ArrowType.FloatingPoint if float.getPrecision() == FloatingPointPrecision.SINGLE =>
         new FloatRowFieldWriter(
           ordinal,
           unsafeRowWriter,
           valueVector.asInstanceOf[Float4Vector]
         )
-      case float: ArrowType.FloatingPoint
-          if float.getPrecision() == FloatingPointPrecision.DOUBLE =>
+      case float: ArrowType.FloatingPoint if float.getPrecision() == FloatingPointPrecision.DOUBLE =>
         new DoubleRowFieldWriter(
           ordinal,
           unsafeRowWriter,
@@ -369,14 +367,14 @@ object RowFieldWriter {
           ordinal,
           unsafeRowWriter,
           valueVector
-            .asInstanceOf[VarCharVector]
+          .asInstanceOf[VarCharVector]
         )
       case ArrowType.Binary.INSTANCE =>
         new BinaryRowFieldWriter(
           ordinal,
           unsafeRowWriter,
           valueVector
-            .asInstanceOf[VarBinaryVector]
+          .asInstanceOf[VarBinaryVector]
         )
       case d: ArrowType.Date =>
         d.getUnit match {
@@ -385,14 +383,14 @@ object RowFieldWriter {
               ordinal,
               unsafeRowWriter,
               valueVector
-                .asInstanceOf[DateDayVector]
+              .asInstanceOf[DateDayVector]
             )
           case DateUnit.MILLISECOND =>
             new DateMilliRowFieldWriter(
               ordinal,
               unsafeRowWriter,
               valueVector
-                .asInstanceOf[DateMilliVector]
+              .asInstanceOf[DateMilliVector]
             )
         }
 

@@ -24,7 +24,7 @@ import org.apache.arrow.vector.types.{
   FloatingPointPrecision,
   TimeUnit
 }
-import org.apache.arrow.vector.types.pojo.{ArrowType, Field, FieldType, Schema}
+import org.apache.arrow.vector.types.pojo.{ ArrowType, Field, FieldType, Schema }
 
 import org.apache.spark.sql.types._
 
@@ -37,10 +37,10 @@ object ArrowUtils {
   def toArrowType(dt: DataType): ArrowType =
     dt match {
       case BooleanType => ArrowType.Bool.INSTANCE
-      case ByteType    => new ArrowType.Int(8, true)
-      case ShortType   => new ArrowType.Int(8 * 2, true)
+      case ByteType => new ArrowType.Int(8, true)
+      case ShortType => new ArrowType.Int(8 * 2, true)
       case IntegerType => new ArrowType.Int(8 * 4, true)
-      case LongType    => new ArrowType.Int(8 * 8, true)
+      case LongType => new ArrowType.Int(8 * 8, true)
       case FloatType =>
         new ArrowType.FloatingPoint(FloatingPointPrecision.SINGLE)
       case DoubleType =>
@@ -48,7 +48,7 @@ object ArrowUtils {
       case StringType => ArrowType.Utf8.INSTANCE
       case BinaryType => ArrowType.Binary.INSTANCE
       // case DecimalType.Fixed(precision, scale) => new ArrowType.Decimal(precision, scale)
-      case DateType      => new ArrowType.Date(DateUnit.DAY)
+      case DateType => new ArrowType.Date(DateUnit.DAY)
       case TimestampType => new ArrowType.Timestamp(TimeUnit.MICROSECOND, "UTC")
       case _ =>
         throw new UnsupportedOperationException(
@@ -67,17 +67,15 @@ object ArrowUtils {
         IntegerType
       case int: ArrowType.Int if int.getIsSigned && int.getBitWidth == 8 * 8 =>
         LongType
-      case float: ArrowType.FloatingPoint
-          if float.getPrecision() == FloatingPointPrecision.SINGLE =>
+      case float: ArrowType.FloatingPoint if float.getPrecision() == FloatingPointPrecision.SINGLE =>
         FloatType
-      case float: ArrowType.FloatingPoint
-          if float.getPrecision() == FloatingPointPrecision.DOUBLE =>
+      case float: ArrowType.FloatingPoint if float.getPrecision() == FloatingPointPrecision.DOUBLE =>
         DoubleType
-      case ArrowType.Utf8.INSTANCE   => StringType
+      case ArrowType.Utf8.INSTANCE => StringType
       case ArrowType.Binary.INSTANCE => BinaryType
-      case d: ArrowType.Decimal      => DecimalType(d.getPrecision, d.getScale)
-      case _: ArrowType.Date         => DateType
-      case _: ArrowType.Timestamp    => TimestampType
+      case d: ArrowType.Decimal => DecimalType(d.getPrecision, d.getScale)
+      case _: ArrowType.Date => DateType
+      case _: ArrowType.Timestamp => TimestampType
       case _ =>
         throw new UnsupportedOperationException(s"Unsupported data type: $dt")
     }
@@ -97,11 +95,11 @@ object ArrowUtils {
           name,
           fieldType,
           fields
-            .map { field =>
-              toArrowField(field.name, field.dataType, field.nullable)
-            }
-            .toSeq
-            .asJava
+          .map { field =>
+            toArrowField(field.name, field.dataType, field.nullable)
+          }
+          .toSeq
+          .asJava
         )
       case dataType =>
         val fieldType = new FieldType(nullable, toArrowType(dataType), null)
@@ -139,8 +137,8 @@ object ArrowUtils {
   }
 
   def assertDataTypeEquals(
-      sparkSchema: StructType,
-      arrowSchema: Schema
+    sparkSchema: StructType,
+    arrowSchema: Schema
   ): Unit = {
     // Arrow schema contains index information, need to drop those
     val actualSchema: StructType = StructType(fromArrowSchema(arrowSchema))

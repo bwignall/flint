@@ -24,25 +24,25 @@ import scala.reflect.ClassTag
 protected[flint] object TreeAggregate {
 
   /**
-    * Aggregates the elements from an rdd, in a multi-level tree pattern, in order, i.e.,
-    *   - `seqOp` will be applied in each partition in the ordering of elements in that partition
-    *   - `combOp` will be applied between partitions respect to the ordering of partitions' indices.
-    *
-    * @param rdd       The rdd expected to aggregate
-    * @param zeroValue The zero value
-    * @param seqOp     The sequential operator expected to apply in each partition
-    * @param combOp    The combine operator expected to merge/combine the partial results from each partition
-    * @param depth     The suggested depth of the tree (default: 2)
-    * @return the aggregated result if the `rdd` is non-empty, otherwise `zeroValue`.
-    * @see [[org.apache.spark.rdd.RDD#treeAggregate]]
-    */
+   * Aggregates the elements from an rdd, in a multi-level tree pattern, in order, i.e.,
+   *   - `seqOp` will be applied in each partition in the ordering of elements in that partition
+   *   - `combOp` will be applied between partitions respect to the ordering of partitions' indices.
+   *
+   * @param rdd       The rdd expected to aggregate
+   * @param zeroValue The zero value
+   * @param seqOp     The sequential operator expected to apply in each partition
+   * @param combOp    The combine operator expected to merge/combine the partial results from each partition
+   * @param depth     The suggested depth of the tree (default: 2)
+   * @return the aggregated result if the `rdd` is non-empty, otherwise `zeroValue`.
+   * @see [[org.apache.spark.rdd.RDD#treeAggregate]]
+   */
   def apply[T: ClassTag, U: ClassTag](
-      rdd: RDD[T]
+    rdd: RDD[T]
   )(
-      zeroValue: U,
-      seqOp: (U, T) => U,
-      combOp: (U, U) => U,
-      depth: Int = 2
+    zeroValue: U,
+    seqOp: (U, T) => U,
+    combOp: (U, U) => U,
+    depth: Int = 2
   ): U = {
     require(
       depth >= 1,

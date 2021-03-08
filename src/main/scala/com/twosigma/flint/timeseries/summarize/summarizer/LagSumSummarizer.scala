@@ -29,9 +29,9 @@ import com.twosigma.flint.timeseries.summarize.ColumnList.Sequence
 import org.apache.spark.sql.catalyst.InternalRow
 
 /**
-  * N.B. LagSumSummarizer exists solely to be a trivial example of an OverlappableSummarizerFactory that we can
-  * use to test common functionality. It should not be depended on by application classes or exposed
-  */
+ * N.B. LagSumSummarizer exists solely to be a trivial example of an OverlappableSummarizerFactory that we can
+ * use to test common functionality. It should not be depended on by application classes or exposed
+ */
 private[flint] object LagSumSummarizer {
   val lagSumColumn: String = "lagSum"
   val sumColumn: String = "sum"
@@ -43,8 +43,8 @@ private[flint] object LagSumSummarizer {
 }
 
 private[flint] case class LagSumSummarizerFactory(
-    column: String,
-    maxLookback: String
+  column: String,
+  maxLookback: String
 ) extends OverlappableSummarizerFactory {
   override val window: TimeWindow = Windows.pastAbsoluteTime(maxLookback)
 
@@ -61,11 +61,11 @@ private[flint] case class LagSumSummarizerFactory(
 }
 
 private[flint] case class LagSumSummarizer(
-    override val inputSchema: StructType,
-    override val prefixOpt: Option[String],
-    requiredColumns: ColumnList
+  override val inputSchema: StructType,
+  override val prefixOpt: Option[String],
+  requiredColumns: ColumnList
 ) extends OverlappableSummarizer
-    with FilterNullInput {
+  with FilterNullInput {
 
   override type T = Double
   override type U = LagSumSummarizerState

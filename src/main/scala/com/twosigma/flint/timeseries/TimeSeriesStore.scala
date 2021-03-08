@@ -16,9 +16,9 @@
 
 package com.twosigma.flint.timeseries
 
-import com.twosigma.flint.rdd.{KeyPartitioningType, OrderedRDD, RangeSplit}
+import com.twosigma.flint.rdd.{ KeyPartitioningType, OrderedRDD, RangeSplit }
 import com.twosigma.flint.timeseries.time.types.TimeType
-import org.apache.spark.{Dependency, OneToOneDependency}
+import org.apache.spark.{ Dependency, OneToOneDependency }
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.InternalRow
@@ -32,27 +32,27 @@ import org.apache.spark.sql.catalyst.plans.physical.{
   OrderedDistribution
 }
 import org.apache.spark.sql.execution.SparkPlan
-import org.apache.spark.sql.types.{LongType, StructType, TimestampType}
+import org.apache.spark.sql.types.{ LongType, StructType, TimestampType }
 import org.apache.spark.storage.StorageLevel
 
 /**
-  * - a DataFrame will be normalized via DataFrame -> (normalized ) OrderedRDD -> DataFrame
-  * conversion if there is no partition information provided;
-  * - a DataFrame will be used directly as a backend if a partition information is provided.
-  */
+ * - a DataFrame will be normalized via DataFrame -> (normalized ) OrderedRDD -> DataFrame
+ * conversion if there is no partition information provided;
+ * - a DataFrame will be used directly as a backend if a partition information is provided.
+ */
 private[timeseries] object TimeSeriesStore {
 
   /**
-    * Convert a [[org.apache.spark.sql.DataFrame]] to a [[TimeSeriesStore]].
-    *
-    * @param dataFrame   A [[org.apache.spark.sql.DataFrame]] with `time` column, and sorted by time value.
-    * @param partInfoOpt This parameter should be either empty, or correctly represent partitioning of
-    *                    the given DataFrame.
-    * @return a [[TimeSeriesStore]].
-    */
+   * Convert a [[org.apache.spark.sql.DataFrame]] to a [[TimeSeriesStore]].
+   *
+   * @param dataFrame   A [[org.apache.spark.sql.DataFrame]] with `time` column, and sorted by time value.
+   * @param partInfoOpt This parameter should be either empty, or correctly represent partitioning of
+   *                    the given DataFrame.
+   * @return a [[TimeSeriesStore]].
+   */
   def apply(
-      dataFrame: DataFrame,
-      partInfoOpt: Option[PartitionInfo]
+    dataFrame: DataFrame,
+    partInfoOpt: Option[PartitionInfo]
   ): TimeSeriesStore =
     partInfoOpt match {
       case Some(partInfo) =>
@@ -84,15 +84,15 @@ private[timeseries] object TimeSeriesStore {
     }
 
   /**
-    * Convert an [[OrderedRDD]] to a [[TimeSeriesStore]].
-    *
-    * @param orderedRdd  An [[OrderedRDD]] with `time` column, and sorted by time value.
-    * @param schema      Schema of this [[TimeSeriesStore]].
-    * @return a [[TimeSeriesStore]].
-    */
+   * Convert an [[OrderedRDD]] to a [[TimeSeriesStore]].
+   *
+   * @param orderedRdd  An [[OrderedRDD]] with `time` column, and sorted by time value.
+   * @param schema      Schema of this [[TimeSeriesStore]].
+   * @return a [[TimeSeriesStore]].
+   */
   def apply(
-      orderedRdd: OrderedRDD[Long, InternalRow],
-      schema: StructType
+    orderedRdd: OrderedRDD[Long, InternalRow],
+    schema: StructType
   ): TimeSeriesStore = {
     val df = DFConverter.toDataFrame(orderedRdd, schema)
 
@@ -108,17 +108,17 @@ private[timeseries] object TimeSeriesStore {
   }
 
   /**
-    * Similar to TimeSeriesRDD.getRowConverter(), but used to convert a [[DataFrame]] into a [[TimeSeriesRDD]]
-    *
-    * @param schema          The schema of the input rows.
-    * @param requireCopy     Whether to require new row objects or reuse the existing ones.
-    * @return                a function to convert [[InternalRow]] into a tuple.
-    * @note                  if `requireNewCopy` is true then the function makes an extra copy of the row value.
-    *                        Otherwise it makes no copies of the row.
-    */
+   * Similar to TimeSeriesRDD.getRowConverter(), but used to convert a [[DataFrame]] into a [[TimeSeriesRDD]]
+   *
+   * @param schema          The schema of the input rows.
+   * @param requireCopy     Whether to require new row objects or reuse the existing ones.
+   * @return                a function to convert [[InternalRow]] into a tuple.
+   * @note                  if `requireNewCopy` is true then the function makes an extra copy of the row value.
+   *                        Otherwise it makes no copies of the row.
+   */
   private[timeseries] def getInternalRowConverter(
-      schema: StructType,
-      requireCopy: Boolean
+    schema: StructType,
+    requireCopy: Boolean
   ): InternalRow => (Long, InternalRow) = {
     val timeColumnIndex = schema.fieldIndex(TimeSeriesRDD.timeColumnName)
     val timeType = TimeType(schema(timeColumnIndex).dataType)
@@ -131,13 +131,13 @@ private[timeseries] object TimeSeriesStore {
   }
 
   /**
-    * Check whether output distribution says the DataFrame is clustered.
-    *
-    * Note: This doesn't not check the ordering of time column
-    *
-    * @param executedPlan  a given [[SparkPlan]]
-    * @return true if a data frame is already clustered, and false otherwise.
-    */
+   * Check whether output distribution says the DataFrame is clustered.
+   *
+   * Note: This doesn't not check the ordering of time column
+   *
+   * @param executedPlan  a given [[SparkPlan]]
+   * @return true if a data frame is already clustered, and false otherwise.
+   */
   private[timeseries] def isClustered(executedPlan: SparkPlan): Boolean = {
     val timeAttribute = getTimeAttribute(executedPlan)
     val requiredDistribution = ClusteredDistribution(Seq(timeAttribute))
@@ -145,10 +145,10 @@ private[timeseries] object TimeSeriesStore {
   }
 
   /**
-    * Check whether output distribution says the DataFrame is sorted
-    * @param executedPlan
-    * @return
-    */
+   * Check whether output distribution says the DataFrame is sorted
+   * @param executedPlan
+   * @return
+   */
   private[timeseries] def isSorted(executedPlan: SparkPlan): Boolean = {
     val timeAttribute = getTimeAttribute(executedPlan)
     val requiredDistribution = OrderedDistribution(
@@ -176,68 +176,68 @@ private[timeseries] object TimeSeriesStore {
 private[timeseries] sealed trait TimeSeriesStore extends Serializable {
 
   /**
-    * Returns the schema of this [[TimeSeriesStore]].
-    */
+   * Returns the schema of this [[TimeSeriesStore]].
+   */
   def schema: StructType
 
   /**
-    * Returns an [[RDD]] representation of this [[TimeSeriesStore]].
-    */
+   * Returns an [[RDD]] representation of this [[TimeSeriesStore]].
+   */
   def rdd: RDD[Row]
 
   /**
-    * Returns an [[OrderedRDD]] representation of this [[TimeSeriesStore]] with safe row copies.
-    */
+   * Returns an [[OrderedRDD]] representation of this [[TimeSeriesStore]] with safe row copies.
+   */
   def orderedRdd: OrderedRDD[Long, InternalRow]
 
   /**
-    * Returns an [[OrderedRDD]] representation of this [[TimeSeriesStore]] with `unsafe` rows.
-    */
+   * Returns an [[OrderedRDD]] representation of this [[TimeSeriesStore]] with `unsafe` rows.
+   */
   def unsafeOrderedRdd: OrderedRDD[Long, InternalRow]
 
   /**
-    * Returns [[PartitionInfo]] if internal representation is normalized, or None otherwise.
-    */
+   * Returns [[PartitionInfo]] if internal representation is normalized, or None otherwise.
+   */
   def partInfo: Option[PartitionInfo]
 
   /**
-    * Returns a [[org.apache.spark.sql.DataFrame]] representation of this [[TimeSeriesStore]].
-    */
+   * Returns a [[org.apache.spark.sql.DataFrame]] representation of this [[TimeSeriesStore]].
+   */
   def dataFrame: DataFrame
 
   /**
-    * Persists this [[TimeSeriesStore]] with default storage level (MEMORY_ONLY).
-    */
+   * Persists this [[TimeSeriesStore]] with default storage level (MEMORY_ONLY).
+   */
   def cache(): Unit
 
   /**
-    * Persists this [[TimeSeriesStore]] with default storage level (MEMORY_ONLY).
-    */
+   * Persists this [[TimeSeriesStore]] with default storage level (MEMORY_ONLY).
+   */
   def persist(): Unit
 
   /**
-    * Persists this [[TimeSeriesStore]] with specified storage level.
-    *
-    * @param newLevel The storage level.
-    */
+   * Persists this [[TimeSeriesStore]] with specified storage level.
+   *
+   * @param newLevel The storage level.
+   */
   def persist(newLevel: StorageLevel): Unit
 
   /**
-    * Marks this [[TimeSeriesStore]] as non-persistent, and remove all blocks for it from memory and disk.
-    *
-    * @param blocking Whether to block until all blocks are deleted.
-    */
+   * Marks this [[TimeSeriesStore]] as non-persistent, and remove all blocks for it from memory and disk.
+   *
+   * @param blocking Whether to block until all blocks are deleted.
+   */
   def unpersist(blocking: Boolean = true): Unit
 }
 
 /**
-  * There are two ways to retrieve a DataFrame object in this class:
-  * - use internalDf object (should be used for all DataFrame operations)
-  * - use newDf function (should be used if you access lazy fields of DF's QueryExecution)
-  */
+ * There are two ways to retrieve a DataFrame object in this class:
+ * - use internalDf object (should be used for all DataFrame operations)
+ * - use newDf function (should be used if you access lazy fields of DF's QueryExecution)
+ */
 private[timeseries] class NormalizedDataFrameStore(
-    private val internalDf: DataFrame,
-    private var internalPartInfo: PartitionInfo
+  private val internalDf: DataFrame,
+  private var internalPartInfo: PartitionInfo
 ) extends TimeSeriesStore {
   require(internalPartInfo.deps.size == 1)
   require(internalPartInfo.deps.head.isInstanceOf[OneToOneDependency[_]])
@@ -250,9 +250,9 @@ private[timeseries] class NormalizedDataFrameStore(
   override val schema: StructType = internalDf.schema
 
   /**
-    * The field below can be used only for DataFrame operations, since they respect DF caching.
-    * If you need an [[RDD]] representation - use `newDF`.
-    */
+   * The field below can be used only for DataFrame operations, since they respect DF caching.
+   * If you need an [[RDD]] representation - use `newDF`.
+   */
   override val dataFrame: DataFrame = internalDf
 
   override def rdd: RDD[Row] = newDf.rdd
@@ -261,7 +261,7 @@ private[timeseries] class NormalizedDataFrameStore(
     toOrderedRdd(requireCopy = true)
 
   private def toOrderedRdd(
-      requireCopy: Boolean
+    requireCopy: Boolean
   ): OrderedRDD[Long, InternalRow] = {
     val internalRows = newDf.queryExecution.toRdd
     val pairRdd = internalRows.mapPartitions { rows =>
@@ -274,9 +274,9 @@ private[timeseries] class NormalizedDataFrameStore(
   }
 
   /**
-    * We create a new DataFrame object to force reevaluation of 'lazy val' fields
-    * in [[org.apache.spark.sql.execution.QueryExecution]].
-    */
+   * We create a new DataFrame object to force reevaluation of 'lazy val' fields
+   * in [[org.apache.spark.sql.execution.QueryExecution]].
+   */
   private def newDf: DataFrame = DFConverter.newDataFrame(internalDf)
 
   override def unsafeOrderedRdd: OrderedRDD[Long, InternalRow] =
@@ -296,8 +296,8 @@ private[timeseries] class NormalizedDataFrameStore(
 }
 
 private[timeseries] case class PartitionInfo(
-    splits: Seq[RangeSplit[Long]],
-    deps: Seq[Dependency[_]]
+  splits: Seq[RangeSplit[Long]],
+  deps: Seq[Dependency[_]]
 ) extends Serializable {
   // TODO: Add checks to make sure partition boundary is at least second resolution here.
   //       This is currently not done because Smooth even size partitioning strategy will

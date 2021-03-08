@@ -44,13 +44,13 @@ object ExponentialSmoothingConvention extends Enumeration {
 }
 
 case class ExponentialSmoothingSummarizerFactory(
-    xColumn: String,
-    timeColumn: String,
-    alpha: Double,
-    primingPeriods: Double,
-    timestampsToPeriods: (Long, Long) => Double,
-    exponentialSmoothingInterpolation: ExponentialSmoothingInterpolation.Value,
-    exponentialSmoothingConvention: ExponentialSmoothingConvention.Value
+  xColumn: String,
+  timeColumn: String,
+  alpha: Double,
+  primingPeriods: Double,
+  timestampsToPeriods: (Long, Long) => Double,
+  exponentialSmoothingInterpolation: ExponentialSmoothingInterpolation.Value,
+  exponentialSmoothingConvention: ExponentialSmoothingConvention.Value
 ) extends BaseSummarizerFactory(xColumn, timeColumn) {
   override def apply(inputSchema: StructType): ExponentialSmoothingSummarizer =
     ExponentialSmoothingSummarizer(
@@ -66,17 +66,17 @@ case class ExponentialSmoothingSummarizerFactory(
 }
 
 case class ExponentialSmoothingSummarizer(
-    override val inputSchema: StructType,
-    override val prefixOpt: Option[String],
-    override val requiredColumns: ColumnList,
-    alpha: Double,
-    primingPeriods: Double,
-    timestampsToPeriods: (Long, Long) => Double,
-    exponentialSmoothingType: ExponentialSmoothingInterpolation.Value,
-    exponentialSmoothingConvention: ExponentialSmoothingConvention.Value
+  override val inputSchema: StructType,
+  override val prefixOpt: Option[String],
+  override val requiredColumns: ColumnList,
+  alpha: Double,
+  primingPeriods: Double,
+  timestampsToPeriods: (Long, Long) => Double,
+  exponentialSmoothingType: ExponentialSmoothingInterpolation.Value,
+  exponentialSmoothingConvention: ExponentialSmoothingConvention.Value
 ) extends FlippableSummarizer
-    with FilterNullInput
-    with TimeAwareSummarizer {
+  with FilterNullInput
+  with TimeAwareSummarizer {
 
   override type T = SmoothingRow
   override type U = ExponentialSmoothingState

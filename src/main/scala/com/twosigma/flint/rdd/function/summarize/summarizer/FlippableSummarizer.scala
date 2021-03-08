@@ -17,8 +17,8 @@
 package com.twosigma.flint.rdd.function.summarize.summarizer
 
 /**
-  * For a summarizer s, we call s flippable if it is associative and if its merge operation does not modify the
-  * state on the right side. We extend this trait for summarizers that benefit from the Flipper algorithm for
-  * summarizeWindows.
-  */
+ * For a summarizer s, we call s flippable if it is associative and if its merge operation does not modify the
+ * state on the right side. We extend this trait for summarizers that benefit from the Flipper algorithm for
+ * summarizeWindows.
+ */
 trait FlippableSummarizer[V, U, V2] extends Summarizer[V, U, V2]

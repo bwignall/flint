@@ -17,14 +17,14 @@
 package com.twosigma.flint.timeseries.summarize.summarizer
 
 import com.twosigma.flint.timeseries.summarize._
-import com.twosigma.flint.timeseries.row.{DuplicateColumnsException, Schema}
+import com.twosigma.flint.timeseries.row.{ DuplicateColumnsException, Schema }
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.GenericInternalRow
 import org.apache.spark.sql.types.StructType
 
 case class CompositeSummarizerFactory(
-    factory1: SummarizerFactory,
-    factory2: SummarizerFactory
+  factory1: SummarizerFactory,
+  factory2: SummarizerFactory
 ) extends SummarizerFactory {
 
   Seq(factory1, factory2).foreach {
@@ -36,8 +36,8 @@ case class CompositeSummarizerFactory(
   }
 
   /**
-    * This doesn't affect input validation because [[CompositeSummarizer]] extends [[InputAlwaysValid]]
-    */
+   * This doesn't affect input validation because [[CompositeSummarizer]] extends [[InputAlwaysValid]]
+   */
   override val requiredColumns =
     factory1.requiredColumns ++ factory2.requiredColumns
 
@@ -56,13 +56,13 @@ case class CompositeSummarizerFactory(
 }
 
 class CompositeSummarizer(
-    override val inputSchema: StructType,
-    override val prefixOpt: Option[String],
-    override val requiredColumns: ColumnList,
-    val summarizer1: Summarizer,
-    val summarizer2: Summarizer
+  override val inputSchema: StructType,
+  override val prefixOpt: Option[String],
+  override val requiredColumns: ColumnList,
+  val summarizer1: Summarizer,
+  val summarizer2: Summarizer
 ) extends Summarizer
-    with InputAlwaysValid {
+  with InputAlwaysValid {
 
   override type T = (InternalRow, InternalRow)
   override type U = (Any, Any)
@@ -82,7 +82,7 @@ class CompositeSummarizer(
     val (r1, r2) = v
     new GenericInternalRow(
       (r1.toSeq(summarizer1.outputSchema) ++ r2
-        .toSeq(summarizer2.outputSchema)).toArray
+      .toSeq(summarizer2.outputSchema)).toArray
     )
   }
 

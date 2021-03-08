@@ -20,38 +20,34 @@ import com.twosigma.flint.math.Kahan
 import scala.math._
 
 /**
-  * Calculates the weighted mean, weighted deviation, weighted t-stat, and the count of observations.
-  *
-  * Implemented based on
-  * [[http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Weighted_incremental_algorithm Weighted incrememtal algorithm]] and
-  * [[http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Parallel_algorithm Parallel algorithm]]
-  * and replaces all "n" with corresponding "SumWeight"
-  *
-  */
+ * Calculates the weighted mean, weighted deviation, weighted t-stat, and the count of observations.
+ *
+ * Implemented based on
+ * [[http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Weighted_incremental_algorithm Weighted incrememtal algorithm]] and
+ * [[http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Parallel_algorithm Parallel algorithm]]
+ * and replaces all "n" with corresponding "SumWeight"
+ *
+ */
 case class WeightedMeanTestState(
-    var count: Long,
-    sumWeight: Kahan,
-    mean: Kahan,
-    sumSquareOfDiffFromMean: Kahan,
-    sumSquareOfWeights: Kahan
+  var count: Long,
+  sumWeight: Kahan,
+  mean: Kahan,
+  sumSquareOfDiffFromMean: Kahan,
+  sumSquareOfWeights: Kahan
 )
 
 case class WeightedMeanTestOutput(
-    weighedMean: Double,
-    weightedStandardDeviation: Double,
-    weightedTstat: Double,
-    observationCount: Long
+  weighedMean: Double,
+  weightedStandardDeviation: Double,
+  weightedTstat: Double,
+  observationCount: Long
 )
 
 case class WeightedMeanTestSummarizer()
-    extends LeftSubtractableSummarizer[
-      (Double, Double),
-      WeightedMeanTestState,
-      WeightedMeanTestOutput
-    ] {
+  extends LeftSubtractableSummarizer[(Double, Double), WeightedMeanTestState, WeightedMeanTestOutput] {
   override def add(
-      u: WeightedMeanTestState,
-      data: (Double, Double)
+    u: WeightedMeanTestState,
+    data: (Double, Double)
   ): WeightedMeanTestState = {
     val (rawValue, rawWeight) = data
 
@@ -80,8 +76,8 @@ case class WeightedMeanTestSummarizer()
   }
 
   override def subtract(
-      u: WeightedMeanTestState,
-      data: (Double, Double)
+    u: WeightedMeanTestState,
+    data: (Double, Double)
   ): WeightedMeanTestState = {
     require(u.count != 0L)
     if (u.count == 1L) {
@@ -118,8 +114,8 @@ case class WeightedMeanTestSummarizer()
     WeightedMeanTestState(0, new Kahan(), new Kahan(), new Kahan(), new Kahan())
 
   override def merge(
-      u1: WeightedMeanTestState,
-      u2: WeightedMeanTestState
+    u1: WeightedMeanTestState,
+    u2: WeightedMeanTestState
   ): WeightedMeanTestState = {
     if (u1.count == 0L) {
       u2

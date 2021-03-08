@@ -20,96 +20,96 @@ import java.nio.charset.Charset
 import java.sql.Timestamp
 
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, SQLContext}
+import org.apache.spark.sql.{ DataFrame, SQLContext }
 import org.apache.spark.sql.types._
 
 import scala.concurrent.duration._
 import java.util.concurrent.TimeUnit
 
 /**
-  * Parse a CSV file into a [[TimeSeriesRDD]].
-  *
-  * Example usage:
-  *
-  * Read and parse a gzipped CSV file with header and specific time format into a [[TimeSeriesRDD]].
-  * {{{
-  * import com.twosigma.flint.timeseries.CSV
-  *
-  * CSV.from(
-  *   sqlContext,
-  *   s"file://foo/bar/data.csv.gz",
-  *   header = true,
-  *   dateFormat = "yyyyMMdd HH:mm:ss.SSS",
-  *   codec = "gzip",
-  *   sorted = true
-  * )
-  * }}}
-  */
+ * Parse a CSV file into a [[TimeSeriesRDD]].
+ *
+ * Example usage:
+ *
+ * Read and parse a gzipped CSV file with header and specific time format into a [[TimeSeriesRDD]].
+ * {{{
+ * import com.twosigma.flint.timeseries.CSV
+ *
+ * CSV.from(
+ *   sqlContext,
+ *   s"file://foo/bar/data.csv.gz",
+ *   header = true,
+ *   dateFormat = "yyyyMMdd HH:mm:ss.SSS",
+ *   codec = "gzip",
+ *   sorted = true
+ * )
+ * }}}
+ */
 object CSV {
   // scalastyle:off parameter.number
   /**
-    * Parse a CSV file into a [[TimeSeriesRDD]].
-    *
-    * @param sqlContext               The Spark SQLContext.
-    * @param filePath                 Location of file. Similar to Spark can accept standard Hadoop globbing
-    *                                 expressions or a local file.
-    * @param sorted                   A flag that specifies if rows in the CSV file have been sorted by time column.
-    * @param timeColumnName           Column name that specifies which column is the time column when
-    *                                 there is header or when a schema is given.
-    * @param timeUnit                 Time unit when a time column is given with a numeric type like
-    *                                 Long or Integer, with default value [[scala.concurrent.duration.NANOSECONDS]].
-    * @param header                   When set to true the first line of files will be used to name columns and will
-    *                                 not be included in data. Default value is false.
-    * @param delimiter                Delimiter that columns are delimited by which could be any character. Default
-    *                                 is ','.
-    * @param quote                    By default the quote character is `"`, but can be set to any character.
-    *                                 Delimiters inside quotes are ignored.
-    * @param escape                   By default the escape character is `\`, but can be set to any character.
-    *                                 Escaped quote characters are ignored.
-    * @param parserLib                By default it is "commons" can be set to "univocity" to use that library for
-    *                                 CSV parsing.
-    * @param mode                     Determines the parsing mode. By default it is PERMISSIVE. Possible values are:
-    *                                 PERMISSIVE: tries to parse all lines: nulls are inserted for missing tokens and
-    *                                 extra tokens are ignored; DROPMALFORMED: drops lines which have fewer or more
-    *                                 tokens than expected or tokens which do not match the schema;
-    *                                 FAILFAST: aborts with a RuntimeException if encounters any malformed line.
-    * @param charset                  Defaults to 'UTF-8' but can be set to other valid charset names.
-    * @param comment                  Skip lines beginning with this character. Default is "#".
-    * @param ignoreLeadingWhiteSpace  By default false to ignore the leading white space.
-    * @param ignoreTrailingWhiteSpace By default false to ignore the trailing white space.
-    * @param schema                   The schema for the CSV file. If the schema is given, use it otherwise infer the
-    *                                 schema from the data itself.
-    * @param dateFormat               The pattern string to parse the date time string under the time column.
-    *                                 Defaults to "yyyy-MM-dd HH:mm:ss.SSS". For example, "1970-01-01 00:00:00.000".
-    * @param keepOriginTimeColumn     The schema of return [[TimeSeriesRDD]] will always have a column named "time"
-    *                                 with LongType. The original time column will not be kept by default.
-    * @param codec                    compression codec to use when reading from file. Should be the fully qualified
-    *                                 name of a class implementing [[org.apache.hadoop.io.compress.CompressionCodec]] or
-    *                                 one of case-insensitive shorten names (bzip2, gzip, lz4, and snappy).
-    *                                 Defaults to no compression when a codec is not specified.
-    */
+   * Parse a CSV file into a [[TimeSeriesRDD]].
+   *
+   * @param sqlContext               The Spark SQLContext.
+   * @param filePath                 Location of file. Similar to Spark can accept standard Hadoop globbing
+   *                                 expressions or a local file.
+   * @param sorted                   A flag that specifies if rows in the CSV file have been sorted by time column.
+   * @param timeColumnName           Column name that specifies which column is the time column when
+   *                                 there is header or when a schema is given.
+   * @param timeUnit                 Time unit when a time column is given with a numeric type like
+   *                                 Long or Integer, with default value [[scala.concurrent.duration.NANOSECONDS]].
+   * @param header                   When set to true the first line of files will be used to name columns and will
+   *                                 not be included in data. Default value is false.
+   * @param delimiter                Delimiter that columns are delimited by which could be any character. Default
+   *                                 is ','.
+   * @param quote                    By default the quote character is `"`, but can be set to any character.
+   *                                 Delimiters inside quotes are ignored.
+   * @param escape                   By default the escape character is `\`, but can be set to any character.
+   *                                 Escaped quote characters are ignored.
+   * @param parserLib                By default it is "commons" can be set to "univocity" to use that library for
+   *                                 CSV parsing.
+   * @param mode                     Determines the parsing mode. By default it is PERMISSIVE. Possible values are:
+   *                                 PERMISSIVE: tries to parse all lines: nulls are inserted for missing tokens and
+   *                                 extra tokens are ignored; DROPMALFORMED: drops lines which have fewer or more
+   *                                 tokens than expected or tokens which do not match the schema;
+   *                                 FAILFAST: aborts with a RuntimeException if encounters any malformed line.
+   * @param charset                  Defaults to 'UTF-8' but can be set to other valid charset names.
+   * @param comment                  Skip lines beginning with this character. Default is "#".
+   * @param ignoreLeadingWhiteSpace  By default false to ignore the leading white space.
+   * @param ignoreTrailingWhiteSpace By default false to ignore the trailing white space.
+   * @param schema                   The schema for the CSV file. If the schema is given, use it otherwise infer the
+   *                                 schema from the data itself.
+   * @param dateFormat               The pattern string to parse the date time string under the time column.
+   *                                 Defaults to "yyyy-MM-dd HH:mm:ss.SSS". For example, "1970-01-01 00:00:00.000".
+   * @param keepOriginTimeColumn     The schema of return [[TimeSeriesRDD]] will always have a column named "time"
+   *                                 with LongType. The original time column will not be kept by default.
+   * @param codec                    compression codec to use when reading from file. Should be the fully qualified
+   *                                 name of a class implementing [[org.apache.hadoop.io.compress.CompressionCodec]] or
+   *                                 one of case-insensitive shorten names (bzip2, gzip, lz4, and snappy).
+   *                                 Defaults to no compression when a codec is not specified.
+   */
   def from(
-      sqlContext: SQLContext,
-      filePath: String,
-      // TimeSeriesRDD specific parameters
-      sorted: Boolean,
-      timeColumnName: String = TimeSeriesRDD.timeColumnName,
-      timeUnit: TimeUnit = NANOSECONDS,
-      // Spark-csv specific parameters
-      header: Boolean = false,
-      delimiter: Char = ',',
-      quote: Char = '"',
-      escape: Char = '\\',
-      comment: Char = '#',
-      mode: String = "PERMISSIVE",
-      parserLib: String = "COMMONS",
-      ignoreLeadingWhiteSpace: Boolean = false,
-      ignoreTrailingWhiteSpace: Boolean = false,
-      charset: String = Charset.forName("UTF-8").name(),
-      schema: StructType = null,
-      dateFormat: String = "yyyy-MM-dd HH:mm:ss.S",
-      keepOriginTimeColumn: Boolean = false,
-      codec: String = null
+    sqlContext: SQLContext,
+    filePath: String,
+    // TimeSeriesRDD specific parameters
+    sorted: Boolean,
+    timeColumnName: String = TimeSeriesRDD.timeColumnName,
+    timeUnit: TimeUnit = NANOSECONDS,
+    // Spark-csv specific parameters
+    header: Boolean = false,
+    delimiter: Char = ',',
+    quote: Char = '"',
+    escape: Char = '\\',
+    comment: Char = '#',
+    mode: String = "PERMISSIVE",
+    parserLib: String = "COMMONS",
+    ignoreLeadingWhiteSpace: Boolean = false,
+    ignoreTrailingWhiteSpace: Boolean = false,
+    charset: String = Charset.forName("UTF-8").name(),
+    schema: StructType = null,
+    dateFormat: String = "yyyy-MM-dd HH:mm:ss.S",
+    keepOriginTimeColumn: Boolean = false,
+    codec: String = null
   ): TimeSeriesRDD = {
     // scalastyle:on parameter.number
     val reader = sqlContext.read
@@ -169,8 +169,8 @@ object CSV {
   }
 
   private[this] def convertTimeToLong(
-      dataFrame: DataFrame,
-      timeColumnName: String
+    dataFrame: DataFrame,
+    timeColumnName: String
   ): DataFrame = {
     val dataType = dataFrame.schema(timeColumnName).dataType
 

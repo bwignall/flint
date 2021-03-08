@@ -21,12 +21,12 @@ import java.util.ArrayDeque
 import org.apache.spark.sql.catalyst.InternalRow
 
 /**
-  * A summarizer that puts all input values into an Array in the order they are added.
-  *
-  * Using ArrayDeque instead of LinkedList is because its better performance `toArray` operation.
-  */
+ * A summarizer that puts all input values into an Array in the order they are added.
+ *
+ * Using ArrayDeque instead of LinkedList is because its better performance `toArray` operation.
+ */
 case class RowsSummarizer[@specialized V: ClassTag]()
-    extends LeftSubtractableSummarizer[V, ArrayDeque[V], Array[V]] {
+  extends LeftSubtractableSummarizer[V, ArrayDeque[V], Array[V]] {
 
   override def zero(): ArrayDeque[V] = new ArrayDeque[V]()
 
@@ -53,37 +53,35 @@ case class RowsSummarizer[@specialized V: ClassTag]()
 }
 
 /**
-  * The reason we need this class instead of using RowsSummarizer[InternalRow] directly is because
-  * its performance is much better. The performance improvement is mainly achieved by avoiding using
-  * java.lang.reflect.Array.create to create new array instance which is ~ 10x slower than the
-  * native java array creation.
-  */
+ * The reason we need this class instead of using RowsSummarizer[InternalRow] directly is because
+ * its performance is much better. The performance improvement is mainly achieved by avoiding using
+ * java.lang.reflect.Array.create to create new array instance which is ~ 10x slower than the
+ * native java array creation.
+ */
 case class InternalRowsSummarizer()
-    extends LeftSubtractableSummarizer[InternalRow, ArrayDeque[
-      InternalRow
-    ], Array[InternalRow]] {
+  extends LeftSubtractableSummarizer[InternalRow, ArrayDeque[InternalRow], Array[InternalRow]] {
 
   override def zero(): ArrayDeque[InternalRow] = new ArrayDeque[InternalRow]()
 
   override def add(
-      u: ArrayDeque[InternalRow],
-      t: InternalRow
+    u: ArrayDeque[InternalRow],
+    t: InternalRow
   ): ArrayDeque[InternalRow] = {
     u.addLast(t)
     u
   }
 
   override def subtract(
-      u: ArrayDeque[InternalRow],
-      t: InternalRow
+    u: ArrayDeque[InternalRow],
+    t: InternalRow
   ): ArrayDeque[InternalRow] = {
     u.removeFirst()
     u
   }
 
   override def merge(
-      u1: ArrayDeque[InternalRow],
-      u2: ArrayDeque[InternalRow]
+    u1: ArrayDeque[InternalRow],
+    u2: ArrayDeque[InternalRow]
   ): ArrayDeque[InternalRow] = {
     u1.addAll(u2)
     u1

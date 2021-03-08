@@ -26,19 +26,17 @@ import scala.reflect.ClassTag
 object Range {
 
   /**
-    * @return a close-open range if begin is not equal to end or a close range if the begin equals
-    *         to the end.
-    */
+   * @return a close-open range if begin is not equal to end or a close range if the begin equals
+   *         to the end.
+   */
   def apply[K](begin: K, end: Option[K])(implicit ord: Ordering[K]): Range[K] =
     closeOpen(begin, end)
 
   /**
-    * @return a close-open range if the begin is not equal to the end or a close range if the
-    *         begin equals to the end.
-    */
-  def closeOpen[K](begin: K, end: Option[K])(implicit
-      ord: Ordering[K]
-  ): Range[K] =
+   * @return a close-open range if the begin is not equal to the end or a close range if the
+   *         begin equals to the end.
+   */
+  def closeOpen[K](begin: K, end: Option[K])(implicit ord: Ordering[K]): Range[K] =
     end match {
       case None => CloseOpen(begin, None)
       case Some(e) =>
@@ -47,13 +45,13 @@ object Range {
     }
 
   /**
-    * @return a close-close range.
-    */
+   * @return a close-close range.
+   */
   def apply[K: Ordering](begin: K, end: K): Range[K] = closeClose(begin, end)
 
   /**
-    * @return a close-close range.
-    */
+   * @return a close-close range.
+   */
   def closeClose[K](begin: K, end: K)(implicit ord: Ordering[K]): Range[K] =
     if (ord.equiv(begin, end)) {
       CloseSingleton(begin)
@@ -62,38 +60,36 @@ object Range {
     }
 
   /**
-    * Test if a sequence of ranges are sorted.
-    *
-    * A sequence of ranges are sorted if and only if both the begin and the end of i-th range are less than
-    * or equal to those of (i+1)-th range, respectively, for all i. This implies that if a range
-    * intersects with i-th range but not the (i+1)-th range, then it won't intersect with any j-th range
-    * when j > i, etc.
-    *
-    * @param ranges A sequence of ranges to test
-    * @return true if the ranges is empty or it is sorted.
-    */
+   * Test if a sequence of ranges are sorted.
+   *
+   * A sequence of ranges are sorted if and only if both the begin and the end of i-th range are less than
+   * or equal to those of (i+1)-th range, respectively, for all i. This implies that if a range
+   * intersects with i-th range but not the (i+1)-th range, then it won't intersect with any j-th range
+   * when j > i, etc.
+   *
+   * @param ranges A sequence of ranges to test
+   * @return true if the ranges is empty or it is sorted.
+   */
   def isSorted[K](ranges: Seq[Range[K]])(implicit ord: Ordering[K]): Boolean =
     isSorted(ranges, { r: Range[K] => r })
 
   /**
-    * Test if a sequence of items' ranges are sorted.
-    *
-    * A sequence of ranges are sorted if and only if both the begin and the end of i-th range are less than
-    * or equal to those of (i+1)-th range, respectively, for all i. This implies that if a range
-    * intersects with i-th range but not the (i+1)-th range, then it won't intersect with any j-th range
-    * when j > i, etc.
-    *
-    * The `range` function will be used to exact the range information from an item and thus avoid extra
-    * copying of `items` to get a sequence of ranges for binary search purpose.
-    *
-    * @param items A sequence of items whose ranges are expected to test
-    * @param range A function to exact a range from an `item`
-    * @return true if the ranges of items are sorted, i.e. the sequence of ranges is empty or if both the begin and
-    *         the end of i-th range are less or equal than that of (i+1)-th range for all i.
-    */
-  def isSorted[K, U](items: Seq[U], range: U => Range[K])(implicit
-      ord: Ordering[K]
-  ): Boolean =
+   * Test if a sequence of items' ranges are sorted.
+   *
+   * A sequence of ranges are sorted if and only if both the begin and the end of i-th range are less than
+   * or equal to those of (i+1)-th range, respectively, for all i. This implies that if a range
+   * intersects with i-th range but not the (i+1)-th range, then it won't intersect with any j-th range
+   * when j > i, etc.
+   *
+   * The `range` function will be used to exact the range information from an item and thus avoid extra
+   * copying of `items` to get a sequence of ranges for binary search purpose.
+   *
+   * @param items A sequence of items whose ranges are expected to test
+   * @param range A function to exact a range from an `item`
+   * @return true if the ranges of items are sorted, i.e. the sequence of ranges is empty or if both the begin and
+   *         the end of i-th range are less or equal than that of (i+1)-th range for all i.
+   */
+  def isSorted[K, U](items: Seq[U], range: U => Range[K])(implicit ord: Ordering[K]): Boolean =
     items.headOption.fold(true) { head =>
       var prev = range(head)
       val iter = items.toIterator.map(range(_))
@@ -107,23 +103,23 @@ object Range {
     }
 
   /**
-    * Return a sequence of indices of items whose ranges intersect with the range of given item.
-    *
-    * The `range` function will be used to exact the range information from an item and thus avoid extra
-    * copying of `items` to get a sequence of ranges for binary search purpose.
-    *
-    * @param item     An item with a range
-    * @param items    An indexed sequence of items whose ranges will be searched for intersections with that of `range`.
-    * @param range    A function to exact a range from an `item`
-    * @param isSorted A flag specifies whether ranges of items are sorted. If true, it will use binary search.
-    *                 Otherwise, it will perform a linear scan. See [[isSorted()]] for testing if they are sorted.
-    * @return a sequence of indices of items whose ranges intersect with the range of `item`. The order is preserved.
-    */
+   * Return a sequence of indices of items whose ranges intersect with the range of given item.
+   *
+   * The `range` function will be used to exact the range information from an item and thus avoid extra
+   * copying of `items` to get a sequence of ranges for binary search purpose.
+   *
+   * @param item     An item with a range
+   * @param items    An indexed sequence of items whose ranges will be searched for intersections with that of `range`.
+   * @param range    A function to exact a range from an `item`
+   * @param isSorted A flag specifies whether ranges of items are sorted. If true, it will use binary search.
+   *                 Otherwise, it will perform a linear scan. See [[isSorted()]] for testing if they are sorted.
+   * @return a sequence of indices of items whose ranges intersect with the range of `item`. The order is preserved.
+   */
   protected[rdd] def intersect[K: Ordering, U: ClassTag](
-      item: U,
-      items: IndexedSeq[U],
-      range: U => Range[K],
-      isSorted: Boolean
+    item: U,
+    items: IndexedSeq[U],
+    range: U => Range[K],
+    isSorted: Boolean
   ): Seq[Int] =
     if (isSorted) {
       val result: SearchResult =
@@ -168,106 +164,106 @@ sealed trait Range[K] {
   def end: Option[K]
 
   /**
-    * @return true if and only if this range intersects with others.
-    */
+   * @return true if and only if this range intersects with others.
+   */
   def intersects(other: Range[K]): Boolean
 
   /**
-    * Return a sequence of indices of ranges that intersect with this range.
-    *
-    * @param ranges   An indexed sequence of ranges that will be searched for intersections.
-    * @param isSorted A flag specifies whether ranges are sorted. If true, it will use binary search.
-    *                 Otherwise, it will perform a linear scan. See [[Range.isSorted()]] for
-    *                 for more information.
-    * @return a sequence of indices of ranges that intersect with this range. The order is preserved.
-    */
+   * Return a sequence of indices of ranges that intersect with this range.
+   *
+   * @param ranges   An indexed sequence of ranges that will be searched for intersections.
+   * @param isSorted A flag specifies whether ranges are sorted. If true, it will use binary search.
+   *                 Otherwise, it will perform a linear scan. See [[Range.isSorted()]] for
+   *                 for more information.
+   * @return a sequence of indices of ranges that intersect with this range. The order is preserved.
+   */
   def intersectsWith(
-      ranges: IndexedSeq[Range[K]],
-      isSorted: Boolean
+    ranges: IndexedSeq[Range[K]],
+    isSorted: Boolean
   ): Seq[Int] =
     Range.intersect(this, ranges, { r: Range[K] => r }, isSorted)
 
   /**
-    * @return true if and only if its begin is strictly greater than k in the ordering.
-    */
+   * @return true if and only if its begin is strictly greater than k in the ordering.
+   */
   def beginGt(k: K): Boolean = ord.gt(begin, k)
 
   /**
-    * @return true if and only if its begin equals to the begin of the other range.
-    */
+   * @return true if and only if its begin equals to the begin of the other range.
+   */
   def beginEquals(other: Range[K]): Boolean = beginEquals(other.begin)
 
   /**
-    * @return true if and only if its begin equals to k in the ordering.
-    */
+   * @return true if and only if its begin equals to k in the ordering.
+   */
   def beginEquals(k: K): Boolean = ord.equiv(begin, k)
 
   /**
-    * @return true if and only if the range contains the given element k.
-    */
+   * @return true if and only if the range contains the given element k.
+   */
   def contains(k: K): Boolean
 
   /**
-    * @return true if and only if the end of other range is the same.
-    */
+   * @return true if and only if the end of other range is the same.
+   */
   def endEquals(other: Range[K]): Boolean = endEquals(other.end)
 
   /**
-    * @return true if and only if its end equals to the other in the ordering.
-    */
+   * @return true if and only if its end equals to the other in the ordering.
+   */
   def endEquals(other: Option[K]): Boolean =
     end.fold(other.isEmpty) { e =>
       other.fold(false)(ord.equiv(e, _))
     }
 
   /**
-    * @return true if and only if the end is greater or equal to the `k` in the ordering.
-    */
+   * @return true if and only if the end is greater or equal to the `k` in the ordering.
+   */
   def endGteq(k: K): Boolean = end.fold(true)(ord.gteq(_, k))
 
   /**
-    * @return true if and only if the end is greater or equal to the end of the `other` range.
-    */
+   * @return true if and only if the end is greater or equal to the end of the `other` range.
+   */
   def endGteq(other: Range[K]): Boolean = endGteq(other.end)
 
   /**
-    * @return true if and only if the end is greater or equal to the `other` in the ordering.
-    */
+   * @return true if and only if the end is greater or equal to the `other` in the ordering.
+   */
   def endGteq(other: Option[K]): Boolean =
     end.fold(true) { thisEnd =>
       other.fold(false)(ord.gteq(thisEnd, _))
     }
 
   /**
-    * @return true if and only if the other range has the same type and has the same begin and end
-    * in the ordering.
-    */
+   * @return true if and only if the other range has the same type and has the same begin and end
+   * in the ordering.
+   */
   def ==(other: Range[K]): Boolean
 
   /**
-    * The opposite of ==.
-    */
+   * The opposite of ==.
+   */
   def !=(other: Range[K]): Boolean = ! ==(other)
 
   /**
-    * Expand the Range. The begin of the new range is f(begin)._1 and the end of the new range is
-    * f(end)._2. The type of the range is unchanged.
-    */
+   * Expand the Range. The begin of the new range is f(begin)._1 and the end of the new range is
+   * f(end)._2. The type of the range is unchanged.
+   */
   def expand(f: K => (K, K)): Range[K] = ???
 
   /**
-    * Shift the Range. The begin of the new range is f(begin) and the end of the new range is f(end).
-    * The type of the range is unchanged
-    */
+   * Shift the Range. The begin of the new range is f(begin) and the end of the new range is f(end).
+   * The type of the range is unchanged
+   */
   def shift(f: K => K): Range[K] = ???
 
 }
 
 /**
-  * Represents a close-close range of [k, k].
-  */
+ * Represents a close-close range of [k, k].
+ */
 case class CloseSingleton[K](begin: K)(implicit val ord: Ordering[K])
-    extends Range[K] {
+  extends Range[K] {
   def end: Some[K] = Some(begin)
   def intersects(other: Range[K]): Boolean = other.contains(begin)
   def contains(k: K): Boolean = ord.equiv(begin, k)
@@ -276,10 +272,10 @@ case class CloseSingleton[K](begin: K)(implicit val ord: Ordering[K])
 }
 
 /**
-  * Represents a close-close range of [begin, end] where begin is not equal to end.
-  */
+ * Represents a close-close range of [begin, end] where begin is not equal to end.
+ */
 case class CloseClose[K](begin: K, end: Some[K])(implicit val ord: Ordering[K])
-    extends Range[K] {
+  extends Range[K] {
   require(
     end.forall(ord.gt(_, begin)),
     s"end $end is not strictly greater than begin $begin"
@@ -301,16 +297,14 @@ case class CloseClose[K](begin: K, end: Some[K])(implicit val ord: Ordering[K])
 }
 
 /**
-  * Represents a close-open range for [begin, end) where begin is not equal to end and the
-  * end could be the greatest boundary of the universe.
-  *
-  * @param begin The begin of the range.
-  * @param end   The end of the range. If it is None, it will be treated as the greatest possible
-  *              value of type K.
-  */
-case class CloseOpen[K](begin: K, end: Option[K])(implicit
-    val ord: Ordering[K]
-) extends Range[K] {
+ * Represents a close-open range for [begin, end) where begin is not equal to end and the
+ * end could be the greatest boundary of the universe.
+ *
+ * @param begin The begin of the range.
+ * @param end   The end of the range. If it is None, it will be treated as the greatest possible
+ *              value of type K.
+ */
+case class CloseOpen[K](begin: K, end: Option[K])(implicit val ord: Ordering[K]) extends Range[K] {
   require(
     end.forall(ord.gt(_, begin)),
     s"end $end is not strictly greater than begin $begin"

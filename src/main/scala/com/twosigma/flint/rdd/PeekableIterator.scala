@@ -22,7 +22,7 @@ protected[flint] object PeekableIterator {
 }
 
 protected[flint] class PeekableIterator[T](iter: Iterator[T])
-    extends Iterator[T] {
+  extends Iterator[T] {
   var peeked: Option[T] = None
 
   def peek: Option[T] = {

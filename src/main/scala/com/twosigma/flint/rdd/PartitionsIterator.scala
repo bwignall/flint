@@ -19,17 +19,16 @@ package com.twosigma.flint.rdd
 import grizzled.slf4j.Logger
 
 import org.apache.spark.rdd.RDD
-import org.apache.spark.{Partition, TaskContext}
+import org.apache.spark.{ Partition, TaskContext }
 
 protected[flint] object PartitionsIterator {
   val logger = Logger(PartitionsIterator.getClass)
 
   def apply[T](
-      rdd: RDD[T],
-      partitions: Seq[Partition],
-      context: TaskContext,
-      preservesPartitionsOrdering: Boolean =
-        false // FIXME: This is a band-aid which should be fixed.
+    rdd: RDD[T],
+    partitions: Seq[Partition],
+    context: TaskContext,
+    preservesPartitionsOrdering: Boolean = false // FIXME: This is a band-aid which should be fixed.
   ): PartitionsIterator[T] =
     new PartitionsIterator(
       rdd,
@@ -40,21 +39,20 @@ protected[flint] object PartitionsIterator {
 }
 
 /**
-  * An iterator for records in a sequence of partitions from an [[RDD]].
-  *
-  * @param rdd                         The [[RDD]] expected to iterate through.
-  * @param partitions                  A sequence of [[Partition]] from the given [[RDD]].
-  * @param context                     The [[TaskContext]].
-  * @param preservesPartitionsOrdering A flag indicates whether the iterator should iterate through
-  *                                    partitions in the given order or it should sort them by their indices first.
-  *                                    By default, it is false and it will sort first.
-  */
+ * An iterator for records in a sequence of partitions from an [[RDD]].
+ *
+ * @param rdd                         The [[RDD]] expected to iterate through.
+ * @param partitions                  A sequence of [[Partition]] from the given [[RDD]].
+ * @param context                     The [[TaskContext]].
+ * @param preservesPartitionsOrdering A flag indicates whether the iterator should iterate through
+ *                                    partitions in the given order or it should sort them by their indices first.
+ *                                    By default, it is false and it will sort first.
+ */
 protected[flint] class PartitionsIterator[T](
-    rdd: RDD[T],
-    partitions: Seq[Partition],
-    context: TaskContext,
-    preservesPartitionsOrdering: Boolean =
-      false // FIXME: This is a band-aid which should be fixed.
+  rdd: RDD[T],
+  partitions: Seq[Partition],
+  context: TaskContext,
+  preservesPartitionsOrdering: Boolean = false // FIXME: This is a band-aid which should be fixed.
 ) extends BufferedIterator[T] {
 
   lazy val init = {
@@ -91,8 +89,8 @@ protected[flint] class PartitionsIterator[T](
   override def head: T = curIter.head
 
   /**
-    * @return the index of partition that the current pointer points to.
-    */
+   * @return the index of partition that the current pointer points to.
+   */
   def headPartitionIndex: Int = curPart.index
 
   private[this] def nextIter() {

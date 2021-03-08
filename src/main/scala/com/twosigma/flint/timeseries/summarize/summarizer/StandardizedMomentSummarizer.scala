@@ -30,9 +30,9 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.types._
 
 /**
-  * See https://en.wikipedia.org/wiki/Skewness and https://en.wikipedia.org/wiki/Kurtosis for the formulas to calculate
-  * these values.
-  */
+ * See https://en.wikipedia.org/wiki/Skewness and https://en.wikipedia.org/wiki/Kurtosis for the formulas to calculate
+ * these values.
+ */
 object StandardizedMomentSummarizerType extends Enumeration {
   type StandardizedMomentType = Value
   val Skewness = Value("skewness")
@@ -40,8 +40,8 @@ object StandardizedMomentSummarizerType extends Enumeration {
 }
 
 case class StandardizedMomentSummarizerFactory(
-    column: String,
-    standardizedMomentType: StandardizedMomentType
+  column: String,
+  standardizedMomentType: StandardizedMomentType
 ) extends BaseSummarizerFactory(column) {
   override def apply(inputSchema: StructType): StandardizedMomentSummarizer = {
     val moment = standardizedMomentType match {
@@ -60,14 +60,14 @@ case class StandardizedMomentSummarizerFactory(
 }
 
 case class StandardizedMomentSummarizer(
-    override val inputSchema: StructType,
-    override val prefixOpt: Option[String],
-    requiredColumns: ColumnList,
-    moment: Integer,
-    standardizedMomentType: StandardizedMomentType,
-    outputColumnName: String
+  override val inputSchema: StructType,
+  override val prefixOpt: Option[String],
+  requiredColumns: ColumnList,
+  moment: Integer,
+  standardizedMomentType: StandardizedMomentType,
+  outputColumnName: String
 ) extends LeftSubtractableSummarizer
-    with FilterNullInput {
+  with FilterNullInput {
   override type T = Double
   override type U = NthCentralMomentState
   override type V = NthCentralMomentOutput

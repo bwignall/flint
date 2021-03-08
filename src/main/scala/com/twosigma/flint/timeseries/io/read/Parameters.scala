@@ -16,7 +16,7 @@
 
 package com.twosigma.flint.timeseries.io.read
 
-import java.time.{Instant, ZonedDateTime, ZoneOffset}
+import java.time.{ Instant, ZonedDateTime, ZoneOffset }
 import javax.annotation.Nullable
 
 import scala.collection.mutable
@@ -24,8 +24,8 @@ import scala.collection.mutable
 import com.twosigma.flint.annotation.PythonApi
 
 private[read] class Parameters private (
-    val extraOptions: mutable.Map[String, String],
-    var range: BeginEndRange = BeginEndRange(None, None, None, None)
+  val extraOptions: mutable.Map[String, String],
+  var range: BeginEndRange = BeginEndRange(None, None, None, None)
 ) extends Serializable {
 
   def this(defaultOptions: Map[String, String]) =
@@ -34,13 +34,13 @@ private[read] class Parameters private (
   def option(key: String, valueOpt: Option[String]): Unit =
     valueOpt match {
       case Some(v) => extraOptions += key -> v
-      case None    => extraOptions -= key
+      case None => extraOptions -= key
     }
 
   /**
-    * Convenience method for the Python API that provides a Java Map compatible with py4j.
-    * Exposed in the Python API as `_extra_options` to return a dict of key-value options.
-    */
+   * Convenience method for the Python API that provides a Java Map compatible with py4j.
+   * Exposed in the Python API as `_extra_options` to return a dict of key-value options.
+   */
   @PythonApi
   private[read] def extraOptionsAsJavaMap: java.util.Map[String, String] = {
     import scala.collection.JavaConverters._
@@ -50,10 +50,10 @@ private[read] class Parameters private (
 }
 
 private[read] case class BeginEndRange(
-    rawBeginNanosOpt: Option[Long] = None,
-    rawEndNanosOpt: Option[Long] = None,
-    expandBeginNanosOpt: Option[Long] = None,
-    expandEndNanosOpt: Option[Long] = None
+  rawBeginNanosOpt: Option[Long] = None,
+  rawEndNanosOpt: Option[Long] = None,
+  expandBeginNanosOpt: Option[Long] = None,
+  expandEndNanosOpt: Option[Long] = None
 ) {
 
   def beginNanos: Long =

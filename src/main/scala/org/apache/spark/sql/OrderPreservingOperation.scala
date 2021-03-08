@@ -26,10 +26,10 @@ import org.apache.spark.sql.catalyst.plans.logical.{
 }
 
 /**
-  * A class to used to check whether a DataFrame operation is partition preserving.
-  *
-  * See doc/partition-preserving-operation.md
-  */
+ * A class to used to check whether a DataFrame operation is partition preserving.
+ *
+ * See doc/partition-preserving-operation.md
+ */
 object OrderPreservingOperation {
   // Accessing analyzedPlan will force the cause it to be evaluated and change the original df
   // Create a new df to ensure the original df is not changed
@@ -37,34 +37,34 @@ object OrderPreservingOperation {
     DFConverter.newDataFrame(df).queryExecution.analyzed
 
   /**
-    * Check if df2 is derived from df1, i.e., if df2 is the result of applying one or more operations on df1
-    */
+   * Check if df2 is derived from df1, i.e., if df2 is the result of applying one or more operations on df1
+   */
   def isDerivedFrom(df1: DataFrame, df2: DataFrame): Boolean =
     isSubtree(analyzedPlan(df1), analyzedPlan(df2))
 
   /**
-    * Check if df1 -> df2 is order preserving.
-    *
-    * @throws IllegalArgumentException if df2 is not derived from df1
-    */
+   * Check if df1 -> df2 is order preserving.
+   *
+   * @throws IllegalArgumentException if df2 is not derived from df1
+   */
   @PythonApi
   def isOrderPreserving(df1: DataFrame, df2: DataFrame): Boolean =
     isOrderPreserving(analyzedPlan(df1), analyzedPlan(df2))
 
   private def isOrderPreservingLogicalNode(node: LogicalPlan): Boolean =
     node match {
-      case _: Project  => true
-      case _: Filter   => true
+      case _: Project => true
+      case _: Filter => true
       case _: Generate => true
-      case _           => false
+      case _ => false
     }
 
   /**
-    * Complexity O(n).
-    */
+   * Complexity O(n).
+   */
   private[sql] def isSubtree(
-      plan1: LogicalPlan,
-      plan2: LogicalPlan
+    plan1: LogicalPlan,
+    plan2: LogicalPlan
   ): Boolean = {
     if (treeEquals(plan1, plan2)) {
       true
@@ -74,8 +74,8 @@ object OrderPreservingOperation {
   }
 
   private[sql] def treeEquals(
-      plan1: LogicalPlan,
-      plan2: LogicalPlan
+    plan1: LogicalPlan,
+    plan2: LogicalPlan
   ): Boolean = {
     if (plan1.fastEquals(plan2)) {
       assert(
@@ -98,8 +98,8 @@ object OrderPreservingOperation {
   }
 
   private def isOrderPreserving(
-      plan1: LogicalPlan,
-      plan2: LogicalPlan
+    plan1: LogicalPlan,
+    plan2: LogicalPlan
   ): Boolean = {
     if (treeEquals(plan1, plan2)) {
       true

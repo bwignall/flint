@@ -24,7 +24,7 @@ import java.io.{
 }
 import java.io.IOException
 
-import scala.reflect.{classTag, ClassTag}
+import scala.reflect.{ classTag, ClassTag }
 
 import org.apache.hadoop.io.Writable
 
@@ -32,7 +32,7 @@ import org.apache.hadoop.io.Writable
 // cast to their specific InputSplit, so we do not want to risk it. Further, this currently works
 // for any Writable.
 case class WriSer[T <: Writable: ClassTag](@transient var get: T)
-    extends Serializable {
+  extends Serializable {
   def this() = this(null.asInstanceOf[T])
 
   @throws(classOf[IOException])

@@ -29,8 +29,7 @@ private[timeseries] object Schema {
           field.dataType,
           field.nullable,
           field.metadata
-        )
-      )
+        ))
       .getOrElse(field)
 
   def rename(schema: StructType, fromTo: Seq[(String, String)]): StructType = {
@@ -44,10 +43,10 @@ private[timeseries] object Schema {
   }
 
   /**
-    * Check if the names of columns are unique and throw [[IllegalArgumentException]] otherwise.
-    *
-    * @param schema The schema expected to check the uniqueness.
-    */
+   * Check if the names of columns are unique and throw [[IllegalArgumentException]] otherwise.
+   *
+   * @param schema The schema expected to check the uniqueness.
+   */
   def requireUniqueColumnNames(schema: StructType): Unit = {
     val duplicates = schema.fieldNames
       .groupBy { name => name }
@@ -72,8 +71,8 @@ private[timeseries] object Schema {
   }
 
   def addOrUpdate(
-      schema: StructType,
-      columns: Seq[((String, DataType), Option[Int])]
+    schema: StructType,
+    columns: Seq[((String, DataType), Option[Int])]
   ): StructType = {
     val oldFields = schema.fields.clone()
     columns.foreach {
@@ -92,16 +91,16 @@ private[timeseries] object Schema {
   }
 
   /**
-    * Append time column and possible other provided fields to the given schema.
-    *
-    * @param schema    The schema expected to append the time column etc.
-    * @param keyFields The other possible fields expected to append.
-    * @return a new schema with the appended time column etc.
-    */
+   * Append time column and possible other provided fields to the given schema.
+   *
+   * @param schema    The schema expected to append the time column etc.
+   * @param keyFields The other possible fields expected to append.
+   * @return a new schema with the appended time column etc.
+   */
   def prependTimeAndKey(
-      schema: StructType,
-      keyFields: Seq[StructField],
-      timeType: TimeType
+    schema: StructType,
+    keyFields: Seq[StructField],
+    timeType: TimeType
   ): StructType = {
     val newSchema = StructType(
       (TimeSeriesRDD.timeField(timeType) +: keyFields) ++ schema.fields
@@ -111,26 +110,26 @@ private[timeseries] object Schema {
   }
 
   /**
-    * Prepend a "time" string to a sequence of strings if it doesn't contain one.
-    *
-    * @param columns The sequence of strings expected to examine.
-    * @return a sequence of strings with a prepending "time" string if it doesn't contain one. Otherwise,
-    *         simply return the original string .
-    */
+   * Prepend a "time" string to a sequence of strings if it doesn't contain one.
+   *
+   * @param columns The sequence of strings expected to examine.
+   * @return a sequence of strings with a prepending "time" string if it doesn't contain one. Otherwise,
+   *         simply return the original string .
+   */
   def prependTimeIfMissing(columns: Seq[String]): Seq[String] =
     columns
       .find(_ == TimeSeriesRDD.timeColumnName)
       .fold(TimeSeriesRDD.timeColumnName +: columns) { _ => columns }
 
   /**
-    * Create a schema with the given sequence of fields.
-    *
-    * @param columns A sequence of tuple(s) specifying the name and the data type of a field.
-    * @return a schema.
-    * @note If the given fields do not contain a column of name "time", it will prepend one with LongType; However, if
-    *       the given fields contain a column of name "time" whose data type is not LongType, it will throw
-    *       an IllegalArgumentException.
-    */
+   * Create a schema with the given sequence of fields.
+   *
+   * @param columns A sequence of tuple(s) specifying the name and the data type of a field.
+   * @return a schema.
+   * @note If the given fields do not contain a column of name "time", it will prepend one with LongType; However, if
+   *       the given fields contain a column of name "time" whose data type is not LongType, it will throw
+   *       an IllegalArgumentException.
+   */
   def apply(columns: (String, DataType)*): StructType = {
     val cols: Seq[(String, DataType)] =
       if (!columns.map(_._1).contains(TimeSeriesRDD.timeColumnName)) {
@@ -146,23 +145,23 @@ private[timeseries] object Schema {
   }
 
   /**
-    * Create a schema with the given sequence of fields.
-    *
-    * @param columns A sequence of tuple(s) specifying the name and the data type of a field.
-    * @return a schema.
-    */
+   * Create a schema with the given sequence of fields.
+   *
+   * @param columns A sequence of tuple(s) specifying the name and the data type of a field.
+   * @return a schema.
+   */
   def of(columns: (String, DataType)*): StructType =
     StructType(columns.map {
       case (columnName, dataType) => StructField(columnName, dataType)
     })
 
   /**
-    * Create a schema with updated column data types or throw an exception if the operation isn't valid.
-    *
-    * @param schema current schema
-    * @param updates A sequence of tuples, where a tuple contains column name and NumericType.
-    * @return a new schema.
-    */
+   * Create a schema with updated column data types or throw an exception if the operation isn't valid.
+   *
+   * @param schema current schema
+   * @param updates A sequence of tuples, where a tuple contains column name and NumericType.
+   * @return a new schema.
+   */
   def cast(schema: StructType, updates: (String, NumericType)*): StructType = {
     require(
       !updates.exists(_._1 == TimeSeriesRDD.timeColumnName),

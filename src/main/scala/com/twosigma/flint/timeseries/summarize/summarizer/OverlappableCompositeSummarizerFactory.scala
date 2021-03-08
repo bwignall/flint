@@ -29,8 +29,8 @@ import com.twosigma.flint.timeseries.window.TimeWindow
 import org.apache.spark.sql.types.StructType
 
 case class OverlappableCompositeSummarizerFactory(
-    factory1: OverlappableSummarizerFactory,
-    factory2: OverlappableSummarizerFactory
+  factory1: OverlappableSummarizerFactory,
+  factory2: OverlappableSummarizerFactory
 ) extends OverlappableSummarizerFactory {
 
   require(
@@ -56,19 +56,19 @@ case class OverlappableCompositeSummarizerFactory(
 }
 
 class OverlappableCompositeSummarizer(
-    override val inputSchema: StructType,
-    override val prefixOpt: Option[String],
-    override val requiredColumns: ColumnList,
-    override val summarizer1: OverlappableSummarizer,
-    override val summarizer2: OverlappableSummarizer
+  override val inputSchema: StructType,
+  override val prefixOpt: Option[String],
+  override val requiredColumns: ColumnList,
+  override val summarizer1: OverlappableSummarizer,
+  override val summarizer2: OverlappableSummarizer
 ) extends CompositeSummarizer(
-      inputSchema,
-      prefixOpt,
-      requiredColumns,
-      summarizer1,
-      summarizer2
-    )
-    with OverlappableSummarizer {
+  inputSchema,
+  prefixOpt,
+  requiredColumns,
+  summarizer1,
+  summarizer2
+)
+  with OverlappableSummarizer {
 
   override val summarizer =
     new OOverlappableCompositeSummarizer(summarizer1, summarizer2)

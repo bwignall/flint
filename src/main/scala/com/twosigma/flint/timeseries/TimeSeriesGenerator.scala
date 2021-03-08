@@ -16,10 +16,10 @@
 
 package com.twosigma.flint.timeseries
 
-import com.twosigma.flint.timeseries.clock.{RandomClock, UniformClock}
+import com.twosigma.flint.timeseries.clock.{ RandomClock, UniformClock }
 import com.twosigma.flint.timeseries.row.Schema
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.{DFConverter, SparkSession}
+import org.apache.spark.sql.{ DFConverter, SparkSession }
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.types._
 
@@ -27,55 +27,55 @@ import scala.util
 import scala.util.Random
 
 /**
-  * A generator to generate a random [[TimeSeriesRDD]].
-  *
-  * For example, the following piece of code will generate a [[TimeSeriesRDD]] such that
-  *   - schema is ["time", "id", "x1", "x2"];
-  *   - timestamps of cycles are uniformly distributed;
-  *   - each cycle has 5 rows whose ids are from 1 to 5;
-  *   - user specifies how random values under `x1` and `x2` are generated.
-  *
-  * {{{
-  *   new TimeSeriesGenerator(sc, begin = 1000L, end = 2000L, frequency = 100L)(
-  *     columns = Seq(
-  *       "x1" -> { (t: Long, id: Int, r: util.Random) => r.nextDouble() },
-  *       "x2" -> { (t: Long, id: Int, r: util.Random) => r.nextDouble() }
-  *     ),
-  *     ids = (1 to 5)
-  *   ).generate()
-  * }}}
-  *
-  *
-  * @param begin            The inclusive begin of time range for the [[TimeSeriesRDD]].
-  * @param end              The inclusive end of time range for the [[TimeSeriesRDD]].
-  * @param frequency        The length of intervals between cycles.
-  * @param uniform          Whether cycles are uniformly distributed. If true, intervals between sequential cycles
-  *                         are fixed length, i.e. `frequency`. If false, intervals between sequential cycles
-  *                         have various lengths whose values are uniformly distributed in the range of
-  *                         [1, `frequency`].
-  * @param ids              The set of possible integer ids per cycle. Default is {{{ Seq(1) }}}.
-  * @param ratioOfCycleSize The percentage of number of distinct ids that appear in each cycle.
-  *                         E.g. if the ratio is 0.5, the number of distinct randomly selected ids per cycle
-  *                         is 0.5 * |`ids`|. If the ratio is 1.0, then every cycle has the same set of ids.
-  *                         Default 1.0.
-  * @param columns          A sequence of tuples each of which specifies the name of an extra column and a function
-  *                         to generate a random value for a given timestamp and id. Default empty sequence.
-  * @param numSlices        The number of desired partitions of the [[TimeSeriesRDD]]. Default
-  *                         {{{ sc.defaultParallelism }}}.
-  * @param seed             The random seed expected to use. Default current time in milliseconds.
-  */
+ * A generator to generate a random [[TimeSeriesRDD]].
+ *
+ * For example, the following piece of code will generate a [[TimeSeriesRDD]] such that
+ *   - schema is ["time", "id", "x1", "x2"];
+ *   - timestamps of cycles are uniformly distributed;
+ *   - each cycle has 5 rows whose ids are from 1 to 5;
+ *   - user specifies how random values under `x1` and `x2` are generated.
+ *
+ * {{{
+ *   new TimeSeriesGenerator(sc, begin = 1000L, end = 2000L, frequency = 100L)(
+ *     columns = Seq(
+ *       "x1" -> { (t: Long, id: Int, r: util.Random) => r.nextDouble() },
+ *       "x2" -> { (t: Long, id: Int, r: util.Random) => r.nextDouble() }
+ *     ),
+ *     ids = (1 to 5)
+ *   ).generate()
+ * }}}
+ *
+ *
+ * @param begin            The inclusive begin of time range for the [[TimeSeriesRDD]].
+ * @param end              The inclusive end of time range for the [[TimeSeriesRDD]].
+ * @param frequency        The length of intervals between cycles.
+ * @param uniform          Whether cycles are uniformly distributed. If true, intervals between sequential cycles
+ *                         are fixed length, i.e. `frequency`. If false, intervals between sequential cycles
+ *                         have various lengths whose values are uniformly distributed in the range of
+ *                         [1, `frequency`].
+ * @param ids              The set of possible integer ids per cycle. Default is {{{ Seq(1) }}}.
+ * @param ratioOfCycleSize The percentage of number of distinct ids that appear in each cycle.
+ *                         E.g. if the ratio is 0.5, the number of distinct randomly selected ids per cycle
+ *                         is 0.5 * |`ids`|. If the ratio is 1.0, then every cycle has the same set of ids.
+ *                         Default 1.0.
+ * @param columns          A sequence of tuples each of which specifies the name of an extra column and a function
+ *                         to generate a random value for a given timestamp and id. Default empty sequence.
+ * @param numSlices        The number of desired partitions of the [[TimeSeriesRDD]]. Default
+ *                         {{{ sc.defaultParallelism }}}.
+ * @param seed             The random seed expected to use. Default current time in milliseconds.
+ */
 class TimeSeriesGenerator(
-    @transient val sc: SparkContext,
-    begin: Long,
-    end: Long,
-    frequency: Long
+  @transient val sc: SparkContext,
+  begin: Long,
+  end: Long,
+  frequency: Long
 )(
-    uniform: Boolean = true,
-    ids: Seq[Int] = Seq(1),
-    ratioOfCycleSize: Double = 1.0,
-    columns: Seq[(String, (Long, Int, util.Random) => Double)] = Seq.empty,
-    numSlices: Int = sc.defaultParallelism,
-    seed: Long = System.currentTimeMillis()
+  uniform: Boolean = true,
+  ids: Seq[Int] = Seq(1),
+  ratioOfCycleSize: Double = 1.0,
+  columns: Seq[(String, (Long, Int, util.Random) => Double)] = Seq.empty,
+  numSlices: Int = sc.defaultParallelism,
+  seed: Long = System.currentTimeMillis()
 ) extends Serializable {
   require(ids.nonEmpty, s"ids must be non-empty.")
 

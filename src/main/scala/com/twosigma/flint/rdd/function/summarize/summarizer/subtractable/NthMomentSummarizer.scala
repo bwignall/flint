@@ -22,7 +22,7 @@ case class NthMomentState(var count: Long, nthMoment: Kahan)
 
 // This summarizer uses mutable state
 case class NthMomentSummarizer(moment: Int)
-    extends LeftSubtractableSummarizer[Double, NthMomentState, Double] {
+  extends LeftSubtractableSummarizer[Double, NthMomentState, Double] {
   require(moment >= 0)
   override def add(u: NthMomentState, t: Double): NthMomentState = {
     val newCount = u.count + 1L

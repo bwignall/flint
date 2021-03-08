@@ -18,33 +18,33 @@ package com.twosigma.flint.timeseries.time.types
 
 import com.twosigma.flint.FlintConf
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.{SQLContext, SparkSession, types}
+import org.apache.spark.sql.{ SQLContext, SparkSession, types }
 
 trait TimeType {
 
   /**
-    * return the time of a row in nanoseconds since epoch.
-    * @return
-    */
+   * return the time of a row in nanoseconds since epoch.
+   * @return
+   */
   def internalToNanos(value: Long): Long
 
   /**
-    * return the internal numeric value of the time type that is
-    * same as the input nanoseconds since epoch.
-    */
+   * return the internal numeric value of the time type that is
+   * same as the input nanoseconds since epoch.
+   */
   def nanosToInternal(nanosSinceEpoch: Long): Long
 
   /**
-    * round nanoseconds to the closest value in the past that is
-    * supported by this time type's precision.
-    */
+   * round nanoseconds to the closest value in the past that is
+   * supported by this time type's precision.
+   */
   def roundDownPrecision(nanosSinceEpoch: Long): Long
 }
 
 object TimeType {
   def apply(sqlType: types.DataType): TimeType = {
     sqlType match {
-      case types.LongType      => LongType
+      case types.LongType => LongType
       case types.TimestampType => TimestampType
       case _ =>
         throw new IllegalArgumentException(s"Unsupported time type: ${sqlType}")
@@ -62,7 +62,7 @@ object TimeType {
 
   def apply(timeType: String): TimeType = {
     timeType match {
-      case "long"      => LongType
+      case "long" => LongType
       case "timestamp" => TimestampType
       case _ =>
         throw new IllegalAccessException(

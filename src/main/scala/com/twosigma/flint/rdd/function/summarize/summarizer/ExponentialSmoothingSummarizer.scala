@@ -22,63 +22,59 @@ import com.twosigma.flint.timeseries.summarize.summarizer.ExponentialSmoothingIn
 case class SmoothingRow(time: Long, x: Double)
 
 /**
-  * @param primaryESValue     Current primary smoothing series value
-  * @param auxiliaryESValue   Current auxiliary smoothing series value
-  * @param firstRow           The first row in the series
-  * @param prevRow            The last row seen in the series
-  * @param count              The count of rows
-  */
+ * @param primaryESValue     Current primary smoothing series value
+ * @param auxiliaryESValue   Current auxiliary smoothing series value
+ * @param firstRow           The first row in the series
+ * @param prevRow            The last row seen in the series
+ * @param count              The count of rows
+ */
 case class ExponentialSmoothingState(
-    var primaryESValue: Double,
-    var auxiliaryESValue: Double,
-    var firstRow: Option[SmoothingRow],
-    var prevRow: Option[SmoothingRow],
-    var count: Long
+  var primaryESValue: Double,
+  var auxiliaryESValue: Double,
+  var firstRow: Option[SmoothingRow],
+  var prevRow: Option[SmoothingRow],
+  var count: Long
 )
 
 case class ExponentialSmoothingOutput(es: Double)
 
 /**
-  * Implemented based on
-  * [[http://www.eckner.com/papers/Algorithms%20for%20Unevenly%20Spaced%20Time%20Series.pdf]]
-  * The formulas can also be derived by calculating the convolution of the exponential function with the timeseries
-  * given the interpolation scheme.
-  *
-  * In a distributed system, merging two EMA states is simply a matter of decaying the left state given the time
-  * difference between the end of the left state and the end of the right state. Then, we also account for the periods
-  * between the last left row and the first right row.
-  *
-  * @param alpha                             The proportion by which the average will decay over one period
-  *                                          A period is a duration of time defined by the function provided for
-  *                                          timestampsToPeriods. For instance, if the timestamps in the dataset are in
-  *                                          nanoseconds, and the function provided in timestampsToPeriods is
-  *                                          (t2 - t1) / nanosecondsInADay, then the summarizer will take the number of
-  *                                          periods between rows to be the number of days elapsed between their
-  *                                          timestamps.
-  * @param primingPeriods                    Parameter used to find the initial decay parameter - taken to be the number
-  *                                          of periods (defined above) elapsed before the first data point
-  * @param timestampsToPeriods               Function that given two timestamps, returns how many periods should be
-  *                                          considered to have passed between them
-  * @param exponentialSmoothingInterpolation Parameter used to determine the interpolation method for intervals between
-  *                                          two rows
-  * @param exponentialSmoothingConvention    Parameter used to determine the convolution convention.
-  */
+ * Implemented based on
+ * [[http://www.eckner.com/papers/Algorithms%20for%20Unevenly%20Spaced%20Time%20Series.pdf]]
+ * The formulas can also be derived by calculating the convolution of the exponential function with the timeseries
+ * given the interpolation scheme.
+ *
+ * In a distributed system, merging two EMA states is simply a matter of decaying the left state given the time
+ * difference between the end of the left state and the end of the right state. Then, we also account for the periods
+ * between the last left row and the first right row.
+ *
+ * @param alpha                             The proportion by which the average will decay over one period
+ *                                          A period is a duration of time defined by the function provided for
+ *                                          timestampsToPeriods. For instance, if the timestamps in the dataset are in
+ *                                          nanoseconds, and the function provided in timestampsToPeriods is
+ *                                          (t2 - t1) / nanosecondsInADay, then the summarizer will take the number of
+ *                                          periods between rows to be the number of days elapsed between their
+ *                                          timestamps.
+ * @param primingPeriods                    Parameter used to find the initial decay parameter - taken to be the number
+ *                                          of periods (defined above) elapsed before the first data point
+ * @param timestampsToPeriods               Function that given two timestamps, returns how many periods should be
+ *                                          considered to have passed between them
+ * @param exponentialSmoothingInterpolation Parameter used to determine the interpolation method for intervals between
+ *                                          two rows
+ * @param exponentialSmoothingConvention    Parameter used to determine the convolution convention.
+ */
 case class ExponentialSmoothingSummarizer(
-    alpha: Double,
-    primingPeriods: Double,
-    timestampsToPeriods: (Long, Long) => Double,
-    exponentialSmoothingInterpolation: ExponentialSmoothingInterpolation.Value,
-    exponentialSmoothingConvention: ExponentialSmoothingConvention.Value
-) extends FlippableSummarizer[
-      SmoothingRow,
-      ExponentialSmoothingState,
-      ExponentialSmoothingOutput
-    ] {
+  alpha: Double,
+  primingPeriods: Double,
+  timestampsToPeriods: (Long, Long) => Double,
+  exponentialSmoothingInterpolation: ExponentialSmoothingInterpolation.Value,
+  exponentialSmoothingConvention: ExponentialSmoothingConvention.Value
+) extends FlippableSummarizer[SmoothingRow, ExponentialSmoothingState, ExponentialSmoothingOutput] {
   private val logDecayPerPeriod = math.log(1.0 - alpha)
 
   override def merge(
-      u1: ExponentialSmoothingState,
-      u2: ExponentialSmoothingState
+    u1: ExponentialSmoothingState,
+    u2: ExponentialSmoothingState
   ): ExponentialSmoothingState = {
     if (u1.count == 0L) {
       u2
@@ -122,7 +118,7 @@ case class ExponentialSmoothingSummarizer(
     )
 
   override def render(
-      u: ExponentialSmoothingState
+    u: ExponentialSmoothingState
   ): ExponentialSmoothingOutput = {
     if (u.count > 0L) {
       // For legacy, we inject a point at time 0 instead of utilizing the primingPeriods parameter.
@@ -161,8 +157,8 @@ case class ExponentialSmoothingSummarizer(
   }
 
   override def add(
-      u: ExponentialSmoothingState,
-      row: SmoothingRow
+    u: ExponentialSmoothingState,
+    row: SmoothingRow
   ): ExponentialSmoothingState = {
     // Don't update here, we will account for priming periods at the end
     if (u.count == 0L) {
@@ -181,8 +177,8 @@ case class ExponentialSmoothingSummarizer(
 
   @inline
   private def decayForInterval(
-      esValue: Double,
-      periods: Double
+    esValue: Double,
+    periods: Double
   ): Double = {
     val timeOverTimeConstant = periods * logDecayPerPeriod
     val decay = math.exp(timeOverTimeConstant)
@@ -191,9 +187,9 @@ case class ExponentialSmoothingSummarizer(
 
   @inline
   private def interpolateForInterval(
-      startVal: Double,
-      endVal: Double,
-      periods: Double
+    startVal: Double,
+    endVal: Double,
+    periods: Double
   ): Double =
     if (periods == 0.0) {
       0.0

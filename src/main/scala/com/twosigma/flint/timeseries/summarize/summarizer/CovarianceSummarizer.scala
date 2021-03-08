@@ -23,23 +23,23 @@ import com.twosigma.flint.timeseries.summarize.{
   SummarizerFactory
 }
 import org.apache.spark.sql.catalyst.expressions.GenericInternalRow
-import org.apache.spark.sql.types.{DoubleType, StructType}
+import org.apache.spark.sql.types.{ DoubleType, StructType }
 
 case class CovarianceSummarizerFactory(columnX: String, columnY: String)
-    extends BaseSummarizerFactory(columnX, columnY) {
+  extends BaseSummarizerFactory(columnX, columnY) {
   override def apply(inputSchema: StructType): CovarianceSummarizer =
     new CovarianceSummarizer(inputSchema, prefixOpt, requiredColumns)
 }
 
 class CovarianceSummarizer(
-    override val inputSchema: StructType,
-    override val prefixOpt: Option[String],
-    override val requiredColumns: ColumnList
+  override val inputSchema: StructType,
+  override val prefixOpt: Option[String],
+  override val requiredColumns: ColumnList
 ) extends AbstractCorrelationSummarizer(
-      inputSchema,
-      prefixOpt,
-      requiredColumns
-    ) {
+  inputSchema,
+  prefixOpt,
+  requiredColumns
+) {
 
   override val schema = Schema.of(
     s"${columnPrefix}_covariance" -> DoubleType

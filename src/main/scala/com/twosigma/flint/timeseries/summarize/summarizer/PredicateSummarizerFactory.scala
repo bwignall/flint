@@ -24,12 +24,12 @@ import com.twosigma.flint.timeseries.summarize.{
 }
 import org.apache.spark.sql.CatalystTypeConvertersWrapper
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.types.{DataType, StructType}
+import org.apache.spark.sql.types.{ DataType, StructType }
 
 class PredicateSummarizerFactory(
-    factory: SummarizerFactory,
-    f: AnyRef,
-    inputColumns: Seq[(String, DataType)]
+  factory: SummarizerFactory,
+  f: AnyRef,
+  inputColumns: Seq[(String, DataType)]
 ) extends SummarizerFactory {
 
   override val requiredColumns: ColumnList =
@@ -63,13 +63,13 @@ class PredicateSummarizerFactory(
 }
 
 class PredicateSummarizer(
-    override val inputSchema: StructType,
-    override val prefixOpt: Option[String],
-    override val requiredColumns: ColumnList,
-    val innnerSummarizer: Summarizer,
-    val predicate: InternalRow => Boolean
+  override val inputSchema: StructType,
+  override val prefixOpt: Option[String],
+  override val requiredColumns: ColumnList,
+  val innnerSummarizer: Summarizer,
+  val predicate: InternalRow => Boolean
 ) extends Summarizer
-    with FilterNullInput {
+  with FilterNullInput {
 
   override type T = innnerSummarizer.T
   override type U = innnerSummarizer.U
@@ -88,9 +88,9 @@ class PredicateSummarizer(
 private object UDFConverter {
 
   def udfToFilter(
-      function: AnyRef,
-      inputSchema: StructType,
-      columns: Seq[String]
+    function: AnyRef,
+    inputSchema: StructType,
+    columns: Seq[String]
   ): InternalRow => Boolean = {
     val fieldIndices = columns.map(inputSchema.fieldIndex)
     val columnPairs =
@@ -99,8 +99,8 @@ private object UDFConverter {
   }
 
   private def buildFilterFunction(
-      function: AnyRef,
-      columns: Seq[(Int, DataType)]
+    function: AnyRef,
+    columns: Seq[(Int, DataType)]
   ): InternalRow => Boolean = {
     val extractors = columns.map {
       case (index, dataType) =>

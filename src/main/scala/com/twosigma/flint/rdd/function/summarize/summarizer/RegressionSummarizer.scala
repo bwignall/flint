@@ -16,21 +16,21 @@
 
 package com.twosigma.flint.rdd.function.summarize.summarizer
 
-import breeze.linalg.{DenseVector, DenseMatrix}
+import breeze.linalg.{ DenseVector, DenseMatrix }
 
 case class RegressionRow(
-    time: Long,
-    x: Array[Double],
-    y: Double,
-    weight: Double
+  time: Long,
+  x: Array[Double],
+  y: Double,
+  weight: Double
 )
 
 object RegressionSummarizer {
 
   protected[summarizer] def transform(
-      rows: Seq[RegressionRow],
-      shouldIntercept: Boolean,
-      isWeighted: Boolean
+    rows: Seq[RegressionRow],
+    shouldIntercept: Boolean,
+    isWeighted: Boolean
   ): (DenseMatrix[Double], DenseVector[Double], Array[(Double, Double)]) = {
     val (weightedX, weightedY, yw) =
       rows.map(transform(_, shouldIntercept, isWeighted)).unzip3
@@ -38,19 +38,19 @@ object RegressionSummarizer {
   }
 
   /**
-    *  Transform a [[RegressionRow]] into sqrt-weighted predictor, sqrt-weighted response, original response, and
-    *  original weight.
-    *
-    * @param r               A [[RegressionRow]].
-    * @param shouldIntercept If true, it will prepend 1.0 to the predictor.
-    * @param isWeighted      If true, both of response and predictor will be multiplied by a factor of square root
-    *                        of weight for the weighted regression purpose.
-    * @return  sqrt-weighted x, sqrt-weighted y,  original y, original weight,
-    */
+   *  Transform a [[RegressionRow]] into sqrt-weighted predictor, sqrt-weighted response, original response, and
+   *  original weight.
+   *
+   * @param r               A [[RegressionRow]].
+   * @param shouldIntercept If true, it will prepend 1.0 to the predictor.
+   * @param isWeighted      If true, both of response and predictor will be multiplied by a factor of square root
+   *                        of weight for the weighted regression purpose.
+   * @return  sqrt-weighted x, sqrt-weighted y,  original y, original weight,
+   */
   protected[summarizer] def transform(
-      r: RegressionRow,
-      shouldIntercept: Boolean,
-      isWeighted: Boolean
+    r: RegressionRow,
+    shouldIntercept: Boolean,
+    isWeighted: Boolean
   ): (Array[Double], Double, (Double, Double)) = {
     val w = if (isWeighted) r.weight else 1.0
     val sqrtW = Math.sqrt(w)
@@ -76,14 +76,14 @@ object RegressionSummarizer {
   }
 
   /**
-    * Find the value of the Gaussian log-likelihood function at the data
-    * We use the statsmodels' implementation as a reference:
-    * [[http://statsmodels.sourceforget.net/stable/_modules/statsmodels/regression/linear_model.html#WLS.loglike loglike]]
-    */
+   * Find the value of the Gaussian log-likelihood function at the data
+   * We use the statsmodels' implementation as a reference:
+   * [[http://statsmodels.sourceforget.net/stable/_modules/statsmodels/regression/linear_model.html#WLS.loglike loglike]]
+   */
   protected[summarizer] def computeLogLikelihood(
-      count: Long,
-      sumOfLogWeights: Double,
-      residualSumOfSquares: Double
+    count: Long,
+    sumOfLogWeights: Double,
+    residualSumOfSquares: Double
   ): Double = {
     val nOver2: Double = count.toDouble / 2.0
     var logLikelihood: Double = -nOver2 * math.log(residualSumOfSquares)
@@ -93,37 +93,37 @@ object RegressionSummarizer {
   }
 
   /**
-    * Find the Bayes information criterion of the data given the fitted model
-    * [[https://en.wikipedia.org/wiki/Bayesian_information_criterion Bayesian information criterion]]
-    */
+   * Find the Bayes information criterion of the data given the fitted model
+   * [[https://en.wikipedia.org/wiki/Bayesian_information_criterion Bayesian information criterion]]
+   */
   protected[summarizer] def computeBayesIC(
-      beta: DenseVector[Double],
-      logLikelihood: Double,
-      count: Long,
-      shouldIntercept: Boolean
+    beta: DenseVector[Double],
+    logLikelihood: Double,
+    count: Long,
+    shouldIntercept: Boolean
   ): Double = {
     val k = beta.length
     -2.0 * logLikelihood + k * math.log(count.toDouble)
   }
 
   /**
-    * Find the Akaike information criterion of the data given the fitted model
-    * [[https://en.wikipedia.org/wiki/Akaike_information_criterion Akaike information criterion]]
-    */
+   * Find the Akaike information criterion of the data given the fitted model
+   * [[https://en.wikipedia.org/wiki/Akaike_information_criterion Akaike information criterion]]
+   */
   protected[summarizer] def computeAkaikeIC(
-      beta: DenseVector[Double],
-      logLikelihood: Double,
-      shouldIntercept: Boolean
+    beta: DenseVector[Double],
+    logLikelihood: Double,
+    shouldIntercept: Boolean
   ): Double = {
     val k = beta.length
     -2.0 * logLikelihood + 2.0 * k
   }
 
   protected[summarizer] def computeResidualSumOfSquares(
-      beta: DenseVector[Double],
-      sumOfYSquared: Double,
-      vectorOfXY: DenseVector[Double],
-      matrixOfXX: DenseMatrix[Double]
+    beta: DenseVector[Double],
+    sumOfYSquared: Double,
+    vectorOfXY: DenseVector[Double],
+    matrixOfXX: DenseMatrix[Double]
   ): Double = {
     val k = beta.length
     require(
@@ -146,11 +146,11 @@ object RegressionSummarizer {
   }
 
   protected[summarizer] def computeRSquared(
-      sumOfYSquared: Double,
-      sumOfWeights: Double,
-      sumOfY: Double,
-      residualSumOfSquares: Double,
-      shouldIntercept: Boolean
+    sumOfYSquared: Double,
+    sumOfWeights: Double,
+    sumOfY: Double,
+    residualSumOfSquares: Double,
+    shouldIntercept: Boolean
   ): Double =
     if (sumOfYSquared == 0.0 || sumOfWeights == 0.0) {
       Double.NaN

@@ -18,12 +18,12 @@ package com.twosigma.flint.timeseries.clock
 
 import java.util.concurrent.TimeUnit
 
-import com.twosigma.flint.rdd.{CloseOpen, OrderedRDD}
+import com.twosigma.flint.rdd.{ CloseOpen, OrderedRDD }
 import com.twosigma.flint.timeseries.TimeSeriesRDD
 import com.twosigma.flint.timeseries.row.Schema
 import com.twosigma.flint.timeseries.time.TimeFormat
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.{DFConverter, SQLContext}
+import org.apache.spark.sql.{ DFConverter, SQLContext }
 import org.apache.spark.sql.catalyst.InternalRow
 import org.joda.time.DateTimeZone
 
@@ -33,20 +33,20 @@ import scala.util.Random
 object Clock {
 
   /**
-    * Generate a sequence of ticks.
-    *
-    * @param begin     The first tick.
-    * @param end       The end of ticks. The generated ticks are less or equal to `end`.
-    * @param frequency The frequency of ticks.
-    * @param nextTick  A function to return the next tick for a given tick.
-    * @return a sequence of ticks.
-    */
+   * Generate a sequence of ticks.
+   *
+   * @param begin     The first tick.
+   * @param end       The end of ticks. The generated ticks are less or equal to `end`.
+   * @param frequency The frequency of ticks.
+   * @param nextTick  A function to return the next tick for a given tick.
+   * @return a sequence of ticks.
+   */
   protected[flint] def apply(
-      begin: Long,
-      end: Long,
-      frequency: Long,
-      nextTick: (Long) => Long,
-      endInclusive: Boolean
+    begin: Long,
+    end: Long,
+    frequency: Long,
+    nextTick: (Long) => Long,
+    endInclusive: Boolean
   ): Stream[Long] = {
     def loop(t: Long): Stream[Long] = t #:: loop(nextTick(t))
     if (endInclusive) {
@@ -58,21 +58,21 @@ object Clock {
 }
 
 abstract class Clock(
-    @transient val sc: SparkContext,
-    val begin: Long,
-    val end: Long,
-    val frequency: Long,
-    val offset: Long,
-    endInclusive: Boolean
+  @transient val sc: SparkContext,
+  val begin: Long,
+  val end: Long,
+  val frequency: Long,
+  val offset: Long,
+  endInclusive: Boolean
 ) extends Serializable {
 
   /**
-    * Return the first tick which is
-    * {{{
-    *     begin + offset % frequency.
-    * }}}
-    * This implies that if offset = 0 then the firstTick = begin.
-    */
+   * Return the first tick which is
+   * {{{
+   *     begin + offset % frequency.
+   * }}}
+   * This implies that if offset = 0 then the firstTick = begin.
+   */
   val firstTick: Long = {
     require(
       end >= begin,
@@ -85,20 +85,20 @@ abstract class Clock(
   }
 
   /**
-    * A function expected to return the next tick t2 for a given tick t1 such that
-    *  - t2 > t1
-    *  - t2 - t1 <= frequency
-    *
-    * @param t The given tick.
-    * @return the next tick.
-    */
+   * A function expected to return the next tick t2 for a given tick t1 such that
+   *  - t2 > t1
+   *  - t2 - t1 <= frequency
+   *
+   * @param t The given tick.
+   * @return the next tick.
+   */
   def nextTick(t: Long): Long
 
   /**
-    * Generate a sequence of ticks as a [[Stream]].
-    *
-    * @return a sequence of ticks.
-    */
+   * Generate a sequence of ticks as a [[Stream]].
+   *
+   * @return a sequence of ticks.
+   */
   protected[flint] def asStream(): Stream[Long] =
     Clock(
       begin = firstTick,
@@ -109,15 +109,15 @@ abstract class Clock(
     )
 
   /**
-    * Generate a sequence of ticks as a [[TimeSeriesRDD]] that has just only one column named "time".
-    *
-    * @param numSlices Number of desired partitions for the [[OrderedRDD]]. The actual number
-    *                  of partitions could be smaller as it will try to guarantee each partition
-    *                  has at least one tick.
-    * @return a sequence of ticks as a [[TimeSeriesRDD]].
-    */
+   * Generate a sequence of ticks as a [[TimeSeriesRDD]] that has just only one column named "time".
+   *
+   * @param numSlices Number of desired partitions for the [[OrderedRDD]]. The actual number
+   *                  of partitions could be smaller as it will try to guarantee each partition
+   *                  has at least one tick.
+   * @return a sequence of ticks as a [[TimeSeriesRDD]].
+   */
   protected[flint] def asTimeSeriesRDD(
-      numSlices: Int = sc.defaultParallelism
+    numSlices: Int = sc.defaultParallelism
   ): TimeSeriesRDD = {
     val rdd = asOrderedRDD(numSlices)
     val rowRdd = rdd.map(kv => InternalRow(kv._2))
@@ -131,15 +131,15 @@ abstract class Clock(
   }
 
   /**
-    * Generate a sequence of ticks as an [[OrderedRDD]] whose key and value for each row are the same.
-    *
-    * @param numSlices Number of desired partitions for the [[OrderedRDD]]. The actual number
-    *                  of partitions could be smaller as it will try to guarantee each partition
-    *                  has at least one tick.
-    * @return a sequence of ticks as an [[OrderedRDD]].
-    */
+   * Generate a sequence of ticks as an [[OrderedRDD]] whose key and value for each row are the same.
+   *
+   * @param numSlices Number of desired partitions for the [[OrderedRDD]]. The actual number
+   *                  of partitions could be smaller as it will try to guarantee each partition
+   *                  has at least one tick.
+   * @return a sequence of ticks as an [[OrderedRDD]].
+   */
   protected[flint] def asOrderedRDD(
-      numSlices: Int = sc.defaultParallelism
+    numSlices: Int = sc.defaultParallelism
   ): OrderedRDD[Long, Long] = {
     // Make sure the number of ticks per slice is always larger than one.
     val ticksPerSlice = (end - firstTick) / frequency / numSlices + 1L
@@ -164,26 +164,26 @@ abstract class Clock(
 }
 
 /**
-  * Clock with uniform distributed intervals/ticks.
-  */
+ * Clock with uniform distributed intervals/ticks.
+ */
 class UniformClock(
-    @transient override val sc: SparkContext,
-    begin: Long,
-    end: Long,
-    frequency: Long,
-    offset: Long,
-    endInclusive: Boolean
+  @transient override val sc: SparkContext,
+  begin: Long,
+  end: Long,
+  frequency: Long,
+  offset: Long,
+  endInclusive: Boolean
 ) extends Clock(sc, begin, end, frequency, offset, endInclusive) {
   override def nextTick(t: Long): Long = t + frequency
 
   def this(
-      sc: SparkContext,
-      beginDateTime: String,
-      endDateTime: String,
-      frequency: String,
-      offset: String,
-      timeZone: String,
-      endInclusive: Boolean
+    sc: SparkContext,
+    beginDateTime: String,
+    endDateTime: String,
+    frequency: String,
+    offset: String,
+    timeZone: String,
+    endInclusive: Boolean
   ) =
     this(
       sc,
@@ -196,18 +196,18 @@ class UniformClock(
 }
 
 /**
-  * Clock with unevenly distributed intervals/ticks. Intervals between two sequential ticks
-  * are uniformly distributed in the range of [1, `frequency`] and rounded up to the closest
-  * microseconds.
-  */
+ * Clock with unevenly distributed intervals/ticks. Intervals between two sequential ticks
+ * are uniformly distributed in the range of [1, `frequency`] and rounded up to the closest
+ * microseconds.
+ */
 class RandomClock(
-    @transient override val sc: SparkContext,
-    begin: Long,
-    end: Long,
-    frequency: Long,
-    offset: Long,
-    endInclusive: Boolean,
-    val seed: Long = System.currentTimeMillis()
+  @transient override val sc: SparkContext,
+  begin: Long,
+  end: Long,
+  frequency: Long,
+  offset: Long,
+  endInclusive: Boolean,
+  val seed: Long = System.currentTimeMillis()
 ) extends Clock(sc, begin, end, frequency, offset, endInclusive) {
   private val rand = new Random(seed)
 
@@ -218,14 +218,14 @@ class RandomClock(
   }
 
   def this(
-      sc: SparkContext,
-      beginDateTime: String,
-      endDateTime: String,
-      frequency: String,
-      offset: String,
-      timeZone: String,
-      seed: Long,
-      endInclusive: Boolean
+    sc: SparkContext,
+    beginDateTime: String,
+    endDateTime: String,
+    frequency: String,
+    offset: String,
+    timeZone: String,
+    seed: Long,
+    endInclusive: Boolean
   ) =
     this(
       sc,

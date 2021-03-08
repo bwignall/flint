@@ -27,7 +27,7 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.types._
 
 case class GeometricMeanSummarizerFactory(geometricMeanColumn: String)
-    extends BaseSummarizerFactory(geometricMeanColumn) {
+  extends BaseSummarizerFactory(geometricMeanColumn) {
   override def apply(inputSchema: StructType): GeometricMeanSummarizer =
     GeometricMeanSummarizer(
       inputSchema,
@@ -37,11 +37,11 @@ case class GeometricMeanSummarizerFactory(geometricMeanColumn: String)
 }
 
 case class GeometricMeanSummarizer(
-    override val inputSchema: StructType,
-    override val prefixOpt: Option[String],
-    requiredColumns: ColumnList
+  override val inputSchema: StructType,
+  override val prefixOpt: Option[String],
+  requiredColumns: ColumnList
 ) extends LeftSubtractableSummarizer
-    with FilterNullInput {
+  with FilterNullInput {
   override type T = Double
   override type U = ProductState
   override type V = Double

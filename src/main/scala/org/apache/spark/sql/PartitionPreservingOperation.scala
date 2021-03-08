@@ -22,31 +22,31 @@ import org.apache.spark.sql.execution.columnar.InMemoryTableScanExec
 import org.apache.spark.sql.execution.python.BatchEvalPythonExec
 
 /**
-  * A class to used to check whether a DataFrame operation is partition preserving.
-  *
-  * See doc/partition.md
-  */
+ * A class to used to check whether a DataFrame operation is partition preserving.
+ *
+ * See doc/partition.md
+ */
 object PartitionPreservingOperation {
 
   /**
-    * Return the root [[SparkPlan]] in the `df`'s executedPlan.
-    *
-    * @param df [[DataFrame]] to exam
-    * @note Accessing executedPlan will force the cause it to be evaluated and change the original [[DataFrame]].
-    *       Create a new [[DataFrame]] to ensure the original df is not changed
-    * @return the root [[SparkPlan]] in the `df`'s executedPlan.
-    */
+   * Return the root [[SparkPlan]] in the `df`'s executedPlan.
+   *
+   * @param df [[DataFrame]] to exam
+   * @note Accessing executedPlan will force the cause it to be evaluated and change the original [[DataFrame]].
+   *       Create a new [[DataFrame]] to ensure the original df is not changed
+   * @return the root [[SparkPlan]] in the `df`'s executedPlan.
+   */
   def executedPlan(df: DataFrame): SparkPlan =
     DFConverter.newDataFrame(df).queryExecution.executedPlan
 
   /**
-    * Return the leaf [[SparkPlan]] in the `df`'s executedPlan.
-    *
-    * @param df [[DataFrame]] to exam
-    * @note Accessing executedPlan will force the cause it to be evaluated and change the original [[DataFrame]].
-    *       Create a new df to ensure the original [[DataFrame]] is not changed
-    * @return the leaf [[SparkPlan]] in the `df`'s executedPlan.
-    */
+   * Return the leaf [[SparkPlan]] in the `df`'s executedPlan.
+   *
+   * @param df [[DataFrame]] to exam
+   * @note Accessing executedPlan will force the cause it to be evaluated and change the original [[DataFrame]].
+   *       Create a new df to ensure the original [[DataFrame]] is not changed
+   * @return the leaf [[SparkPlan]] in the `df`'s executedPlan.
+   */
   def leafExecutedPlan(df: DataFrame): SparkPlan = {
     var plan = DFConverter.newDataFrame(df).queryExecution.executedPlan
     while (plan.children.nonEmpty) {
@@ -60,9 +60,9 @@ object PartitionPreservingOperation {
     isPartitionPreservingPlan(executedPlan(df))
 
   /**
-    * Checks if df1 -> df2 is partition preserving.
-    * @throws IllegalArgumentException if df2 is not derived from df1
-    */
+   * Checks if df1 -> df2 is partition preserving.
+   * @throws IllegalArgumentException if df2 is not derived from df1
+   */
   @PythonApi
   def isPartitionPreserving(df1: DataFrame, df2: DataFrame): Boolean = {
     require(
@@ -76,23 +76,23 @@ object PartitionPreservingOperation {
 
   private def isPartitionPreservingUnaryNode(node: SparkPlan): Boolean = {
     node match {
-      case _: ProjectExec             => true
-      case _: FilterExec              => true
-      case _: BatchEvalPythonExec     => true
-      case _: WholeStageCodegenExec   => true
-      case _: InputAdapter            => true
-      case _: GenerateExec            => true
+      case _: ProjectExec => true
+      case _: FilterExec => true
+      case _: BatchEvalPythonExec => true
+      case _: WholeStageCodegenExec => true
+      case _: InputAdapter => true
+      case _: GenerateExec => true
       case _: SerializeFromObjectExec => true
-      case _                          => false
+      case _ => false
     }
   }
 
   private def isPartitionPreservingLeafNode(node: SparkPlan): Boolean = {
     node match {
-      case _: RDDScanExec            => true
-      case _: InMemoryTableScanExec  => true
+      case _: RDDScanExec => true
+      case _: InMemoryTableScanExec => true
       case _: ExternalRDDScanExec[_] => true
-      case _                         => false
+      case _ => false
     }
   }
 

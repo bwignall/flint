@@ -16,9 +16,7 @@
 
 package com.twosigma.flint.rdd.function.summarize.summarizer.subtractable
 
-case class SumSummarizer[T](implicit
-    n: Numeric[T]
-) extends LeftSubtractableSummarizer[T, T, T] {
+case class SumSummarizer[T](implicit n: Numeric[T]) extends LeftSubtractableSummarizer[T, T, T] {
   def zero(): T = n.zero
   def add(u: T, t: T): T = n.plus(u, t)
   def subtract(u: T, t: T): T = n.minus(u, t)

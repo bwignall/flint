@@ -30,20 +30,18 @@ import scala.reflect.ClassTag
 protected[flint] object Merge {
 
   def apply[K: Ordering: ClassTag, V: ClassTag](
-      left: OrderedRDD[K, V],
-      right: OrderedRDD[K, V]
+    left: OrderedRDD[K, V],
+    right: OrderedRDD[K, V]
   ): OrderedRDD[K, V] =
     ++(left, right).mapValues {
-      case (_, Left(v))  => v
+      case (_, Left(v)) => v
       case (_, Right(v)) => v
     }
 
   def ++[K: ClassTag, V: ClassTag, V2: ClassTag](
-      left: OrderedRDD[K, V],
-      right: OrderedRDD[K, V2]
-  )(implicit
-      ord: Ordering[K]
-  ): OrderedRDD[K, Either[V, V2]] = {
+    left: OrderedRDD[K, V],
+    right: OrderedRDD[K, V2]
+  )(implicit ord: Ordering[K]): OrderedRDD[K, Either[V, V2]] = {
     // A map from new partition to a RangeMergeJoin.
     val partToMergeJoin = RangeMergeJoin
       .mergeSplits(left.rangeSplits, right.rangeSplits)

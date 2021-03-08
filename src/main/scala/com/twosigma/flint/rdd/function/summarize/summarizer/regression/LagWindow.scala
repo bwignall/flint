@@ -21,17 +21,17 @@ trait LagWindow {
   val maxSize: Int = Int.MaxValue
 
   def shouldKeep(
-      currentTimestamp: Long,
-      oldestTimestamp: Long,
-      size: Int
+    currentTimestamp: Long,
+    oldestTimestamp: Long,
+    size: Int
   ): Boolean
 }
 
 case class AbsoluteTimeLagWindow(duration: Long) extends LagWindow {
   override def shouldKeep(
-      currentTimestamp: Long,
-      oldestTimestamp: Long,
-      size: Int
+    currentTimestamp: Long,
+    oldestTimestamp: Long,
+    size: Int
   ): Boolean =
     currentTimestamp - oldestTimestamp < duration
 }
@@ -43,9 +43,9 @@ case class CountLagWindow(count: Int, maxLookBack: Long) extends LagWindow {
   override val maxSize = count + 1
 
   override def shouldKeep(
-      currentTimestamp: Long,
-      oldestTimestamp: Long,
-      size: Int
+    currentTimestamp: Long,
+    oldestTimestamp: Long,
+    size: Int
   ): Boolean =
     currentTimestamp - oldestTimestamp <= maxLookBack && size <= maxSize
 }

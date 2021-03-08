@@ -19,17 +19,17 @@ package com.twosigma.flint.timeseries
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.types._
 
-import scala.reflect.{ClassTag, classTag}
+import scala.reflect.{ ClassTag, classTag }
 
 package object summarize {
 
   def asDoubleExtractor(
-      dataType: DataType,
-      columnIndex: Int
+    dataType: DataType,
+    columnIndex: Int
   ): InternalRow => Double =
     dataType match {
       case DoubleType => { row: InternalRow => row.getDouble(columnIndex) }
-      case LongType   => { row: InternalRow => row.getLong(columnIndex).toDouble }
+      case LongType => { row: InternalRow => row.getLong(columnIndex).toDouble }
       case IntegerType => { row: InternalRow =>
         row.getInt(columnIndex).toDouble
       }
@@ -45,9 +45,9 @@ package object summarize {
   def toClassTag(dataType: DataType): ClassTag[_] =
     dataType match {
       case IntegerType => classTag[Int]
-      case LongType    => classTag[Long]
-      case FloatType   => classTag[Float]
-      case DoubleType  => classTag[Double]
+      case LongType => classTag[Long]
+      case FloatType => classTag[Float]
+      case DoubleType => classTag[Double]
       case _ =>
         throw new IllegalArgumentException(s"Unsupported data type: $dataType")
     }
@@ -55,9 +55,9 @@ package object summarize {
   def toOrdering(dataType: DataType): Ordering[_] =
     dataType match {
       case IntegerType => Ordering[Int]
-      case LongType    => Ordering[Long]
-      case FloatType   => Ordering[Float]
-      case DoubleType  => Ordering[Double]
+      case LongType => Ordering[Long]
+      case FloatType => Ordering[Float]
+      case DoubleType => Ordering[Double]
       case _ =>
         throw new IllegalArgumentException(s"Unsupported data type: $dataType")
     }

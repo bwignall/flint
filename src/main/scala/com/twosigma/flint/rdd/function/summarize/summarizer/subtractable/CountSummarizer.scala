@@ -17,7 +17,7 @@
 package com.twosigma.flint.rdd.function.summarize.summarizer.subtractable
 
 case class CountSummarizer()
-    extends LeftSubtractableSummarizer[Any, Long, Long] {
+  extends LeftSubtractableSummarizer[Any, Long, Long] {
   def zero(): Long = 0L
   def add(u: Long, t: Any): Long = u + 1
   def subtract(u: Long, t: Any): Long = u - 1

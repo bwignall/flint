@@ -21,35 +21,31 @@ import com.twosigma.flint.math.Kahan
 import scala.math._
 
 case class CorrelationState(
-    var count: Long,
-    covariance: Kahan,
-    var xMean: NthMomentState,
-    var yMean: NthMomentState,
-    var xVariance: NthCentralMomentState,
-    var yVariance: NthCentralMomentState
+  var count: Long,
+  covariance: Kahan,
+  var xMean: NthMomentState,
+  var yMean: NthMomentState,
+  var xVariance: NthCentralMomentState,
+  var yVariance: NthCentralMomentState
 )
 
 case class CorrelationOutput(
-    covariance: Double,
-    correlation: Double,
-    tStat: Double,
-    observationCount: Long
+  covariance: Double,
+  correlation: Double,
+  tStat: Double,
+  observationCount: Long
 )
 
 // This summarizer uses mutable state
 case class CorrelationSummarizer()
-    extends LeftSubtractableSummarizer[
-      (Double, Double),
-      CorrelationState,
-      CorrelationOutput
-    ] {
+  extends LeftSubtractableSummarizer[(Double, Double), CorrelationState, CorrelationOutput] {
 
   val meanSummarizer = NthMomentSummarizer(1)
   val varianceSummarizer = NthCentralMomentSummarizer(2)
 
   override def add(
-      u: CorrelationState,
-      data: (Double, Double)
+    u: CorrelationState,
+    data: (Double, Double)
   ): CorrelationState = {
     val (x, y) = data
 
@@ -71,8 +67,8 @@ case class CorrelationSummarizer()
   }
 
   override def subtract(
-      u: CorrelationState,
-      data: (Double, Double)
+    u: CorrelationState,
+    data: (Double, Double)
   ): CorrelationState = {
     require(u.count != 0L)
     if (u.count == 1L) {
@@ -107,8 +103,8 @@ case class CorrelationSummarizer()
     )
 
   override def merge(
-      u1: CorrelationState,
-      u2: CorrelationState
+    u1: CorrelationState,
+    u2: CorrelationState
   ): CorrelationState = {
     if (u1.count == 0L) {
       u2

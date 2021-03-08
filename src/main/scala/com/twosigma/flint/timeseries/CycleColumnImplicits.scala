@@ -19,82 +19,82 @@ package com.twosigma.flint.timeseries
 import org.apache.spark.sql.types.DataType
 
 /**
-  * Trait containing implicit conversions to [[CycleColumn]]s. This trait is mixed-in to
-  * the [[CycleColumn]] companion object so that conversions are automatically resolved
-  * by the compiler without an additional import statement by the client.
-  */
+ * Trait containing implicit conversions to [[CycleColumn]]s. This trait is mixed-in to
+ * the [[CycleColumn]] companion object so that conversions are automatically resolved
+ * by the compiler without an additional import statement by the client.
+ */
 trait CycleColumnImplicits {
 
   /**
-    * Implicit conversion from a tuple that returns a `Map[Row, U]` to a [[CycleColumn]].
-    *
-    * Rows that are not defined in the returned map will get a value of `null`.
-    *
-    * Example:
-    * {{{
-    *   val tsRdd: TimeSeriesRDD = ...
-    *   tsrdd.addColumnsForCycle("newCol" -> DoubleType -> { rows: Seq[Row] =>
-    *     rows.map { row => row -> row.getAs[Double]("otherCol") + 1 }.toMap
-    *   })
-    * }}}
-    *
-    */
+   * Implicit conversion from a tuple that returns a `Map[Row, U]` to a [[CycleColumn]].
+   *
+   * Rows that are not defined in the returned map will get a value of `null`.
+   *
+   * Example:
+   * {{{
+   *   val tsRdd: TimeSeriesRDD = ...
+   *   tsrdd.addColumnsForCycle("newCol" -> DoubleType -> { rows: Seq[Row] =>
+   *     rows.map { row => row -> row.getAs[Double]("otherCol") + 1 }.toMap
+   *   })
+   * }}}
+   *
+   */
   implicit def tupleMapToCycleColumn[D <: DataType, U](
-      cycleColumn: CycleColumn.MapForm[D, U]
+    cycleColumn: CycleColumn.MapForm[D, U]
   ): CycleColumn = {
     val ((name, dataType), f) = cycleColumn
     CycleColumn(name, dataType, CycleColumn.mapFormToSeqForm(f))
   }
 
   /**
-    * Implicit conversion from a tuple that returns values as a `Seq[U]` to a [[CycleColumn]].
-    *
-    * Example usage:
-    * {{{
-    *   val tsRdd: TimeSeriesRDD = ...
-    *   tsRdd.addColumnsForCycle("newCol" -> DoubleType -> { rows: Seq[Row] =>
-    *     rows.map(_.getAs[Double]("otherCol") + 1)
-    *   })
-    * }}}
-    */
+   * Implicit conversion from a tuple that returns values as a `Seq[U]` to a [[CycleColumn]].
+   *
+   * Example usage:
+   * {{{
+   *   val tsRdd: TimeSeriesRDD = ...
+   *   tsRdd.addColumnsForCycle("newCol" -> DoubleType -> { rows: Seq[Row] =>
+   *     rows.map(_.getAs[Double]("otherCol") + 1)
+   *   })
+   * }}}
+   */
   implicit def tupleSeqToCycleColumn[D <: DataType, U](
-      cycleColumn: CycleColumn.SeqForm[D, U]
+    cycleColumn: CycleColumn.SeqForm[D, U]
   ): CycleColumn = {
     val ((name, dataType), udf) = cycleColumn
     CycleColumn(name, dataType, udf)
   }
 
   /**
-    * Applies the column name to complete an unnamed [[CycleColumn]].
-    *
-    * Example usage:
-    * {{{
-    *   val tsRdd: TimeSeriesRDD = ...
-    *   val unnamedColumn = CycleColumn.unnamed(DoubleType, { rows: Seq[Row] => rows.map(_ => 1.0) })
-    *   tsRdd.addColumnsForCycle("newCol" -> unnamedColumn)
-    *   })
-    * }}}
-    */
+   * Applies the column name to complete an unnamed [[CycleColumn]].
+   *
+   * Example usage:
+   * {{{
+   *   val tsRdd: TimeSeriesRDD = ...
+   *   val unnamedColumn = CycleColumn.unnamed(DoubleType, { rows: Seq[Row] => rows.map(_ => 1.0) })
+   *   tsRdd.addColumnsForCycle("newCol" -> unnamedColumn)
+   *   })
+   * }}}
+   */
   implicit def applyNameToUnnamedCycleColumn(
-      nameAndUnnamedCycleColumn: (String, CycleColumn.UnnamedCycleColumn)
+    nameAndUnnamedCycleColumn: (String, CycleColumn.UnnamedCycleColumn)
   ): CycleColumn = {
     val (name, unnamedCycleColumn) = nameAndUnnamedCycleColumn
     unnamedCycleColumn(name)
   }
 
   /**
-    * Implicit conversion of any Seq of elements that can be implicitly converted to [[CycleColumn]].
-    *
-    * Example usage:
-    * {{{
-    *   val tsRdd: TimeSeriesRDD = ...
-    *   val udf1: CycleColumn.UnnamedCycleColumn = ...
-    *   val udf2: CycleColumn.UnnamedCycleColumn = ...
-    *   tsRdd.addColumnsForCycle(Seq("newCol1" -> udf1, "newCol2" -> udf2))
-    * }}}
-    */
+   * Implicit conversion of any Seq of elements that can be implicitly converted to [[CycleColumn]].
+   *
+   * Example usage:
+   * {{{
+   *   val tsRdd: TimeSeriesRDD = ...
+   *   val udf1: CycleColumn.UnnamedCycleColumn = ...
+   *   val udf2: CycleColumn.UnnamedCycleColumn = ...
+   *   tsRdd.addColumnsForCycle(Seq("newCol1" -> udf1, "newCol2" -> udf2))
+   * }}}
+   */
   implicit def seqCycleColumn[T](
-      seq: Seq[T]
+    seq: Seq[T]
   )(implicit toCycleColumn: T => CycleColumn): Seq[CycleColumn] =
     seq.map(toCycleColumn)
 

@@ -28,17 +28,17 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.types._
 
 case class CorrelationSummarizerFactory(columnX: String, columnY: String)
-    extends BaseSummarizerFactory(columnX, columnY) {
+  extends BaseSummarizerFactory(columnX, columnY) {
   override def apply(inputSchema: StructType): CorrelationSummarizer =
     new CorrelationSummarizer(inputSchema, prefixOpt, requiredColumns)
 }
 
 abstract class AbstractCorrelationSummarizer(
-    override val inputSchema: StructType,
-    override val prefixOpt: Option[String],
-    override val requiredColumns: ColumnList
+  override val inputSchema: StructType,
+  override val prefixOpt: Option[String],
+  override val requiredColumns: ColumnList
 ) extends LeftSubtractableSummarizer
-    with FilterNullInput {
+  with FilterNullInput {
   override final type T = (Double, Double)
   override final type U = CorrelationState
   override final type V = CorrelationOutput
@@ -57,14 +57,14 @@ abstract class AbstractCorrelationSummarizer(
 }
 
 class CorrelationSummarizer(
-    override val inputSchema: StructType,
-    override val prefixOpt: Option[String],
-    override val requiredColumns: ColumnList
+  override val inputSchema: StructType,
+  override val prefixOpt: Option[String],
+  override val requiredColumns: ColumnList
 ) extends AbstractCorrelationSummarizer(
-      inputSchema,
-      prefixOpt,
-      requiredColumns
-    ) {
+  inputSchema,
+  prefixOpt,
+  requiredColumns
+) {
   override val schema = Schema.of(
     s"${columnPrefix}_correlation" -> DoubleType,
     s"${columnPrefix}_correlationTStat" -> DoubleType

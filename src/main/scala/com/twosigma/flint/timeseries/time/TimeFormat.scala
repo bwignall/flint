@@ -23,7 +23,7 @@ import org.joda.time.format.{
   DateTimeFormatter,
   ISODateTimeFormat
 }
-import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.{ DateTime, DateTimeZone }
 
 import scala.concurrent.duration.TimeUnit
 import scala.util.Try
@@ -56,37 +56,37 @@ object TimeFormat {
   )
 
   /**
-    * Parses a date-time from the given text and returning the number of NANOSECONDS since the epoch,
-    * 1970-01-01T00:00:00Z.
-    *
-    * @see [[parse(String, DateTimeZone, TimeUnit)]] for parsing rules.
-    *
-    * @param text the text to parse, not null
-    * @return an parsed NANOSECONDS since the epoch 1970-01-01T00:00:00Z.
-    */
+   * Parses a date-time from the given text and returning the number of NANOSECONDS since the epoch,
+   * 1970-01-01T00:00:00Z.
+   *
+   * @see [[parse(String, DateTimeZone, TimeUnit)]] for parsing rules.
+   *
+   * @param text the text to parse, not null
+   * @return an parsed NANOSECONDS since the epoch 1970-01-01T00:00:00Z.
+   */
   protected[flint] def parseNano(
-      text: String,
-      timeZone: DateTimeZone = DateTimeZone.UTC
+    text: String,
+    timeZone: DateTimeZone = DateTimeZone.UTC
   ): Long =
     parse(text, timeZone, timeUnit = TimeUnit.NANOSECONDS)
 
   /**
-    * Parses a date-time from the given text and returning it in terms of `timeUnit` since the epoch,
-    * 1970-01-01T00:00:00Z.
-    * <p>
-    * It will try all possible known formatters with the given time zone (default: UTC) and
-    * ISO chronology to parse, respectively. It will return the first parsable one.
-    * <p>
-    * If the text contains a time zone string then that will be taken into account. However, the underneath MILLISECONDS
-    * from 1970-01-01T00:00:00Z won't be changed.
-    *
-    * @param text the text to parse, not null
-    * @return an parsed NANOSECONDS since the epoch 1970-01-01T00:00:00Z.
-    */
+   * Parses a date-time from the given text and returning it in terms of `timeUnit` since the epoch,
+   * 1970-01-01T00:00:00Z.
+   * <p>
+   * It will try all possible known formatters with the given time zone (default: UTC) and
+   * ISO chronology to parse, respectively. It will return the first parsable one.
+   * <p>
+   * If the text contains a time zone string then that will be taken into account. However, the underneath MILLISECONDS
+   * from 1970-01-01T00:00:00Z won't be changed.
+   *
+   * @param text the text to parse, not null
+   * @return an parsed NANOSECONDS since the epoch 1970-01-01T00:00:00Z.
+   */
   protected[flint] def parse(
-      text: String,
-      timeZone: DateTimeZone = DateTimeZone.UTC,
-      timeUnit: TimeUnit = TimeUnit.NANOSECONDS
+    text: String,
+    timeZone: DateTimeZone = DateTimeZone.UTC,
+    timeUnit: TimeUnit = TimeUnit.NANOSECONDS
   ): Long =
     timeUnit.convert(
       parseDateTime(text, timeZone).getMillis,
@@ -94,21 +94,21 @@ object TimeFormat {
     )
 
   /**
-    * Parses a date time from the given text.
-    * <p>
-    * It will try all possible known formatters with the given time zone (default UTC) as the default time Zone and
-    * ISO chronology to parse, respectively. It will return the first parsable date time.
-    * <p>
-    * If the text contains a time zone string then that will be taken into account. However, the underneath MILLISECONDS
-    * from 1970-01-01T00:00:00Z won't be changed.
-    *
-    * @param text the text to parse, not null
-    * @return a parsed [[org.joda.time.DateTime]].
-    */
+   * Parses a date time from the given text.
+   * <p>
+   * It will try all possible known formatters with the given time zone (default UTC) as the default time Zone and
+   * ISO chronology to parse, respectively. It will return the first parsable date time.
+   * <p>
+   * If the text contains a time zone string then that will be taken into account. However, the underneath MILLISECONDS
+   * from 1970-01-01T00:00:00Z won't be changed.
+   *
+   * @param text the text to parse, not null
+   * @return a parsed [[org.joda.time.DateTime]].
+   */
   @throws(classOf[IllegalArgumentException])
   protected[flint] def parseDateTime(
-      text: String,
-      timeZone: DateTimeZone = DateTimeZone.UTC
+    text: String,
+    timeZone: DateTimeZone = DateTimeZone.UTC
   ): DateTime = {
     val parsedOption = formatters.view.flatMap { formatter =>
       Try(formatter.withZone(timeZone).parseDateTime(text.trim)).toOption

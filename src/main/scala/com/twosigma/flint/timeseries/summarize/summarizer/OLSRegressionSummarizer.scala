@@ -66,12 +66,12 @@ object OLSRegressionSummarizer {
 }
 
 case class OLSRegressionSummarizerFactory(
-    yColumn: String,
-    xColumns: Array[String],
-    weightColumn: String,
-    shouldIntercept: Boolean,
-    shouldIgnoreConstants: Boolean,
-    constantErrorBound: Double
+  yColumn: String,
+  xColumns: Array[String],
+  weightColumn: String,
+  shouldIntercept: Boolean,
+  shouldIgnoreConstants: Boolean,
+  constantErrorBound: Double
 ) extends SummarizerFactory {
   type K = Long
 
@@ -95,17 +95,17 @@ case class OLSRegressionSummarizerFactory(
 }
 
 case class OLSRegressionSummarizer(
-    override val inputSchema: StructType,
-    override val prefixOpt: Option[String],
-    override val requiredColumns: ColumnList,
-    yColumn: String,
-    xColumns: Array[String],
-    weightColumn: Option[String],
-    shouldIntercept: Boolean,
-    shouldIgnoreConstants: Boolean,
-    constantErrorBound: Double
+  override val inputSchema: StructType,
+  override val prefixOpt: Option[String],
+  override val requiredColumns: ColumnList,
+  yColumn: String,
+  xColumns: Array[String],
+  weightColumn: Option[String],
+  shouldIntercept: Boolean,
+  shouldIgnoreConstants: Boolean,
+  constantErrorBound: Double
 ) extends LeftSubtractableSummarizer
-    with FilterNullInput {
+  with FilterNullInput {
 
   override type T = RegressionRow
   override type U = OLSRegressionState

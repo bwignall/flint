@@ -19,13 +19,13 @@ package com.twosigma.flint.rdd.function.summarize.summarizer.overlappable
 import com.twosigma.flint.rdd.function.summarize.summarizer.CompositeSummarizer
 
 class OverlappableCompositeSummarizer[T1, U1, V1, T2, U2, V2](
-    override val summarizer1: OverlappableSummarizer[T1, U1, V1],
-    override val summarizer2: OverlappableSummarizer[T2, U2, V2]
+  override val summarizer1: OverlappableSummarizer[T1, U1, V1],
+  override val summarizer2: OverlappableSummarizer[T2, U2, V2]
 ) extends CompositeSummarizer[T1, U1, V1, T2, U2, V2](
-      summarizer1,
-      summarizer2
-    )
-    with OverlappableSummarizer[(T1, T2), (U1, U2), (V1, V2)] {
+  summarizer1,
+  summarizer2
+)
+  with OverlappableSummarizer[(T1, T2), (U1, U2), (V1, V2)] {
 
   def addOverlapped(u: (U1, U2), t: ((T1, T2), Boolean)): (U1, U2) =
     (

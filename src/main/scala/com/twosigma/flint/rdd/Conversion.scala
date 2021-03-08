@@ -20,40 +20,40 @@ import com.twosigma.flint.hadoop._
 import org.apache.spark.rdd.RDD
 import org.apache.spark._
 
-import scala.collection.immutable.{SortedMap, TreeMap}
+import scala.collection.immutable.{ SortedMap, TreeMap }
 import scala.reflect.ClassTag
 
 object Conversion {
 
   /**
-    * Convert an [[org.apache.spark.rdd.RDD]] to an [[OrderedRDD]]. Internally, it will sort the given rdd first and thus
-    * will invoke shuffling of rows and thus will be slow and IO/Memory intensive.
-    *
-    * @param rdd The RDD of (K, SK, V) tuple(s) expected to convert.
-    * @return an [[OrderedRDD]].
-    */
+   * Convert an [[org.apache.spark.rdd.RDD]] to an [[OrderedRDD]]. Internally, it will sort the given rdd first and thus
+   * will invoke shuffling of rows and thus will be slow and IO/Memory intensive.
+   *
+   * @param rdd The RDD of (K, SK, V) tuple(s) expected to convert.
+   * @return an [[OrderedRDD]].
+   */
   def fromUnsortedRDD[K: Ordering: ClassTag, V: ClassTag](
-      rdd: RDD[(K, V)]
+    rdd: RDD[(K, V)]
   ): OrderedRDD[K, V] =
     rdd match {
       case orderedRdd: OrderedRDD[K, V] => orderedRdd
-      case _                            => fromNormalizedSortedRDD(rdd.sortBy(_._1))
+      case _ => fromNormalizedSortedRDD(rdd.sortBy(_._1))
     }
 
   /**
-    * Convert a normalized sorted [[org.apache.spark.rdd.RDD]] to an [[OrderedRDD]].
-    *
-    * An rdd is considered to be sorted and normalized iff
-    *   - all keys of rows in the k-th partition are strictly less than those of (k + 1)-th partition for all k,
-    *     i.e. there is no key existing multiple partitions;
-    *   - all rows of any partition are also sorted by their keys.
-    *
-    * @param rdd The [[org.apache.spark.rdd.RDD]] of (K, V) tuple(s) expected to convert. Note that the first partition
-    *            does not necessarily have tuple(s) with the smallest keys.
-    * @return an [[OrderedRDD]].
-    */
+   * Convert a normalized sorted [[org.apache.spark.rdd.RDD]] to an [[OrderedRDD]].
+   *
+   * An rdd is considered to be sorted and normalized iff
+   *   - all keys of rows in the k-th partition are strictly less than those of (k + 1)-th partition for all k,
+   *     i.e. there is no key existing multiple partitions;
+   *   - all rows of any partition are also sorted by their keys.
+   *
+   * @param rdd The [[org.apache.spark.rdd.RDD]] of (K, V) tuple(s) expected to convert. Note that the first partition
+   *            does not necessarily have tuple(s) with the smallest keys.
+   * @return an [[OrderedRDD]].
+   */
   def fromNormalizedSortedRDD[K: Ordering: ClassTag, V: ClassTag](
-      rdd: RDD[(K, V)]
+    rdd: RDD[(K, V)]
   ): OrderedRDD[K, V] = {
     val partitionToFirstKey = rdd
       .mapPartitionsWithIndex {
@@ -105,8 +105,8 @@ object Conversion {
   }
 
   private def rangeValidationFunction[K, V](
-      rddString: String,
-      range: CloseOpen[K]
+    rddString: String,
+    range: CloseOpen[K]
   )(r: (K, V)): (K, V) = {
     require(
       range.contains(r._1),
@@ -116,17 +116,17 @@ object Conversion {
   }
 
   /**
-    * Convert a sorted rows backed by a CSV file into an [[OrderedRDD]].
-    *
-    * @param sc The Spark context.
-    * @param file The file path of CSV file.
-    * @param numPartitions The number of partitions expects to split the resulted [[OrderedRDD]].
-    * @return an [[OrderedRDD]].
-    */
+   * Convert a sorted rows backed by a CSV file into an [[OrderedRDD]].
+   *
+   * @param sc The Spark context.
+   * @param file The file path of CSV file.
+   * @param numPartitions The number of partitions expects to split the resulted [[OrderedRDD]].
+   * @return an [[OrderedRDD]].
+   */
   def fromCSV[SK, V: ClassTag](
-      sc: SparkContext,
-      file: String,
-      numPartitions: Int
+    sc: SparkContext,
+    file: String,
+    numPartitions: Int
   )(parse: Iterator[String] => Iterator[(Long, V)]): OrderedRDD[Long, V] = {
     // TODO: add unit test for it.
     val sortedRdd = fromInputFormat(
@@ -134,31 +134,31 @@ object Conversion {
       file,
       CSVInputFormatConf(TextInputFormatConf(file, numPartitions))
     ) { iter =>
-      parse(iter.map(_._2))
-    }
+        parse(iter.map(_._2))
+      }
     fromSortedRDD(sortedRdd)
   }
 
   /**
-    * Convert a sorted [[org.apache.spark.rdd.RDD]] to an [[OrderedRDD]].
-    *
-    * An `rdd` is considered to be sorted iff
-    *   - all keys of rows in the k-th partition are less or equal than those of (k + 1)-th partition for all k;
-    *   - all rows of any partition are also sorted by their keys.
-    *
-    * The key reason for using `keyRdd` is to faster the process of finding the boundaries of each partition.
-    *
-    * @param rdd    The [[org.apache.spark.rdd.RDD]] of (K, V) tuple(s) expected to convert. Note that the
-    *               first partition does not necessarily have tuple(s) with the smallest keys.
-    * @param keyRdd The [[org.apache.spark.rdd.RDD]] of keys of `rdd`. The `keyRdd` is expected to have exactly the
-    *               same distribution of keys as that of `rdd`, i.e. the same number of partition; the i-th partitions
-    *               of `rdd` and `keyRdd` have exactly the same sequences of keys. An example of `keyRdd` could
-    *               be obtained by {{ rdd.map(_._1) }}.
-    * @return an [[OrderedRDD]].
-    */
+   * Convert a sorted [[org.apache.spark.rdd.RDD]] to an [[OrderedRDD]].
+   *
+   * An `rdd` is considered to be sorted iff
+   *   - all keys of rows in the k-th partition are less or equal than those of (k + 1)-th partition for all k;
+   *   - all rows of any partition are also sorted by their keys.
+   *
+   * The key reason for using `keyRdd` is to faster the process of finding the boundaries of each partition.
+   *
+   * @param rdd    The [[org.apache.spark.rdd.RDD]] of (K, V) tuple(s) expected to convert. Note that the
+   *               first partition does not necessarily have tuple(s) with the smallest keys.
+   * @param keyRdd The [[org.apache.spark.rdd.RDD]] of keys of `rdd`. The `keyRdd` is expected to have exactly the
+   *               same distribution of keys as that of `rdd`, i.e. the same number of partition; the i-th partitions
+   *               of `rdd` and `keyRdd` have exactly the same sequences of keys. An example of `keyRdd` could
+   *               be obtained by {{ rdd.map(_._1) }}.
+   * @return an [[OrderedRDD]].
+   */
   protected[flint] def fromSortedRDD[K: ClassTag, V: ClassTag](
-      rdd: RDD[(K, V)],
-      keyRdd: RDD[K] = null
+    rdd: RDD[(K, V)],
+    keyRdd: RDD[K] = null
   )(implicit ord: Ordering[K]): OrderedRDD[K, V] = {
     val keys = if (keyRdd == null) {
       rdd.map(_._1)
@@ -248,17 +248,15 @@ object Conversion {
   }
 
   /**
-    * Note: the K parameter must provide a total ordering over the source data set. If not,
-    * this will all fail in confusing ways.
-    */
+   * Note: the K parameter must provide a total ordering over the source data set. If not,
+   * this will all fail in confusing ways.
+   */
   private[this] def fromInputFormat[K1, V1, K: ClassTag, V](
-      sc: SparkContext,
-      file: String,
-      ifConf: InputFormatConf[K1, V1]
+    sc: SparkContext,
+    file: String,
+    ifConf: InputFormatConf[K1, V1]
   )(
-      parse: Iterator[
-        (ifConf.KExtract#Extracted, ifConf.VExtract#Extracted)
-      ] => Iterator[(K, V)]
+    parse: Iterator[(ifConf.KExtract#Extracted, ifConf.VExtract#Extracted)] => Iterator[(K, V)]
   )(implicit ord: Ordering[K]): RDD[(K, V)] = {
     val fileSplits = Hadoop.fileSplits(sc, file, ifConf) {
       case r => parse(Iterator(r)).next._1
@@ -269,8 +267,8 @@ object Conversion {
     })
     new RDD[(K, V)](sc, Nil) {
       override def compute(
-          split: Partition,
-          context: TaskContext
+        split: Partition,
+        context: TaskContext
       ): Iterator[(K, V)] =
         parse(
           Hadoop.readRecords(ifConf)(broadcastFileSplits.value(split.index))
@@ -282,8 +280,8 @@ object Conversion {
   }
 
   private[flint] def fromRDD[K: Ordering: ClassTag, V: ClassTag](
-      rdd: RDD[(K, V)],
-      ranges: Seq[CloseOpen[K]]
+    rdd: RDD[(K, V)],
+    ranges: Seq[CloseOpen[K]]
   ): OrderedRDD[K, V] = {
     require(rdd.partitions.length == ranges.length)
     val splits = (rdd.partitions zip ranges).map {
@@ -303,23 +301,23 @@ object Conversion {
   }
 
   /**
-    * Constructing an [[OrderedRDD]] from a [[RDD]] with partition range information.
-    * *
-    * Let us assume that an [[OrderedRDD]] orderedRdd1 is constructed from an [[RDD]] rdd1 and an [[RDD]]
-    * rdd2 is obtained by applying some  partition preserving operation on rdd1, i.e. rdd2 has the same partition
-    * ranges as rdd1. To create an  [[OrderedRDD]] orderedRdd2 from rdd2,  one could simply reuse the partition
-    * range information obtained from the construction of orderedRdd1 from rdd1 without recomputing it.
-    *
-    * @param rdd The [[RDD]] to create a new [[OrderedRDD]] from
-    * @param deps dependencies of the [[OrderedRDD]] that is used to construct dependencies of the new [[OrderedRDD]].
-    *             Should have only one dependency.
-    * @param rangeSplits rangeSplits of the [[OrderedRDD]] that is used to construct rangeSplits of the new
-    *                   [[OrderedRDD]].
-    */
+   * Constructing an [[OrderedRDD]] from a [[RDD]] with partition range information.
+   * *
+   * Let us assume that an [[OrderedRDD]] orderedRdd1 is constructed from an [[RDD]] rdd1 and an [[RDD]]
+   * rdd2 is obtained by applying some  partition preserving operation on rdd1, i.e. rdd2 has the same partition
+   * ranges as rdd1. To create an  [[OrderedRDD]] orderedRdd2 from rdd2,  one could simply reuse the partition
+   * range information obtained from the construction of orderedRdd1 from rdd1 without recomputing it.
+   *
+   * @param rdd The [[RDD]] to create a new [[OrderedRDD]] from
+   * @param deps dependencies of the [[OrderedRDD]] that is used to construct dependencies of the new [[OrderedRDD]].
+   *             Should have only one dependency.
+   * @param rangeSplits rangeSplits of the [[OrderedRDD]] that is used to construct rangeSplits of the new
+   *                   [[OrderedRDD]].
+   */
   private[flint] def fromRDD[K: Ordering: ClassTag, V: ClassTag](
-      rdd: RDD[(K, V)],
-      deps: Seq[Dependency[_]],
-      rangeSplits: Seq[RangeSplit[K]]
+    rdd: RDD[(K, V)],
+    deps: Seq[Dependency[_]],
+    rangeSplits: Seq[RangeSplit[K]]
   ): OrderedRDD[K, V] = {
     require(
       deps.length == 1,

@@ -27,8 +27,8 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.types._
 
 case class ZScoreSummarizerFactory(
-    column: String,
-    includeCurrentObservation: Boolean
+  column: String,
+  includeCurrentObservation: Boolean
 ) extends BaseSummarizerFactory(column) {
   override def apply(inputSchema: StructType): ZScoreSummarizer =
     ZScoreSummarizer(
@@ -40,19 +40,21 @@ case class ZScoreSummarizerFactory(
 }
 
 case class ZScoreSummarizer(
-    override val inputSchema: StructType,
-    override val prefixOpt: Option[String],
-    override val requiredColumns: ColumnList,
-    includeCurrentObservation: Boolean
+  override val inputSchema: StructType,
+  override val prefixOpt: Option[String],
+  override val requiredColumns: ColumnList,
+  includeCurrentObservation: Boolean
 ) extends LeftSubtractableSummarizer
-    with FilterNullInput {
+  with FilterNullInput {
   override type T = Double
   override type U = ZScoreState
   override type V = Double
   override val summarizer = ZSSummarizer(includeCurrentObservation)
-  override val schema = Schema.of(s"${column}_zScore" -> DoubleType)
+
   private val Sequence(Seq(column)) = requiredColumns
   private val columnIndex = inputSchema.fieldIndex(column)
+
+  override val schema = Schema.of(s"${column}_zScore" -> DoubleType)
 
   override def toT(r: InternalRow): T = r.getDouble(columnIndex)
 

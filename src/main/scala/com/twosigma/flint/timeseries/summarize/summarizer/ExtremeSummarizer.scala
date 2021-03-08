@@ -35,7 +35,7 @@ object ExtremeSummarizerType extends Enumeration {
 }
 
 case class ExtremeSummarizerFactory(column: String, extremeType: ExtremeType)
-    extends BaseSummarizerFactory(column) {
+  extends BaseSummarizerFactory(column) {
   override def apply(inputSchema: StructType): Summarizer = {
     val dataType = inputSchema(column).dataType
     val ctag = toClassTag(dataType)
@@ -55,14 +55,14 @@ case class ExtremeSummarizerFactory(column: String, extremeType: ExtremeType)
 }
 
 case class ExtremeSummarizer[E](
-    override val inputSchema: StructType,
-    override val prefixOpt: Option[String],
-    override val requiredColumns: ColumnList,
-    tag: ClassTag[E],
-    order: Ordering[_],
-    outputColumnName: String
+  override val inputSchema: StructType,
+  override val prefixOpt: Option[String],
+  override val requiredColumns: ColumnList,
+  tag: ClassTag[E],
+  order: Ordering[_],
+  outputColumnName: String
 ) extends FlippableSummarizer
-    with FilterNullInput {
+  with FilterNullInput {
   override type T = E
   override type U = mutable.PriorityQueue[E]
   override type V = Array[E]

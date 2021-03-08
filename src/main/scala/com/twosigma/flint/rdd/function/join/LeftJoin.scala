@@ -16,24 +16,24 @@
 
 package com.twosigma.flint.rdd.function.join
 
-import com.twosigma.flint.rdd.{PartitionsIterator, PeekableIterator}
-import org.apache.spark.{NarrowDependency, OneToOneDependency}
+import com.twosigma.flint.rdd.{ PartitionsIterator, PeekableIterator }
+import org.apache.spark.{ NarrowDependency, OneToOneDependency }
 import com.twosigma.flint.rdd.OrderedRDD
 
 import scala.collection.immutable.TreeMap
 import scala.reflect.ClassTag
-import java.util.{HashMap => JHashMap}
+import java.util.{ HashMap => JHashMap }
 
 protected[flint] object LeftJoin {
 
   val skMapInitialSize = 1024
 
   def apply[K: ClassTag, SK, V, V2](
-      leftRdd: OrderedRDD[K, V],
-      rightRdd: OrderedRDD[K, V2],
-      toleranceFn: K => K,
-      leftSk: V => SK,
-      rightSk: V2 => SK
+    leftRdd: OrderedRDD[K, V],
+    rightRdd: OrderedRDD[K, V2],
+    toleranceFn: K => K,
+    leftSk: V => SK,
+    rightSk: V2 => SK
   )(implicit ord: Ordering[K]): OrderedRDD[K, (V, Option[(K, V2)])] = {
     // A map from left partition index to left range split and right partitions.
     val leftIndexToJoinSplits = TreeMap(
@@ -81,9 +81,7 @@ protected[flint] object LeftJoin {
           val sk = leftSk(v)
           catchUp(k, rightSk, rightIter, lastSeen)
           val lastSeenRight = lastSeen.get(sk)
-          if (
-            lastSeenRight != null && ord.gteq(lastSeenRight._1, toleranceFn(k))
-          ) {
+          if (lastSeenRight != null && ord.gteq(lastSeenRight._1, toleranceFn(k))) {
             (k, (v, Some(lastSeenRight)))
           } else {
             (k, (v, None))
@@ -93,15 +91,15 @@ protected[flint] object LeftJoin {
   }
 
   /**
-    * Iterates until we are at the last row without going over current key, and maps each SK
-    * to its last-seen row.
-    */
+   * Iterates until we are at the last row without going over current key, and maps each SK
+   * to its last-seen row.
+   */
   @annotation.tailrec
   private[rdd] def catchUp[K, SK, V](
-      cur: K,
-      skFn: V => SK,
-      iter: PeekableIterator[(K, V)],
-      lastSeen: JHashMap[SK, (K, V)]
+    cur: K,
+    skFn: V => SK,
+    iter: PeekableIterator[(K, V)],
+    lastSeen: JHashMap[SK, (K, V)]
   )(implicit ord: Ordering[K]) {
     val peek = iter.peek
     if (peek.nonEmpty && ord.lteq(peek.get._1, cur)) {

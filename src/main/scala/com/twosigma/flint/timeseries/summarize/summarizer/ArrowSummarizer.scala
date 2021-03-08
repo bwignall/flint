@@ -32,7 +32,7 @@ import com.twosigma.flint.timeseries.summarize.{
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.GenericInternalRow
 import org.apache.spark.sql.catalyst.util.GenericArrayData
-import org.apache.spark.sql.types.{ArrayType, BinaryType, StructType}
+import org.apache.spark.sql.types.{ ArrayType, BinaryType, StructType }
 
 object ArrowSummarizer {
   val baseRowsColumnName = "__baseRows"
@@ -40,13 +40,13 @@ object ArrowSummarizer {
 }
 
 /**
-  * Summarize columns into arrow batch.
-  *
-  * @param columns
-  */
+ * Summarize columns into arrow batch.
+ *
+ * @param columns
+ */
 case class ArrowSummarizerFactory(
-    columns: Seq[String],
-    includeBaseRows: Boolean
+  columns: Seq[String],
+  includeBaseRows: Boolean
 ) extends SummarizerFactory {
   override val requiredColumns: ColumnList =
     if (includeBaseRows) {
@@ -70,13 +70,13 @@ case class ArrowSummarizerFactory(
 }
 
 case class ArrowSummarizer(
-    override val inputSchema: StructType,
-    outputBatchSchema: StructType,
-    includeBaseRows: Boolean,
-    override val prefixOpt: Option[String],
-    requiredColumns: ColumnList
+  override val inputSchema: StructType,
+  outputBatchSchema: StructType,
+  includeBaseRows: Boolean,
+  override val prefixOpt: Option[String],
+  requiredColumns: ColumnList
 ) extends Summarizer
-    with InputAlwaysValid {
+  with InputAlwaysValid {
   override type T = InternalRow
   override type U = ArrowSummarizerState
   override type V = ArrowSummarizerResult

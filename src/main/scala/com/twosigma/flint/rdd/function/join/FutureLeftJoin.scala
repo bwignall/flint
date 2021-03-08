@@ -16,8 +16,8 @@
 
 package com.twosigma.flint.rdd.function.join
 
-import com.twosigma.flint.rdd.{PartitionsIterator, PeekableIterator}
-import org.apache.spark.{NarrowDependency, OneToOneDependency, TaskContext}
+import com.twosigma.flint.rdd.{ PartitionsIterator, PeekableIterator }
+import org.apache.spark.{ NarrowDependency, OneToOneDependency, TaskContext }
 import com.twosigma.flint.rdd.OrderedRDD
 
 import scala.collection.immutable.TreeMap
@@ -27,12 +27,12 @@ import java.util
 protected[flint] object FutureLeftJoin {
 
   def apply[K: ClassTag, SK, V, V2](
-      leftRdd: OrderedRDD[K, V],
-      rightRdd: OrderedRDD[K, V2],
-      toleranceFn: K => K,
-      leftSk: V => SK,
-      rightSk: V2 => SK,
-      strictForward: Boolean
+    leftRdd: OrderedRDD[K, V],
+    rightRdd: OrderedRDD[K, V2],
+    toleranceFn: K => K,
+    leftSk: V => SK,
+    rightSk: V2 => SK,
+    strictForward: Boolean
   )(implicit ord: Ordering[K]): OrderedRDD[K, (V, Option[(K, V2)])] = {
     // A map from left partition index to left range split and right partitions.
     val indexToJoinSplits = TreeMap(
@@ -92,30 +92,28 @@ protected[flint] object FutureLeftJoin {
   }
 
   /**
-    * The basic algorithm works as follows. For each SK, it creates a queue for it. The following
-    * process iterates through the given iterator until finding a row under the tolerance that could
-    * be used for join.
-    *
-    * Before finding that row, all the previously iterated / scanned rows will be put into the
-    * corresponding queues for possibly later use and those earlier ones at the top of the queue of leftSk
-    * (relatively to the reference) will be cleaned out when performing enqueue operations.
-    */
+   * The basic algorithm works as follows. For each SK, it creates a queue for it. The following
+   * process iterates through the given iterator until finding a row under the tolerance that could
+   * be used for join.
+   *
+   * Before finding that row, all the previously iterated / scanned rows will be put into the
+   * corresponding queues for possibly later use and those earlier ones at the top of the queue of leftSk
+   * (relatively to the reference) will be cleaned out when performing enqueue operations.
+   */
   private[rdd] def forward[K, SK, V](
-      leftK: K,
-      leftSk: SK,
-      forwardK: K,
-      rightSk: V => SK,
-      rightIter: PeekableIterator[(K, V)],
-      foreSeen: util.HashMap[SK, util.Deque[(K, V)]],
-      strictForward: Boolean
+    leftK: K,
+    leftSk: SK,
+    forwardK: K,
+    rightSk: V => SK,
+    rightIter: PeekableIterator[(K, V)],
+    foreSeen: util.HashMap[SK, util.Deque[(K, V)]],
+    strictForward: Boolean
   )(implicit ord: Ordering[K]) = {
     // Scan through the rightIter until next rightK matches leftK
     // This is safe because if next rightK < current leftK, it will never match in the future and skipping it also
     // doesn't change the matching of previous rows (because the results of matching for previous rows have been
     // finalized at this point).
-    while (
-      rightIter.hasNext && !passes(leftK, rightIter.peek.get._1, strictForward)
-    ) {
+    while (rightIter.hasNext && !passes(leftK, rightIter.peek.get._1, strictForward)) {
       rightIter.next
     }
 
@@ -162,15 +160,14 @@ protected[flint] object FutureLeftJoin {
 
   @inline
   private def purge[K, V](q: util.Deque[(K, V)], k: K, strictForward: Boolean)(
-      implicit ord: Ordering[K]
+    implicit
+    ord: Ordering[K]
   ) =
     while (!q.isEmpty && !passes(k, q.peekFirst()._1, strictForward)) {
       q.pollFirst()
     }
 
   @inline
-  private def passes[K](leftK: K, rightK: K, strictForward: Boolean)(implicit
-      ord: Ordering[K]
-  ): Boolean =
+  private def passes[K](leftK: K, rightK: K, strictForward: Boolean)(implicit ord: Ordering[K]): Boolean =
     if (strictForward) ord.lt(leftK, rightK) else ord.lteq(leftK, rightK)
 }

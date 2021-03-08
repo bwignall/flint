@@ -27,11 +27,11 @@ object Hadoop {
   val logger = Logger(Hadoop.getClass)
 
   def fileSplits[K1, V1, K: Ordering](
-      sc: SparkContext,
-      file: String,
-      ifConf: InputFormatConf[K1, V1] // TODO consider just straight up making this (K, K) as we CAN get it, it's just a pain.
+    sc: SparkContext,
+    file: String,
+    ifConf: InputFormatConf[K1, V1] // TODO consider just straight up making this (K, K) as we CAN get it, it's just a pain.
   )(
-      parseKey: (ifConf.KExtract#Extracted, ifConf.VExtract#Extracted) => K
+    parseKey: (ifConf.KExtract#Extracted, ifConf.VExtract#Extracted) => K
   ): Map[Int, (Range[K], WriSer[ifConf.Split])] = {
     val splits = ifConf.makeSplits(new Configuration())
     logger.info(s"Total number of splits: ${splits.size}")
@@ -47,11 +47,11 @@ object Hadoop {
   }
 
   def getSplitTimes[K1, V1, K](
-      sc: SparkContext,
-      ifConf: InputFormatConf[K1, V1]
+    sc: SparkContext,
+    ifConf: InputFormatConf[K1, V1]
   )(
-      parseKey: (ifConf.KExtract#Extracted, ifConf.VExtract#Extracted) => K,
-      splits: Seq[WriSer[ifConf.Split]]
+    parseKey: (ifConf.KExtract#Extracted, ifConf.VExtract#Extracted) => K,
+    splits: Seq[WriSer[ifConf.Split]]
   ): Vector[(Int, K)] =
     sc.parallelize(splits.zipWithIndex)
       .map {
@@ -63,7 +63,7 @@ object Hadoop {
       .reduce(_ ++ _)
 
   def readRecords[K, V](ifConf: InputFormatConf[K, V])(
-      serSplit: WriSer[ifConf.Split]
+    serSplit: WriSer[ifConf.Split]
   ): Iterator[(ifConf.KExtract#Extracted, ifConf.VExtract#Extracted)] = {
     val inputFormat = ifConf.makeInputFormat()
     val split = serSplit.get

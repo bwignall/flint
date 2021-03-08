@@ -19,12 +19,12 @@ package com.twosigma.flint.rdd.function.summarize.summarizer
 import scala.reflect.ClassTag
 
 /**
-  * Takes multiple summarizers, and provided that they all render the same type,
-  * puts them together in an array.
-  * Similar to CompositeSummarizer but makes the row tall, rather than wide.
-  */
+ * Takes multiple summarizers, and provided that they all render the same type,
+ * puts them together in an array.
+ * Similar to CompositeSummarizer but makes the row tall, rather than wide.
+ */
 case class StackSummarizer[T, U, V: ClassTag](
-    summarizers: Seq[Summarizer[T, U, V]]
+  summarizers: Seq[Summarizer[T, U, V]]
 ) extends Summarizer[T, Seq[U], Seq[V]] {
   override def zero(): Seq[U] = summarizers.map(_.zero())
 

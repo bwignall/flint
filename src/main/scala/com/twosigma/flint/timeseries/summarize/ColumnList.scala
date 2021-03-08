@@ -17,35 +17,35 @@
 package com.twosigma.flint.timeseries.summarize
 
 /**
-  * A ColumnList trait represents operation requirements on the input columns.
-  */
+ * A ColumnList trait represents operation requirements on the input columns.
+ */
 sealed trait ColumnList {
 
   /**
-    * Combines this [[ColumnList]] with another one.
-    *
-    * @param other the first list.
-    * @return a composed [[ColumnList]].
-    */
+   * Combines this [[ColumnList]] with another one.
+   *
+   * @param other the first list.
+   * @return a composed [[ColumnList]].
+   */
   def ++(other: ColumnList): ColumnList
 }
 
 object ColumnList {
 
   /**
-    * [[Sequence]] should be used to specify a list of columns.
-    */
+   * [[Sequence]] should be used to specify a list of columns.
+   */
   case class Sequence(columns: Seq[String]) extends ColumnList {
     def ++(other: ColumnList): ColumnList =
       other match {
-        case All           => All
+        case All => All
         case Sequence(seq) => Sequence(columns ++ seq)
       }
   }
 
   /**
-    * [[All]] object should be used when an operation needs all columns.
-    */
+   * [[All]] object should be used when an operation needs all columns.
+   */
   case object All extends ColumnList {
     def ++(other: ColumnList): ColumnList = All
   }

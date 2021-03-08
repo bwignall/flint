@@ -27,18 +27,18 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.types._
 
 case class QuantileSummarizerFactory(column: String, p: Array[Double])
-    extends BaseSummarizerFactory(column) {
+  extends BaseSummarizerFactory(column) {
   override def apply(inputSchema: StructType): QuantileSummarizer =
     QuantileSummarizer(inputSchema, prefixOpt, requiredColumns, p)
 }
 
 case class QuantileSummarizer(
-    override val inputSchema: StructType,
-    override val prefixOpt: Option[String],
-    override val requiredColumns: ColumnList,
-    p: Array[Double]
+  override val inputSchema: StructType,
+  override val prefixOpt: Option[String],
+  override val requiredColumns: ColumnList,
+  p: Array[Double]
 ) extends LeftSubtractableSummarizer
-    with FilterNullInput {
+  with FilterNullInput {
   override type T = Double
   override type U = SequentialArrayQueue[Double]
   override type V = Array[Double]

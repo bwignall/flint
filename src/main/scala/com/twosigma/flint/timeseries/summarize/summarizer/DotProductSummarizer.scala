@@ -27,7 +27,7 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.types._
 
 case class DotProductSummarizerFactory(columnX: String, columnY: String)
-    extends BaseSummarizerFactory(columnX, columnY) {
+  extends BaseSummarizerFactory(columnX, columnY) {
   override def apply(inputSchema: StructType): DotProductSummarizer =
     new DotProductSummarizer(
       inputSchema,
@@ -37,11 +37,11 @@ case class DotProductSummarizerFactory(columnX: String, columnY: String)
 }
 
 class DotProductSummarizer(
-    override val inputSchema: StructType,
-    override val prefixOpt: Option[String],
-    override val requiredColumns: ColumnList
+  override val inputSchema: StructType,
+  override val prefixOpt: Option[String],
+  override val requiredColumns: ColumnList
 ) extends LeftSubtractableSummarizer
-    with FilterNullInput {
+  with FilterNullInput {
   override type T = (Double, Double)
   override type U = Kahan
   override type V = Double

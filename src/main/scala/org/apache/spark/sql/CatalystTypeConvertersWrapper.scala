@@ -16,13 +16,13 @@
 
 package org.apache.spark.sql
 
-import org.apache.spark.sql.catalyst.{CatalystTypeConverters, InternalRow}
+import org.apache.spark.sql.catalyst.{ CatalystTypeConverters, InternalRow }
 import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
 import org.apache.spark.sql.types.DataType
 
 /**
-  * Functions to convert Scala types to Catalyst types and back.
-  */
+ * Functions to convert Scala types to Catalyst types and back.
+ */
 object CatalystTypeConvertersWrapper {
   def toCatalystRowConverter(dataType: DataType): Row => InternalRow = {
     CatalystTypeConverters
@@ -31,7 +31,7 @@ object CatalystTypeConvertersWrapper {
   }
 
   def toScalaRowConverter(
-      dataType: DataType
+    dataType: DataType
   ): InternalRow => GenericRowWithSchema = {
     CatalystTypeConverters
       .createToScalaConverter(dataType)(_)

@@ -20,12 +20,12 @@ import scala.collection.mutable.PriorityQueue
 import scala.reflect.ClassTag
 
 /**
-  * Get the k largest elements defined by order
-  */
+ * Get the k largest elements defined by order
+ */
 case class ExtremesSummarizer[T](
-    val k: Int,
-    implicit val tag: ClassTag[T],
-    ordering: Ordering[T]
+  val k: Int,
+  implicit val tag: ClassTag[T],
+  ordering: Ordering[T]
 ) extends FlippableSummarizer[T, PriorityQueue[T], Array[T]] {
 
   // To find the k largest, we use a min heap, so the order needs to be reversed.
@@ -43,8 +43,8 @@ case class ExtremesSummarizer[T](
   }
 
   override def merge(
-      u1: PriorityQueue[T],
-      u2: PriorityQueue[T]
+    u1: PriorityQueue[T],
+    u2: PriorityQueue[T]
   ): PriorityQueue[T] = {
     val u = (u1 ++ u2)
     // If there are more than n items after merge, keep the top k items

@@ -17,15 +17,13 @@
 package com.twosigma.flint.rdd
 
 /**
-  * Merge two iterators of different types into one single iterator. The types of iterators to be merged are (K, A)
-  * and (K, B). The merged iterator is of type (K, Either[A, B]) and of order K.
-  */
+ * Merge two iterators of different types into one single iterator. The types of iterators to be merged are (K, A)
+ * and (K, B). The merged iterator is of type (K, Either[A, B]) and of order K.
+ */
 case class MergeIterator[K, A, B](
-    leftIter: PeekableIterator[(K, A)],
-    rightIter: PeekableIterator[(K, B)]
-)(implicit
-    ord: Ordering[K]
-) extends Iterator[(K, Either[A, B])] {
+  leftIter: PeekableIterator[(K, A)],
+  rightIter: PeekableIterator[(K, B)]
+)(implicit ord: Ordering[K]) extends Iterator[(K, Either[A, B])] {
 
   override def hasNext: Boolean = leftIter.hasNext || rightIter.hasNext
 

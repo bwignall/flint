@@ -20,22 +20,22 @@ import com.twosigma.flint.rdd.function.summarize.summarizer.Summarizer
 import com.twosigma.flint.rdd.function.summarize.summarizer.overlappable.OverlappableSummarizer
 
 /**
-  * With the following definitions and notations for a summarizer: s,<br>
-  * u + a = s.add(u, a)<br>
-  * u - a = s.subtract(u, a)<br>
-  * <p>
-  * For a summarizer s, if there exists a function s.subtract(u, a) such that for any sequence
-  * (a[1], a[2] ..., a[n]), any prefix sequence (a[1], a[2], ..., a[m]) where m <= n, and any
-  * state u, it satisfies<br>
-  * u + a[1] + a[2] + ... + a[n] - a[1] - a[2] - ... - a[m] == u + a[m+1] + a[m+2] ... + a[n]<br>
-  * then, we will say that the summarizer s is left-subtractable.
-  */
+ * With the following definitions and notations for a summarizer: s,<br>
+ * u + a = s.add(u, a)<br>
+ * u - a = s.subtract(u, a)<br>
+ * <p>
+ * For a summarizer s, if there exists a function s.subtract(u, a) such that for any sequence
+ * (a[1], a[2] ..., a[n]), any prefix sequence (a[1], a[2], ..., a[m]) where m <= n, and any
+ * state u, it satisfies<br>
+ * u + a[1] + a[2] + ... + a[n] - a[1] - a[2] - ... - a[m] == u + a[m+1] + a[m+2] ... + a[n]<br>
+ * then, we will say that the summarizer s is left-subtractable.
+ */
 trait LeftSubtractableSummarizer[V, U, V2] extends Summarizer[V, U, V2] {
   def subtract(u: U, v: V): U
 }
 
 trait LeftSubtractableOverlappableSummarizer[V, U, V2]
-    extends OverlappableSummarizer[V, U, V2] {
+  extends OverlappableSummarizer[V, U, V2] {
   def addOverlapped(u: U, t: (V, Boolean)): U
   def subtractOverlapped(u: U, t: (V, Boolean)): U
 }

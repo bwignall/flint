@@ -17,21 +17,21 @@
 package com.twosigma.flint.math.stats.regression
 
 import org.apache.spark.rdd.RDD
-import breeze.linalg.{DenseMatrix, DenseVector}
+import breeze.linalg.{ DenseMatrix, DenseVector }
 
 object OLSMultipleLinearRegression {
 
   /**
-    * Build the linear regression model with the input data.
-    *
-    * @param input RDD of (label, weight, array of features) tuples. Each pair describes a row of
-    * the data matrix X, the weight, as well as the corresponding right hand side label y.
-    * @param intercept Whether to use intercept (default true).
-    * @return the linear regression model.
-    */
+   * Build the linear regression model with the input data.
+   *
+   * @param input RDD of (label, weight, array of features) tuples. Each pair describes a row of
+   * the data matrix X, the weight, as well as the corresponding right hand side label y.
+   * @param intercept Whether to use intercept (default true).
+   * @return the linear regression model.
+   */
   def regression(
-      input: RDD[WeightedLabeledPoint],
-      intercept: Boolean = true
+    input: RDD[WeightedLabeledPoint],
+    intercept: Boolean = true
   ): LinearRegressionModel = {
     // Try to get the number of columns
     val nCols = if (intercept) {
@@ -60,8 +60,8 @@ object OLSMultipleLinearRegression {
         0.0 // 9. Calculate sum of log weights
       )
     )(
-      // U is a pair of matrix and vector and v is a WeightedLabeledPoint.
-      seqOp = (U, v) => {
+        // U is a pair of matrix and vector and v is a WeightedLabeledPoint.
+        seqOp = (U, v) => {
         // Append 1.0 at the head for calculating intercept.
         val x = if (intercept) {
           DenseVector.vertcat(DenseVector(1.0), v.features)
@@ -83,7 +83,7 @@ object OLSMultipleLinearRegression {
           U._9 + math.log(v.weight)
         )
       },
-      combOp = (U1, U2) =>
+        combOp = (U1, U2) =>
         (
           U1._1 += U2._1,
           U1._2 += U2._2,
@@ -95,7 +95,7 @@ object OLSMultipleLinearRegression {
           U1._8 + U2._8,
           U1._9 + U2._9
         )
-    )
+      )
     LinearRegressionModel(
       input,
       intercept,

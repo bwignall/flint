@@ -37,12 +37,12 @@ case class RowsSummarizerFactory(column: String) extends SummarizerFactory {
 }
 
 case class RowsSummarizer(
-    override val inputSchema: StructType,
-    override val prefixOpt: Option[String],
-    requiredColumns: ColumnList,
-    column: String
+  override val inputSchema: StructType,
+  override val prefixOpt: Option[String],
+  requiredColumns: ColumnList,
+  column: String
 ) extends LeftSubtractableSummarizer
-    with InputAlwaysValid {
+  with InputAlwaysValid {
   override type T = InternalRow
   override type U = ArrayDeque[InternalRow]
   override type V = Array[InternalRow]

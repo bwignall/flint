@@ -23,14 +23,12 @@ import scala.collection.Searching._
 object RangeSplit {
 
   /**
-    * Find the first begin among the `begins` such that it is strictly greater than the given `begin`.
-    * Return None if not found.
-    *
-    * The `begins` must be sorted.
-    */
-  private[rdd] def getNextBegin[K](begin: K, begins: IndexedSeq[K])(implicit
-      ord: Ordering[K]
-  ): Option[K] = {
+   * Find the first begin among the `begins` such that it is strictly greater than the given `begin`.
+   * Return None if not found.
+   *
+   * The `begins` must be sorted.
+   */
+  private[rdd] def getNextBegin[K](begin: K, begins: IndexedSeq[K])(implicit ord: Ordering[K]): Option[K] = {
     val result: SearchResult = begins.search(begin)
     var i = result.insertionPoint
     while (i < begins.length && !ord.gt(begins(i), begin)) {
@@ -44,13 +42,13 @@ object RangeSplit {
   }
 
   /**
-    * Find all [[RangeSplit]]s that intersect with a given range.
-    *
-    * The `splits` has been sorted by their ranges. See [[isSortedByRange]] for more details.
-    */
+   * Find all [[RangeSplit]]s that intersect with a given range.
+   *
+   * The `splits` has been sorted by their ranges. See [[isSortedByRange]] for more details.
+   */
   private[rdd] def getIntersectingSplits[K: Ordering](
-      range: CloseOpen[K],
-      splits: IndexedSeq[RangeSplit[K]]
+    range: CloseOpen[K],
+    splits: IndexedSeq[RangeSplit[K]]
   ): Seq[RangeSplit[K]] = {
     val split = RangeSplit(OrderedRDDPartition(0), range)
     Range
@@ -59,18 +57,18 @@ object RangeSplit {
   }
 
   /**
-    * Test whether `splits` are sorted by their ranges.
-    */
+   * Test whether `splits` are sorted by their ranges.
+   */
   private[rdd] def isSortedByRange[K: Ordering](
-      splits: Seq[RangeSplit[K]]
+    splits: Seq[RangeSplit[K]]
   ): Boolean =
     Range.isSorted(splits, { r: RangeSplit[K] => r.range })
 }
 
 /**
-  * The range of a split implies that all records of a partition must have their keys within that range.
-  *
-  * @param partition The partition of this split.
-  * @param range     The range associated with this split.
-  */
+ * The range of a split implies that all records of a partition must have their keys within that range.
+ *
+ * @param partition The partition of this split.
+ * @param range     The range associated with this split.
+ */
 case class RangeSplit[K](partition: Partition, range: CloseOpen[K])

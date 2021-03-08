@@ -17,8 +17,8 @@
 package com.twosigma.flint.rdd
 
 /**
-  * Type of key partitioning and ordering in RDD[(K, V)] where a tuple represents a key-value pair.
-  */
+ * Type of key partitioning and ordering in RDD[(K, V)] where a tuple represents a key-value pair.
+ */
 sealed trait KeyPartitioningType
 
 object KeyPartitioningType {
@@ -35,22 +35,22 @@ object KeyPartitioningType {
     }
 
   /**
-    * An rdd is not `Sorted`.
-    */
+   * An rdd is not `Sorted`.
+   */
   case object UnSorted extends KeyPartitioningType
 
   /**
-    * An rdd is considered to be sorted iff
-    *   - all keys of rows in the k-th partition are less or equal than those of (k + 1)-th partition for all k;
-    *   - all rows of any partition are also sorted by their keys.
-    */
+   * An rdd is considered to be sorted iff
+   *   - all keys of rows in the k-th partition are less or equal than those of (k + 1)-th partition for all k;
+   *   - all rows of any partition are also sorted by their keys.
+   */
   case object Sorted extends KeyPartitioningType
 
   /**
-    * An rdd is considered to be sorted and normalized iff
-    *   - all keys of rows in the k-th partition are strictly less than those of (k + 1)-th partition for all k,
-    *     i.e. there is no key existing multiple partitions;
-    *   - all rows of any partition are also sorted by their keys.
-    */
+   * An rdd is considered to be sorted and normalized iff
+   *   - all keys of rows in the k-th partition are strictly less than those of (k + 1)-th partition for all k,
+   *     i.e. there is no key existing multiple partitions;
+   *   - all rows of any partition are also sorted by their keys.
+   */
   case object NormalizedSorted extends KeyPartitioningType
 }

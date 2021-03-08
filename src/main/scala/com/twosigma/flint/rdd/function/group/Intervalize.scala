@@ -31,21 +31,21 @@ object Intervalize {
   private val logger = Logger()
 
   /**
-    * Intervalize an [[OrderedRDD]] by mapping its keys to the begin or the end of an interval where
-    * they fall into. Intervals are defined by the provided `clock`.
-    *
-    * @param rdd            The [[OrderedRDD]] expected to intervalize.
-    * @param clock          A sequence of sorted keys where two sequential keys are treated as an interval.
-    * @param inclusion      "begin" or "end". If begin, intervals are [begin, end). Otherwise, (begin, end]
-    * @param rounding       "begin" or "end". If begin, rows are rounded to the begin of each interval,
-    *                        otherwise, end.
-    * @return an [[OrderedRDD]] whose keys are intervalized and the original keys are kept in the values as (K, V)s.
-    */
+   * Intervalize an [[OrderedRDD]] by mapping its keys to the begin or the end of an interval where
+   * they fall into. Intervals are defined by the provided `clock`.
+   *
+   * @param rdd            The [[OrderedRDD]] expected to intervalize.
+   * @param clock          A sequence of sorted keys where two sequential keys are treated as an interval.
+   * @param inclusion      "begin" or "end". If begin, intervals are [begin, end). Otherwise, (begin, end]
+   * @param rounding       "begin" or "end". If begin, rows are rounded to the begin of each interval,
+   *                        otherwise, end.
+   * @return an [[OrderedRDD]] whose keys are intervalized and the original keys are kept in the values as (K, V)s.
+   */
   def intervalize[K: ClassTag, V](
-      rdd: OrderedRDD[K, V],
-      clock: Array[K],
-      inclusion: String,
-      rounding: String
+    rdd: OrderedRDD[K, V],
+    clock: Array[K],
+    inclusion: String,
+    rounding: String
   )(implicit ord: Ordering[K]): OrderedRDD[K, (K, V)] = {
     require(
       Seq("begin", "end").contains(inclusion),
@@ -85,7 +85,7 @@ object Intervalize {
       val until = rddEnd.fold(clock.length) { end =>
         clock.search(end) match {
           // +2 because: (1) until is exclusive (2) need to include one more interval towards the end
-          case Found(idx)          => Math.min(clock.length, idx + 2)
+          case Found(idx) => Math.min(clock.length, idx + 2)
           case InsertionPoint(idx) => Math.min(clock.length, idx + 2)
         }
       }
@@ -112,8 +112,8 @@ object Intervalize {
   }
 
   private def broadcastClock[K: ClassTag](
-      sparkContext: SparkContext,
-      clock: Array[K]
+    sparkContext: SparkContext,
+    clock: Array[K]
   ): Broadcast[Array[K]] = {
     val INTERVALS_PER_YEAR = 365 * 24 * 12
     val NUMBER_OF_YEAR = 20
@@ -130,8 +130,8 @@ object Intervalize {
   }
 
   def roundFn[K: Ordering](
-      inclusion: String,
-      rounding: String
+    inclusion: String,
+    rounding: String
   ): (K, Array[K]) => Option[K] =
     (inclusion, rounding) match {
       case ("begin", "begin") =>

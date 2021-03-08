@@ -26,8 +26,8 @@ import org.apache.hadoop.mapreduce.{
 
 // This exists just because of a quirk of the record reader api.
 case class ConfOnlyTAC(_conf: Configuration)
-    extends Job
-    with TaskAttemptContext {
+  extends Job
+  with TaskAttemptContext {
   // JobContextImpl and JobContext
   override def getConfiguration: Configuration = _conf
 

@@ -26,7 +26,7 @@ import com.twosigma.flint.arrow.{
   ArrowUtils,
   ArrowWriter
 }
-import org.apache.arrow.memory.{BufferAllocator, RootAllocator}
+import org.apache.arrow.memory.{ BufferAllocator, RootAllocator }
 import org.apache.arrow.vector.VectorSchemaRoot
 import org.apache.arrow.vector.ipc.ArrowFileWriter
 import org.apache.spark.sql.catalyst.InternalRow
@@ -37,43 +37,39 @@ import org.apache.spark.sql.types.StructType
 import scala.collection.JavaConverters._
 
 /**
-  * State is NOT serializable. This summarizer is not a distributed summarizer.
-  */
+ * State is NOT serializable. This summarizer is not a distributed summarizer.
+ */
 class ArrowSummarizerState(
-    var initialized: Boolean,
-    var baseRows: util.ArrayList[InternalRow],
-    var allocator: BufferAllocator,
-    var root: VectorSchemaRoot,
-    var arrowWriter: ArrowWriter
+  var initialized: Boolean,
+  var baseRows: util.ArrayList[InternalRow],
+  var allocator: BufferAllocator,
+  var root: VectorSchemaRoot,
+  var arrowWriter: ArrowWriter
 )
 
 /**
-  * If includeBaseRows, baseRows is an array of internal rows that contains all
-  * rows added to the summarizer. Otherwise it's empty array.
-  *
-  * arrowBatch is an arrow batch record in file format.
-  */
+ * If includeBaseRows, baseRows is an array of internal rows that contains all
+ * rows added to the summarizer. Otherwise it's empty array.
+ *
+ * arrowBatch is an arrow batch record in file format.
+ */
 case class ArrowSummarizerResult(baseRows: Array[Any], arrowBatch: Array[Byte])
 
 /**
-  * Summarize rows in Arrow File Format.
-  *
-  * This summarizer differs from other summarizers:
-  *
-  * (1) It is not distributed, i.e., doesn't support merge operation
-  * (2) It holds resources (offheap memory) and need to be manually freed, see close()
-  *
-  * This summarizer is only meant to be used in local mode, such as in summarizeCycles and summarizeWindows.
-  */
+ * Summarize rows in Arrow File Format.
+ *
+ * This summarizer differs from other summarizers:
+ *
+ * (1) It is not distributed, i.e., doesn't support merge operation
+ * (2) It holds resources (offheap memory) and need to be manually freed, see close()
+ *
+ * This summarizer is only meant to be used in local mode, such as in summarizeCycles and summarizeWindows.
+ */
 case class ArrowSummarizer(
-    inputSchema: StructType,
-    outputSchema: StructType,
-    includeBaseRows: Boolean
-) extends Summarizer[
-      InternalRow,
-      ArrowSummarizerState,
-      ArrowSummarizerResult
-    ] {
+  inputSchema: StructType,
+  outputSchema: StructType,
+  includeBaseRows: Boolean
+) extends Summarizer[InternalRow, ArrowSummarizerState, ArrowSummarizerResult] {
   private[this] val size = outputSchema.size
   require(size > 0, "Cannot create summarizer with no input columns")
 
@@ -83,8 +79,8 @@ case class ArrowSummarizer(
   }
 
   override def add(
-      u: ArrowSummarizerState,
-      row: InternalRow
+    u: ArrowSummarizerState,
+    row: InternalRow
   ): ArrowSummarizerState = {
     if (!u.initialized) {
       init(u)
@@ -113,8 +109,8 @@ case class ArrowSummarizer(
   }
 
   override def merge(
-      u1: ArrowSummarizerState,
-      u2: ArrowSummarizerState
+    u1: ArrowSummarizerState,
+    u2: ArrowSummarizerState
   ): ArrowSummarizerState = throw new UnsupportedOperationException()
 
   // This can only be called once

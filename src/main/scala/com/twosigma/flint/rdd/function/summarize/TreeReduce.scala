@@ -23,21 +23,21 @@ import scala.reflect.ClassTag
 object TreeReduce {
 
   /**
-    * Reduces the elements from an rdd, in a multi-level tree pattern, in order, i.e.,
-    *   - `f` will be applied in each partition in the ordering of elements in that partition
-    *   - `f` will be applied between partitions respect to the ordering of partitions' indices.
-    *
-    * @param rdd   The rdd expected to reduce
-    * @param f     The operator that merge two elements
-    * @param depth The suggested depth of the tree (default: 2)
-    * @return the reduced result.
-    * @see [[org.apache.spark.rdd.RDD#treeReduce]]
-    */
+   * Reduces the elements from an rdd, in a multi-level tree pattern, in order, i.e.,
+   *   - `f` will be applied in each partition in the ordering of elements in that partition
+   *   - `f` will be applied between partitions respect to the ordering of partitions' indices.
+   *
+   * @param rdd   The rdd expected to reduce
+   * @param f     The operator that merge two elements
+   * @param depth The suggested depth of the tree (default: 2)
+   * @return the reduced result.
+   * @see [[org.apache.spark.rdd.RDD#treeReduce]]
+   */
   def apply[T: ClassTag](
-      rdd: RDD[T]
+    rdd: RDD[T]
   )(
-      f: (T, T) => T,
-      depth: Int = 2
+    f: (T, T) => T,
+    depth: Int = 2
   ): T = {
     require(
       depth >= 1,

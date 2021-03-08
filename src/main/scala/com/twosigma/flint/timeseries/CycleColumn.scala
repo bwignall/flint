@@ -20,14 +20,14 @@ import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.DataType
 
 /**
-  * Implementations of this trait are used as parameters to [[TimeSeriesRDD.addColumnsForCycle]].
-  *
-  * Generally, client code shouldn't create implementations of [[CycleColumn]] directly.
-  * Instead, use the [[CycleColumn.MapForm]] or [[CycleColumn.SeqForm]] as
-  *
-  * All implementing classes of this trait *must* be serializable because they are
-  * used in closures that are passed to Spark executors.
-  */
+ * Implementations of this trait are used as parameters to [[TimeSeriesRDD.addColumnsForCycle]].
+ *
+ * Generally, client code shouldn't create implementations of [[CycleColumn]] directly.
+ * Instead, use the [[CycleColumn.MapForm]] or [[CycleColumn.SeqForm]] as
+ *
+ * All implementing classes of this trait *must* be serializable because they are
+ * used in closures that are passed to Spark executors.
+ */
 private[flint] trait CycleColumn extends Serializable {
 
   /** The column name where the result stored */
@@ -37,15 +37,15 @@ private[flint] trait CycleColumn extends Serializable {
   def dataType: DataType
 
   /**
-    * This method is called by [[TimeSeriesRDD.addColumnsForCycle]] to apply the
-    * UDF to the current cycle.
-    *
-    * The returned values is joined by index with the original row.
-    *
-    * @return a seq of values. If the length of the sequence is less than the input
-    *         in `rows`, [[TimeSeriesRDD.addColumnsForCycle]] will pad the sequence
-    *         with `null`.
-    */
+   * This method is called by [[TimeSeriesRDD.addColumnsForCycle]] to apply the
+   * UDF to the current cycle.
+   *
+   * The returned values is joined by index with the original row.
+   *
+   * @return a seq of values. If the length of the sequence is less than the input
+   *         in `rows`, [[TimeSeriesRDD.addColumnsForCycle]] will pad the sequence
+   *         with `null`.
+   */
   def applyCycle(rows: Seq[Row]): Seq[Any]
 
 }
@@ -53,60 +53,60 @@ private[flint] trait CycleColumn extends Serializable {
 object CycleColumn extends CycleColumnImplicits {
 
   /**
-    * Type alias for [[CycleColumn]] tuple definitions with a cycle function that returns a `Map[Row, U]`.
-    *
-    * @tparam D The SparkSQL [[DataType]] that the Udf returns
-    * @tparam U The Scala data type that the Udf returns
-    */
+   * Type alias for [[CycleColumn]] tuple definitions with a cycle function that returns a `Map[Row, U]`.
+   *
+   * @tparam D The SparkSQL [[DataType]] that the Udf returns
+   * @tparam U The Scala data type that the Udf returns
+   */
   type MapForm[D <: DataType, U] = ((String, D), Seq[Row] => Map[Row, U])
 
   /**
-    * Type alias for [[CycleColumn]] tuple definitions with a cycle function that returns a `Seq[U]`.
-    *
-    * @tparam D The SparkSQL [[DataType]] that the Udf returns
-    * @tparam U The Scala data type that the Udf returns
-    */
+   * Type alias for [[CycleColumn]] tuple definitions with a cycle function that returns a `Seq[U]`.
+   *
+   * @tparam D The SparkSQL [[DataType]] that the Udf returns
+   * @tparam U The Scala data type that the Udf returns
+   */
   type SeqForm[D <: DataType, U] = ((String, D), Seq[Row] => Seq[U])
 
   /**
-    * Type alias for a [[CycleColumn]] without a `name`.
-    *
-    * Typical usage uses the implicit conversion for `(String, UnnamedCycleColumn)`
-    * defined in [[CycleColumnImplicits]] to apply the column name to the column.
-    *
-    * Example usage:
-    * {{{
-    *   val unnamedCycleColumn: UnnamedCycleColumn = ...
-    *   tsRdd.addColumnsForCycle("output" -> unnamedCycleColumn)
-    * }}}
-    */
+   * Type alias for a [[CycleColumn]] without a `name`.
+   *
+   * Typical usage uses the implicit conversion for `(String, UnnamedCycleColumn)`
+   * defined in [[CycleColumnImplicits]] to apply the column name to the column.
+   *
+   * Example usage:
+   * {{{
+   *   val unnamedCycleColumn: UnnamedCycleColumn = ...
+   *   tsRdd.addColumnsForCycle("output" -> unnamedCycleColumn)
+   * }}}
+   */
   type UnnamedCycleColumn = String => CycleColumn
 
   /**
-    * Factory method for creating a predefined [[UnnamedCycleColumn]].
-    *
-    * For all other usage, use [[MapForm]] or [[SeqForm]] as parameters to [[TimeSeriesRDD.addColumnsForCycle]]
-    * instead of this method.
-    *
-    * @param f any values referenced in the closure `f` must be serializable.
-    */
+   * Factory method for creating a predefined [[UnnamedCycleColumn]].
+   *
+   * For all other usage, use [[MapForm]] or [[SeqForm]] as parameters to [[TimeSeriesRDD.addColumnsForCycle]]
+   * instead of this method.
+   *
+   * @param f any values referenced in the closure `f` must be serializable.
+   */
   def unnamed(dt: DataType, f: Seq[Row] => Seq[Any]): UnnamedCycleColumn = {
     name: String =>
       apply(name, dt, f)
   }
 
   /**
-    * Factory method for creating a predefined [[CycleColumn]].
-    *
-    * For all other usage, use [[MapForm]] or [[SeqForm]] as parameters to [[TimeSeriesRDD.addColumnsForCycle]]
-    * instead of this method.
-    *
-    * @param f any values referenced in the closure `f` must be serializable.
-    */
+   * Factory method for creating a predefined [[CycleColumn]].
+   *
+   * For all other usage, use [[MapForm]] or [[SeqForm]] as parameters to [[TimeSeriesRDD.addColumnsForCycle]]
+   * instead of this method.
+   *
+   * @param f any values referenced in the closure `f` must be serializable.
+   */
   def apply(
-      columnName: String,
-      dt: DataType,
-      f: Seq[Row] => Seq[Any]
+    columnName: String,
+    dt: DataType,
+    f: Seq[Row] => Seq[Any]
   ): CycleColumn =
     new CycleColumn {
       val name: String = columnName
@@ -115,8 +115,8 @@ object CycleColumn extends CycleColumnImplicits {
     }
 
   /**
-    * Converts a cycle function that returns a `Map[Row, _]` to one that returns `Seq[Any]`.
-    */
+   * Converts a cycle function that returns a `Map[Row, _]` to one that returns `Seq[Any]`.
+   */
   def mapFormToSeqForm(f: Seq[Row] => Map[Row, _]): Seq[Row] => Seq[Any] = {
     input: Seq[Row] =>
       val rowValueMap: Map[Row, _] = f(input)

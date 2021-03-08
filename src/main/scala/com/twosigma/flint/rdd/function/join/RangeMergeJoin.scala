@@ -16,22 +16,20 @@
 
 package com.twosigma.flint.rdd.function.join
 
-import com.twosigma.flint.rdd.{Range, CloseOpen, RangeSplit}
+import com.twosigma.flint.rdd.{ Range, CloseOpen, RangeSplit }
 import org.apache.spark.Partition
 
 protected[flint] object RangeMergeJoin {
 
   /**
-    * For each unique [[Range]] begin, return intersecting [[RangeSplit]]s from both thisSplits and thatSplits.
-    * Can optionally use the toleranceFn to extend the time range in searching for intersections.
-    */
+   * For each unique [[Range]] begin, return intersecting [[RangeSplit]]s from both thisSplits and thatSplits.
+   * Can optionally use the toleranceFn to extend the time range in searching for intersections.
+   */
   def mergeSplits[K](
-      thisSplits: IndexedSeq[RangeSplit[K]],
-      thatSplits: IndexedSeq[RangeSplit[K]],
-      toleranceFn: K => K = { x: K => x }
-  )(implicit
-      ord: Ordering[K]
-  ): Seq[RangeMergeJoin[K]] = {
+    thisSplits: IndexedSeq[RangeSplit[K]],
+    thatSplits: IndexedSeq[RangeSplit[K]],
+    toleranceFn: K => K = { x: K => x }
+  )(implicit ord: Ordering[K]): Seq[RangeMergeJoin[K]] = {
     require(RangeSplit.isSortedByRange(thisSplits))
     require(RangeSplit.isSortedByRange(thatSplits))
 
@@ -55,14 +53,14 @@ protected[flint] object RangeMergeJoin {
   }
 
   /**
-    * Similar to [[leftJoinSplits]], but takes window function instead
-    */
+   * Similar to [[leftJoinSplits]], but takes window function instead
+   */
   // TODO: window function should probably returns a range instead of tuple so that
   //       we could support inclusiveness/exclusiveness on both sides.
   protected[rdd] def windowJoinSplits[K](
-      windowFn: K => (K, K),
-      leftSplits: IndexedSeq[RangeSplit[K]],
-      rightSplits: IndexedSeq[RangeSplit[K]]
+    windowFn: K => (K, K),
+    leftSplits: IndexedSeq[RangeSplit[K]],
+    rightSplits: IndexedSeq[RangeSplit[K]]
   )(implicit ord: Ordering[K]): Seq[(RangeSplit[K], Seq[Partition])] = {
     require(RangeSplit.isSortedByRange(leftSplits))
     require(RangeSplit.isSortedByRange(rightSplits))
@@ -71,23 +69,23 @@ protected[flint] object RangeMergeJoin {
       (
         left,
         RangeSplit
-          .getIntersectingSplits(left.range.expand(windowFn), rightSplits)
-          .map(_.partition)
+        .getIntersectingSplits(left.range.expand(windowFn), rightSplits)
+        .map(_.partition)
       )
     }
   }
 
   /**
-    * For each [[RangeSplit]] in the left, return intersecting partitions from right
-    *
-    * @param toleranceFn A function provides look-back tolerance inclusively.
-    * @param leftSplits  The splits from the left-hand side.
-    * @param rightSplits The splits from the right-hand side.
-    */
+   * For each [[RangeSplit]] in the left, return intersecting partitions from right
+   *
+   * @param toleranceFn A function provides look-back tolerance inclusively.
+   * @param leftSplits  The splits from the left-hand side.
+   * @param rightSplits The splits from the right-hand side.
+   */
   protected[rdd] def leftJoinSplits[K](
-      toleranceFn: K => K,
-      leftSplits: IndexedSeq[RangeSplit[K]],
-      rightSplits: IndexedSeq[RangeSplit[K]]
+    toleranceFn: K => K,
+    leftSplits: IndexedSeq[RangeSplit[K]],
+    rightSplits: IndexedSeq[RangeSplit[K]]
   )(implicit ord: Ordering[K]): Seq[(RangeSplit[K], Seq[Partition])] = {
     require(RangeSplit.isSortedByRange(leftSplits))
     require(RangeSplit.isSortedByRange(rightSplits))
@@ -101,19 +99,19 @@ protected[flint] object RangeMergeJoin {
       (
         left,
         RangeSplit
-          .getIntersectingSplits(
-            CloseOpen(toleranceBegin, left.range.end),
-            rightSplits
-          )
-          .map(_.partition)
+        .getIntersectingSplits(
+          CloseOpen(toleranceBegin, left.range.end),
+          rightSplits
+        )
+        .map(_.partition)
       )
     }
   }
 
   protected[rdd] def futureLeftJoinSplits[K](
-      toleranceFn: K => K,
-      leftSplits: IndexedSeq[RangeSplit[K]],
-      rightSplits: IndexedSeq[RangeSplit[K]]
+    toleranceFn: K => K,
+    leftSplits: IndexedSeq[RangeSplit[K]],
+    rightSplits: IndexedSeq[RangeSplit[K]]
   )(implicit ord: Ordering[K]): Seq[(RangeSplit[K], Seq[Partition])] = {
     require(RangeSplit.isSortedByRange(leftSplits))
     require(RangeSplit.isSortedByRange(rightSplits))
@@ -128,24 +126,24 @@ protected[flint] object RangeMergeJoin {
       (
         left,
         RangeSplit
-          .getIntersectingSplits(
-            // This excludes the end as it is close-open range.
-            CloseOpen(left.range.begin, toleranceEnd),
-            rightSplits
-          )
-          .map(_.partition)
+        .getIntersectingSplits(
+          // This excludes the end as it is close-open range.
+          CloseOpen(left.range.begin, toleranceEnd),
+          rightSplits
+        )
+        .map(_.partition)
       )
     }
   }
 
   @annotation.tailrec
   private def mergeSplits[K: Ordering](
-      toleranceFn: K => K,
-      begin: Option[K],
-      thisSplits: IndexedSeq[RangeSplit[K]],
-      thatSplits: IndexedSeq[RangeSplit[K]],
-      begins: IndexedSeq[K],
-      mergedSplits: Seq[RangeMergeJoin[K]]
+    toleranceFn: K => K,
+    begin: Option[K],
+    thisSplits: IndexedSeq[RangeSplit[K]],
+    thatSplits: IndexedSeq[RangeSplit[K]],
+    begins: IndexedSeq[K],
+    mergedSplits: Seq[RangeMergeJoin[K]]
   ): Seq[RangeMergeJoin[K]] =
     begin match {
       // The algorithm works as follows.
@@ -178,7 +176,7 @@ protected[flint] object RangeMergeJoin {
 }
 
 case class RangeMergeJoin[K](
-    range: CloseOpen[K],
-    left: Seq[RangeSplit[K]],
-    right: Seq[RangeSplit[K]]
+  range: CloseOpen[K],
+  left: Seq[RangeSplit[K]],
+  right: Seq[RangeSplit[K]]
 ) extends Serializable

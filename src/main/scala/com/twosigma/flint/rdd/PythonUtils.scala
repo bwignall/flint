@@ -16,17 +16,17 @@
 
 package com.twosigma.flint.rdd
 
-import com.twosigma.flint.timeseries.{TimeSeriesRDD, TimeSeriesRDDImpl}
+import com.twosigma.flint.timeseries.{ TimeSeriesRDD, TimeSeriesRDDImpl }
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{CatalystTypeConvertersWrapper, Row}
+import org.apache.spark.sql.{ CatalystTypeConvertersWrapper, Row }
 
 private[rdd] case class SchemaColumnInfo(
-    idx: Int,
-    clazz: Class[_ <: Ordered[_]],
-    dataType: DataType
+  idx: Int,
+  clazz: Class[_ <: Ordered[_]],
+  dataType: DataType
 )
 
 case class TimeSeriesRDDWithSchema(rdd: TimeSeriesRDDImpl, schema: StructType)
@@ -34,18 +34,18 @@ case class TimeSeriesRDDWithSchema(rdd: TimeSeriesRDDImpl, schema: StructType)
 object PythonUtils {
 
   /**
-    * Add reference to the object (py4j won't do this)
-    */
+   * Add reference to the object (py4j won't do this)
+   */
   def makeCopy[T](obj: T): T = obj
 
   /**
-    * (py4j-friendly) Create TimeSeriesRDD through OrderedRDD's fromSorted
-    */
+   * (py4j-friendly) Create TimeSeriesRDD through OrderedRDD's fromSorted
+   */
   def fromSortedRDD(
-      sc: SparkContext,
-      rdd: RDD[Row],
-      schema: StructType,
-      keyColumn: String
+    sc: SparkContext,
+    rdd: RDD[Row],
+    schema: StructType,
+    keyColumn: String
   ): TimeSeriesRDDImpl = {
     val ordd = OrderedRDD.fromRDD(
       formatRDD[Long](rdd, schema, keyColumn),
@@ -55,12 +55,12 @@ object PythonUtils {
   }
 
   /**
-    * Convert RDD[row] to RDD[(key, row)]
-    */
+   * Convert RDD[row] to RDD[(key, row)]
+   */
   def formatRDD[K](
-      rdd: RDD[Row],
-      schema: StructType,
-      keyColumn: String
+    rdd: RDD[Row],
+    schema: StructType,
+    keyColumn: String
   ): RDD[(K, Row)] = {
     val keyIdx = schema.fieldIndex(keyColumn)
     rdd.map { row =>
@@ -69,13 +69,13 @@ object PythonUtils {
   }
 
   /**
-    * (py4j-friendly) Create TimeSeriesRDD through OrderedRDD's fromUnsorted
-    */
+   * (py4j-friendly) Create TimeSeriesRDD through OrderedRDD's fromUnsorted
+   */
   def fromUnsortedRDD(
-      sc: SparkContext,
-      rdd: RDD[Row],
-      schema: StructType,
-      keyColumn: String
+    sc: SparkContext,
+    rdd: RDD[Row],
+    schema: StructType,
+    keyColumn: String
   ): TimeSeriesRDDImpl = {
     val orderedRdd = OrderedRDD.fromRDD(
       formatRDD[Long](rdd, schema, keyColumn),
@@ -87,10 +87,10 @@ object PythonUtils {
   }
 
   def toOrderedRDD(
-      rdd: RDD[Row],
-      schema: StructType,
-      keyColumn: String,
-      ranges: Seq[CloseOpen[Long]]
+    rdd: RDD[Row],
+    schema: StructType,
+    keyColumn: String,
+    ranges: Seq[CloseOpen[Long]]
   ): OrderedRDD[Long, InternalRow] = {
     val keyIdx = schema.fieldIndex(keyColumn)
     val converter = CatalystTypeConvertersWrapper.toCatalystRowConverter(schema)

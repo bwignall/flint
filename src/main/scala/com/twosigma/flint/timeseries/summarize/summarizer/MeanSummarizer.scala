@@ -26,15 +26,15 @@ import com.twosigma.flint.timeseries.summarize.{
 import org.apache.spark.sql.types._
 
 case class MeanSummarizerFactory(column: String)
-    extends BaseSummarizerFactory(column) {
+  extends BaseSummarizerFactory(column) {
   override def apply(inputSchema: StructType): MeanSummarizer =
     new MeanSummarizer(inputSchema, prefixOpt, requiredColumns)
 }
 
 class MeanSummarizer(
-    override val inputSchema: StructType,
-    override val prefixOpt: Option[String],
-    override val requiredColumns: ColumnList
+  override val inputSchema: StructType,
+  override val prefixOpt: Option[String],
+  override val requiredColumns: ColumnList
 ) extends NthMomentSummarizer(inputSchema, prefixOpt, requiredColumns, 1) {
   override val schema = Schema.of(s"${column}_mean" -> DoubleType)
   private val Sequence(Seq(column)) = requiredColumns

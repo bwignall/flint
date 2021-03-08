@@ -16,7 +16,7 @@
 
 package com.twosigma.flint.rdd.function.join
 
-import java.util.{HashMap => JHashMap}
+import java.util.{ HashMap => JHashMap }
 
 import com.twosigma.flint.rdd._
 import org.apache.spark.NarrowDependency
@@ -28,14 +28,12 @@ protected[flint] object SymmetricJoin {
   val skMapInitialSize = 1024
 
   def apply[K: ClassTag, SK, V, V2](
-      leftRdd: OrderedRDD[K, V],
-      rightRdd: OrderedRDD[K, V2],
-      toleranceFn: K => K,
-      leftSk: V => SK,
-      rightSk: V2 => SK
-  )(implicit
-      ord: Ordering[K]
-  ): OrderedRDD[K, (Option[(K, V)], Option[(K, V2)])] = {
+    leftRdd: OrderedRDD[K, V],
+    rightRdd: OrderedRDD[K, V2],
+    toleranceFn: K => K,
+    leftSk: V => SK,
+    rightSk: V2 => SK
+  )(implicit ord: Ordering[K]): OrderedRDD[K, (Option[(K, V)], Option[(K, V2)])] = {
     // map from new partition to a RangeMergeJoin
     val partToMergeJoin = RangeMergeJoin
       .mergeSplits(

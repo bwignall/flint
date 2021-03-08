@@ -22,19 +22,19 @@ import org.apache.spark.sql.expressions.{
 }
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types._
-import scala.math.{abs, signum, sqrt}
+import scala.math.{ abs, signum, sqrt }
 
 /**
-  * Calculates the weighted mean, weighted deviation, and weighted tstat.
-  *
-  * Takes every (sample, weight) pair and treats them as if they were written
-  * (sign(weight) * sample, abs(weight)).
-  *
-  * Implemented based on
-  * [[http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Weighted_incremental_algorithm Weighted incremental algorithm]] and
-  * [[http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Parallel_algorithm Parallel algorithm]]
-  * and replaces all "n" with corresponding "SumWeight"
-  */
+ * Calculates the weighted mean, weighted deviation, and weighted tstat.
+ *
+ * Takes every (sample, weight) pair and treats them as if they were written
+ * (sign(weight) * sample, abs(weight)).
+ *
+ * Implemented based on
+ * [[http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Weighted_incremental_algorithm Weighted incremental algorithm]] and
+ * [[http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Parallel_algorithm Parallel algorithm]]
+ * and replaces all "n" with corresponding "SumWeight"
+ */
 
 class WeightedMeanTest extends UserDefinedAggregateFunction {
   override def inputSchema: StructType =

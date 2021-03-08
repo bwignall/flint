@@ -22,9 +22,9 @@ import org.apache.commons.math3.util.CombinatoricsUtils
 import scala.math.pow
 
 case class NthCentralMomentState(
-    var count: Long,
-    mean: Kahan,
-    moments: Array[Kahan]
+  var count: Long,
+  mean: Kahan,
+  moments: Array[Kahan]
 )
 
 case class NthCentralMomentOutput(count: Long, moments: Array[Double]) {
@@ -38,11 +38,7 @@ case class NthCentralMomentOutput(count: Long, moments: Array[Double]) {
 
 // This summarizer uses mutable state
 case class NthCentralMomentSummarizer(moment: Int)
-    extends LeftSubtractableSummarizer[
-      Double,
-      NthCentralMomentState,
-      NthCentralMomentOutput
-    ] {
+  extends LeftSubtractableSummarizer[Double, NthCentralMomentState, NthCentralMomentOutput] {
   require(moment > 0)
   val binomials: Array[Array[Double]] = {
     val b = Array.fill(moment - 1)(null: Array[Double])
@@ -57,8 +53,8 @@ case class NthCentralMomentSummarizer(moment: Int)
   }
 
   override def add(
-      u: NthCentralMomentState,
-      data: Double
+    u: NthCentralMomentState,
+    data: Double
   ): NthCentralMomentState = {
     val prevMean = u.mean.value
     val prevMoments = u.moments.map(_.value)
@@ -103,8 +99,8 @@ case class NthCentralMomentSummarizer(moment: Int)
   }
 
   override def subtract(
-      u: NthCentralMomentState,
-      data: Double
+    u: NthCentralMomentState,
+    data: Double
   ): NthCentralMomentState = {
     require(u.count != 0L)
     if (u.count == 1L) {
@@ -150,8 +146,8 @@ case class NthCentralMomentSummarizer(moment: Int)
     NthCentralMomentState(0, new Kahan(), Array.fill(moment - 1)(new Kahan()))
 
   override def merge(
-      u1: NthCentralMomentState,
-      u2: NthCentralMomentState
+    u1: NthCentralMomentState,
+    u2: NthCentralMomentState
   ): NthCentralMomentState = {
     if (u1.count == 0) {
       u2
@@ -176,12 +172,12 @@ case class NthCentralMomentSummarizer(moment: Int)
 
   // Update values in u1. u2 is unchanged
   private[this] def combineMoments(
-      p: Int,
-      newCount: Long,
-      meanDelta: Double,
-      prevMoments1: Array[Double],
-      u1: NthCentralMomentState,
-      u2: NthCentralMomentState
+    p: Int,
+    newCount: Long,
+    meanDelta: Double,
+    prevMoments1: Array[Double],
+    u1: NthCentralMomentState,
+    u2: NthCentralMomentState
   ): Unit = {
 
     u1.moments(p - 2).add(u2.moments(p - 2))
@@ -194,9 +190,9 @@ case class NthCentralMomentSummarizer(moment: Int)
               p - k - 2
             ) +
               pow(u1.count.toDouble / newCount, k.toDouble) * u2
-                .moments(p - k - 2)
-                .value) *
-            pow(meanDelta, k.toDouble)
+              .moments(p - k - 2)
+              .value) *
+              pow(meanDelta, k.toDouble)
         )
     }
 

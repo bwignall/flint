@@ -16,7 +16,7 @@
 
 package com.twosigma.flint.rdd
 
-import java.text.{DateFormat, SimpleDateFormat}
+import java.text.{ DateFormat, SimpleDateFormat }
 
 // TODO should this really live here like this?
 object Parsing {

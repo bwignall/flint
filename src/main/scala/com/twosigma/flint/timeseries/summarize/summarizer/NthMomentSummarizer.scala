@@ -27,18 +27,18 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.types._
 
 case class NthMomentSummarizerFactory(column: String, moment: Int)
-    extends BaseSummarizerFactory(column) {
+  extends BaseSummarizerFactory(column) {
   override def apply(inputSchema: StructType): NthMomentSummarizer =
     NthMomentSummarizer(inputSchema, prefixOpt, requiredColumns, moment)
 }
 
 case class NthMomentSummarizer(
-    override val inputSchema: StructType,
-    override val prefixOpt: Option[String],
-    override val requiredColumns: ColumnList,
-    moment: Int
+  override val inputSchema: StructType,
+  override val prefixOpt: Option[String],
+  override val requiredColumns: ColumnList,
+  moment: Int
 ) extends LeftSubtractableSummarizer
-    with FilterNullInput {
+  with FilterNullInput {
   override type T = Double
   override type U = NthMomentState
   override type V = Double

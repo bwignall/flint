@@ -26,33 +26,33 @@ import scala.reflect.ClassTag
 import scala.collection.JavaConverters._
 
 /**
-  * Summarizes rows for each key and secondary key using a constant
-  * amount of memory per SK. This means memory is bounded to the number
-  * of distinct secondary keys times the size of the intermediate representation
-  *
-  * Assuming that you are summarizing with RowSummarizer, we can use the following
-  * example to illustrate what this iterator looks like.
-  *
-  * {{{
-  * val l = List(
-  *   (1000L, (1, 0.01)),
-  *   (1000L, (2, 0.02)),
-  *   (1000L, (1, 0.03)),
-  *   (1000L, (2, 0.04)))
-  * val iter = SummarizeByKeyIterator(l.iterator, (x: (Int, Double)) => x._1, new RowSummarizer[(Int, Double)])
-  * iter.next
-  * // (1000L, Array((1, 0.01), (1, 0.03)))
-  * iter.next
-  * // (1000L, Array((2, 0.02), (2, 0.04)))
-  * }}}
-  */
+ * Summarizes rows for each key and secondary key using a constant
+ * amount of memory per SK. This means memory is bounded to the number
+ * of distinct secondary keys times the size of the intermediate representation
+ *
+ * Assuming that you are summarizing with RowSummarizer, we can use the following
+ * example to illustrate what this iterator looks like.
+ *
+ * {{{
+ * val l = List(
+ *   (1000L, (1, 0.01)),
+ *   (1000L, (2, 0.02)),
+ *   (1000L, (1, 0.03)),
+ *   (1000L, (2, 0.04)))
+ * val iter = SummarizeByKeyIterator(l.iterator, (x: (Int, Double)) => x._1, new RowSummarizer[(Int, Double)])
+ * iter.next
+ * // (1000L, Array((1, 0.01), (1, 0.03)))
+ * iter.next
+ * // (1000L, Array((2, 0.02), (2, 0.04)))
+ * }}}
+ */
 private[rdd] class SummarizeByKeyIterator[K, V, SK, U, V2](
-    iter: Iterator[(K, V)],
-    skFn: V => SK,
-    summarizer: Summarizer[V, U, V2]
+  iter: Iterator[(K, V)],
+  skFn: V => SK,
+  summarizer: Summarizer[V, U, V2]
 )(implicit tag: ClassTag[V], ord: Ordering[K])
-    extends Iterator[(K, (SK, V2))]
-    with AutoCloseable {
+  extends Iterator[(K, (SK, V2))]
+  with AutoCloseable {
   private[this] val bufferedIter = iter.buffered
   // We use a mutable linked hash map in order to preserve the secondary key ordering.
   private[this] val intermediates: util.LinkedHashMap[SK, U] =

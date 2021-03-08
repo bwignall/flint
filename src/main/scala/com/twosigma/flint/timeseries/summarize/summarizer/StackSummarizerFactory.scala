@@ -19,10 +19,10 @@ package com.twosigma.flint.timeseries.summarize.summarizer
 import com.twosigma.flint.timeseries.summarize._
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.util.GenericArrayData
-import org.apache.spark.sql.types.{ArrayType, StructField, StructType}
+import org.apache.spark.sql.types.{ ArrayType, StructField, StructType }
 
 case class StackSummarizerFactory(factories: Seq[SummarizerFactory])
-    extends SummarizerFactory {
+  extends SummarizerFactory {
 
   factories.foreach {
     case factory =>
@@ -33,8 +33,8 @@ case class StackSummarizerFactory(factories: Seq[SummarizerFactory])
   }
 
   /**
-    * This doesn't affect input validation because [[StackSummarizer]] extends [[InputAlwaysValid]]
-    */
+   * This doesn't affect input validation because [[StackSummarizer]] extends [[InputAlwaysValid]]
+   */
   override val requiredColumns: ColumnList =
     factories.map(_.requiredColumns).reduce(_ ++ _)
 
@@ -46,12 +46,12 @@ case class StackSummarizerFactory(factories: Seq[SummarizerFactory])
 }
 
 class StackSummarizer(
-    override val inputSchema: StructType,
-    override val prefixOpt: Option[String],
-    override val requiredColumns: ColumnList,
-    summarizers: Seq[Summarizer]
+  override val inputSchema: StructType,
+  override val prefixOpt: Option[String],
+  override val requiredColumns: ColumnList,
+  summarizers: Seq[Summarizer]
 ) extends Summarizer
-    with InputAlwaysValid {
+  with InputAlwaysValid {
 
   override type T = InternalRow
   override type U = Seq[Any]

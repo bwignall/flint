@@ -29,7 +29,7 @@ import org.apache.spark.sql.catalyst.expressions.{
   UnaryExpression
 }
 import org.apache.spark.sql.catalyst.expressions.codegen.Block._
-import org.apache.spark.sql.types.{DataType, LongType, TimestampType}
+import org.apache.spark.sql.types.{ DataType, LongType, TimestampType }
 
 case class TimestampToNanos(child: Expression) extends TimestampCast {
   val dataType: DataType = LongType
@@ -60,46 +60,47 @@ object NanosToTimestamp {
 }
 
 /**
-  * Trait implementing an expression for casting Timestamp to / from
-  * Long with microsecond precision.
-  */
+ * Trait implementing an expression for casting Timestamp to / from
+ * Long with microsecond precision.
+ */
 trait TimestampCast extends UnaryExpression with NullIntolerant {
 
   /**
-    * A TimestampType or LongType column.
-    */
+   * A TimestampType or LongType column.
+   */
   def child: Expression
 
   protected def cast(childPrim: String): String
 
   override protected def doGenCode(
-      ctx: CodegenContext,
-      ev: ExprCode
+    ctx: CodegenContext,
+    ev: ExprCode
   ): ExprCode = {
     val eval = child.genCode(ctx)
     ev.copy(code =
       eval.code +
-        castCode(ctx, eval.value, eval.isNull, ev.value, ev.isNull, dataType)
-    )
+        castCode(ctx, eval.value, eval.isNull, ev.value, ev.isNull, dataType))
   }
 
   /**
-    * Copied and modified from org/apache/spark/sql/catalyst/expressions/Cast.scala
-    * Updated for changes in SPARK-24505:
-    * https://github.com/apache/spark/commit/19c45db47725a8087bd50d14d1005c53ac52e87d
-    */
+   * Copied and modified from org/apache/spark/sql/catalyst/expressions/Cast.scala
+   * Updated for changes in SPARK-24505:
+   * https://github.com/apache/spark/commit/19c45db47725a8087bd50d14d1005c53ac52e87d
+   */
   private[this] def castCode(
-      ctx: CodegenContext,
-      childPrim: String,
-      childNull: String,
-      resultPrim: String,
-      resultNull: String,
-      resultType: DataType
+    ctx: CodegenContext,
+    childPrim: String,
+    childNull: String,
+    resultPrim: String,
+    resultNull: String,
+    resultType: DataType
   ): Block = {
     code"""
       boolean $resultNull = $childNull;
-      ${CodeGenerator.javaType(resultType)} $resultPrim = ${CodeGenerator
-      .defaultValue(resultType)};
+      ${CodeGenerator.javaType(resultType)} $resultPrim = ${
+      CodeGenerator
+        .defaultValue(resultType)
+    };
       if (!${childNull}) {
         $resultPrim = (long) ${cast(childPrim)};
       }
