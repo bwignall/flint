@@ -19,12 +19,12 @@ package com.twosigma.flint.rdd
 import scala.reflect.ClassTag
 
 /**
- * An iterator expected to iterate through an ordered collection, i.e. elements in the collection
- * are ordered by their keys.
- */
+  * An iterator expected to iterate through an ordered collection, i.e. elements in the collection
+  * are ordered by their keys.
+  */
 protected[flint] class OrderedIterator[T, K: Ordering: ClassTag](
-  iterator: Iterator[T],
-  key: (T) => K
+    iterator: Iterator[T],
+    key: (T) => K
 ) extends Iterator[T] {
 
   override def hasNext: Boolean = iterator.hasNext
@@ -32,31 +32,38 @@ protected[flint] class OrderedIterator[T, K: Ordering: ClassTag](
   override def next(): T = iterator.next()
 
   /**
-   * Filter the iterator by a given range. It will first drop the elements out of range and then take elements
-   * continuously until out of range.
-   *
-   * @param range A range specifies a range of keys to keep.
-   * @return an [[OrderedIterator]] preserving the ordering.
-   */
+    * Filter the iterator by a given range. It will first drop the elements out of range and then take elements
+    * continuously until out of range.
+    *
+    * @param range A range specifies a range of keys to keep.
+    * @return an [[OrderedIterator]] preserving the ordering.
+    */
   def filterByRange(range: Range[K]): OrderedIterator[T, K] = {
-    val filtered = iterator.dropWhile {
-      t => !range.contains(key(t))
-    }.takeWhile {
-      t => range.contains(key(t))
-    }
+    val filtered = iterator
+      .dropWhile { t =>
+        !range.contains(key(t))
+      }
+      .takeWhile { t =>
+        range.contains(key(t))
+      }
     new OrderedIterator(filtered, key)
   }
 }
 
 protected[flint] class OrderedKeyValueIterator[K: Ordering: ClassTag, V](
-  iterator: Iterator[(K, V)]
+    iterator: Iterator[(K, V)]
 ) extends OrderedIterator[(K, V), K](iterator, { case (k, v) => k })
 
 protected[flint] object OrderedIterator {
 
-  def apply[K: Ordering: ClassTag, V](iterator: Iterator[(K, V)]): OrderedKeyValueIterator[K, V] =
+  def apply[K: Ordering: ClassTag, V](
+      iterator: Iterator[(K, V)]
+  ): OrderedKeyValueIterator[K, V] =
     new OrderedKeyValueIterator(iterator)
 
-  def apply[T, K: Ordering: ClassTag](iterator: Iterator[T], key: (T) => K): OrderedIterator[T, K] =
+  def apply[T, K: Ordering: ClassTag](
+      iterator: Iterator[T],
+      key: (T) => K
+  ): OrderedIterator[T, K] =
     new OrderedIterator(iterator, key)
 }

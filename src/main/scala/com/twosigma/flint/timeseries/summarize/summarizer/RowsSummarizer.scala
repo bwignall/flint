@@ -20,7 +20,12 @@ import java.util.ArrayDeque
 
 import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable
 import com.twosigma.flint.timeseries.row.Schema
-import com.twosigma.flint.timeseries.summarize.{ ColumnList, InputAlwaysValid, LeftSubtractableSummarizer, SummarizerFactory }
+import com.twosigma.flint.timeseries.summarize.{
+  ColumnList,
+  InputAlwaysValid,
+  LeftSubtractableSummarizer,
+  SummarizerFactory
+}
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.util.GenericArrayData
 import org.apache.spark.sql.types._
@@ -32,11 +37,12 @@ case class RowsSummarizerFactory(column: String) extends SummarizerFactory {
 }
 
 case class RowsSummarizer(
-  override val inputSchema: StructType,
-  override val prefixOpt: Option[String],
-  requiredColumns: ColumnList,
-  column: String
-) extends LeftSubtractableSummarizer with InputAlwaysValid {
+    override val inputSchema: StructType,
+    override val prefixOpt: Option[String],
+    requiredColumns: ColumnList,
+    column: String
+) extends LeftSubtractableSummarizer
+    with InputAlwaysValid {
   override type T = InternalRow
   override type U = ArrayDeque[InternalRow]
   override type V = Array[InternalRow]

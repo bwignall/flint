@@ -17,60 +17,67 @@
 package com.twosigma.flint.rdd.function.summarize.summarizer.subtractable
 
 import breeze.linalg._
-import com.twosigma.flint.rdd.function.summarize.summarizer.{ RegressionRow, RegressionSummarizer }
+import com.twosigma.flint.rdd.function.summarize.summarizer.{
+  RegressionRow,
+  RegressionSummarizer
+}
 
 import scala.util.control.Exception._
-import scala.util.{ Failure, Success }
+import scala.util.{Failure, Success}
 
 case class OLSRegressionState(
-  var count: Long,
-  var matrixOfXX: DenseMatrix[Double],
-  var vectorOfXY: DenseVector[Double],
-  var sumOfYSquared: Double,
-  var sumOfWeights: Double,
-  var sumOfLogWeights: Double,
-  var sumOfY: Double,
-  var variancesOfPrimaryX: Array[NthCentralMomentState]
+    var count: Long,
+    var matrixOfXX: DenseMatrix[Double],
+    var vectorOfXY: DenseVector[Double],
+    var sumOfYSquared: Double,
+    var sumOfWeights: Double,
+    var sumOfLogWeights: Double,
+    var sumOfY: Double,
+    var variancesOfPrimaryX: Array[NthCentralMomentState]
 )
 
 case class OLSRegressionOutput(
-  count: Long,
-  beta: Array[Double], // beta without intercept
-  intercept: Double,
-  hasIntercept: Boolean,
-  stdErrOfBeta: Array[Double],
-  stdErrOfIntercept: Double,
-  rSquared: Double,
-  r: Double,
-  tStatOfIntercept: Double,
-  tStatOfBeta: Array[Double],
-  logLikelihood: Double,
-  akaikeIC: Double,
-  bayesIC: Double,
-  cond: Double,
-  constantsCoordinates: Array[Int]
+    count: Long,
+    beta: Array[Double], // beta without intercept
+    intercept: Double,
+    hasIntercept: Boolean,
+    stdErrOfBeta: Array[Double],
+    stdErrOfIntercept: Double,
+    rSquared: Double,
+    r: Double,
+    tStatOfIntercept: Double,
+    tStatOfBeta: Array[Double],
+    logLikelihood: Double,
+    akaikeIC: Double,
+    bayesIC: Double,
+    cond: Double,
+    constantsCoordinates: Array[Int]
 )
 
 /**
- * @param dimensionOfX          The dimension of raw data input as predictors which doesn't include the intercept.
- * @param shouldIntercept       Whether should include intercept in the regression.
- * @param isWeighted            Whether should use given weight. All predictors and responses will be multiplied by
- *                              sqrt-weight if it is true.
- * @param shouldIgnoreConstants Whether the regression should ignore columns of X that are constants.
- *                              When true, the scalar fields of regression result are the same as if
- *                              the constant columns are removed from X. The output beta, tStat, stdErr
- *                              still have the same dimension as that of rows in X. However, entries
- *                              corresponding to constant columns will have 0.0 for beta and stdErr;
- *                              and Double.NaN for tStat. When false, the regression will throw an
- *                              exception if X has constant columns.
- */
+  * @param dimensionOfX          The dimension of raw data input as predictors which doesn't include the intercept.
+  * @param shouldIntercept       Whether should include intercept in the regression.
+  * @param isWeighted            Whether should use given weight. All predictors and responses will be multiplied by
+  *                              sqrt-weight if it is true.
+  * @param shouldIgnoreConstants Whether the regression should ignore columns of X that are constants.
+  *                              When true, the scalar fields of regression result are the same as if
+  *                              the constant columns are removed from X. The output beta, tStat, stdErr
+  *                              still have the same dimension as that of rows in X. However, entries
+  *                              corresponding to constant columns will have 0.0 for beta and stdErr;
+  *                              and Double.NaN for tStat. When false, the regression will throw an
+  *                              exception if X has constant columns.
+  */
 class OLSRegressionSummarizer(
-  dimensionOfX: Int,
-  shouldIntercept: Boolean,
-  isWeighted: Boolean,
-  shouldIgnoreConstants: Boolean = false,
-  constantErrorBound: Double
-) extends LeftSubtractableSummarizer[RegressionRow, OLSRegressionState, OLSRegressionOutput] {
+    dimensionOfX: Int,
+    shouldIntercept: Boolean,
+    isWeighted: Boolean,
+    shouldIgnoreConstants: Boolean = false,
+    constantErrorBound: Double
+) extends LeftSubtractableSummarizer[
+      RegressionRow,
+      OLSRegressionState,
+      OLSRegressionOutput
+    ] {
 
   import RegressionSummarizer._
 
@@ -82,28 +89,9 @@ class OLSRegressionSummarizer(
 
   private val varianceSummarizer = NthCentralMomentSummarizer(2)
 
-  private def almostZero(x: Double): Boolean =
-    x < constantErrorBound && x > -constantErrorBound
-
-  private def getPrimaryConstCoords(u: OLSRegressionState): Array[Int] =
-    u.variancesOfPrimaryX.zipWithIndex.filter{
-      case (momentState, i) => almostZero(u.count * varianceSummarizer.render(momentState).nthCentralMoment(2))
-    }.map(_._2)
-
-  override def zero(): OLSRegressionState = OLSRegressionState(
-    count = 0L,
-    matrixOfXX = DenseMatrix.zeros[Double](k, k),
-    vectorOfXY = DenseVector.zeros[Double](k),
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    Array.fill[NthCentralMomentState](dimensionOfX)(varianceSummarizer.zero())
-  )
-
   override def merge(
-    u1: OLSRegressionState,
-    u2: OLSRegressionState
+      u1: OLSRegressionState,
+      u2: OLSRegressionState
   ): OLSRegressionState =
     if (u1.count == 0) {
       u2
@@ -122,23 +110,172 @@ class OLSRegressionSummarizer(
       mergedU.sumOfY = u1.sumOfY + u2.sumOfY
 
       // Update variances
-      mergedU.variancesOfPrimaryX = u1.variancesOfPrimaryX.zip(u2.variancesOfPrimaryX).map {
-        case (u1Var, u2Var) => varianceSummarizer.merge(u1Var, u2Var)
-      }
+      mergedU.variancesOfPrimaryX =
+        u1.variancesOfPrimaryX.zip(u2.variancesOfPrimaryX).map {
+          case (u1Var, u2Var) => varianceSummarizer.merge(u1Var, u2Var)
+        }
 
       mergedU
     }
 
+  override def zero(): OLSRegressionState =
+    OLSRegressionState(
+      count = 0L,
+      matrixOfXX = DenseMatrix.zeros[Double](k, k),
+      vectorOfXY = DenseVector.zeros[Double](k),
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      Array.fill[NthCentralMomentState](dimensionOfX)(varianceSummarizer.zero())
+    )
+
+  override def render(u: OLSRegressionState): OLSRegressionOutput = {
+    val (shrunkState, stretchFn) = shrink(u)
+    catching(classOf[MatrixSingularException]).withTry {
+      solve(shrunkState)
+    } match {
+      case Success(o) =>
+        o.copy(
+          beta = stretchFn(o.beta, 0.0),
+          stdErrOfBeta = stretchFn(o.stdErrOfBeta, 0.0),
+          tStatOfBeta = stretchFn(o.tStatOfBeta, Double.NaN)
+        )
+      case Failure(_) =>
+        OLSRegressionOutput(
+          count = u.count,
+          beta = Array.fill(dimensionOfX)(Double.NaN),
+          intercept = Double.NaN,
+          hasIntercept = shouldIntercept,
+          stdErrOfBeta = Array.fill(dimensionOfX)(Double.NaN),
+          stdErrOfIntercept = Double.NaN,
+          rSquared = Double.NaN,
+          r = Double.NaN,
+          tStatOfIntercept = Double.NaN,
+          tStatOfBeta = Array.fill(dimensionOfX)(Double.NaN),
+          logLikelihood = Double.NaN,
+          akaikeIC = Double.NaN,
+          bayesIC = Double.NaN,
+          cond = Double.NaN,
+          constantsCoordinates = getPrimaryConstCoords(u)
+        )
+    }
+  }
+
+  override def add(
+      u: OLSRegressionState,
+      t: RegressionRow
+  ): OLSRegressionState = {
+    val (xt, yt, yw) =
+      RegressionSummarizer.transform(t, shouldIntercept, isWeighted)
+    var i = 0
+    // Update matrixOfXX
+    while (i < xt.length) {
+      var j = i
+      while (j < xt.length) {
+        val xij = xt(i) * xt(j)
+        u.matrixOfXX.update(i, j, u.matrixOfXX(i, j) + xij)
+        u.matrixOfXX.update(j, i, u.matrixOfXX(i, j))
+        j += 1
+      }
+      i += 1
+    }
+
+    // Update vectorOfXY
+    i = 0
+    while (i < xt.length) {
+      u.vectorOfXY.update(i, u.vectorOfXY(i) + xt(i) * yt)
+      i += 1
+    }
+
+    u.sumOfYSquared += yt * yt
+    u.count += 1L
+    u.sumOfWeights += yw._2
+    u.sumOfLogWeights += math.log(yw._2)
+    u.sumOfY += yw._1 * yw._2
+
+    // Update variances
+    i = 0
+    while (i < t.x.length) {
+      u.variancesOfPrimaryX(i) =
+        varianceSummarizer.add(u.variancesOfPrimaryX(i), t.x(i))
+      i += 1
+    }
+
+    u
+  }
+
+  override def subtract(
+      u: OLSRegressionState,
+      t: RegressionRow
+  ): OLSRegressionState = {
+    require(u.count > 0L)
+    if (u.count == 1L) {
+      zero()
+    } else {
+      val (xt, yt, yw) =
+        RegressionSummarizer.transform(t, shouldIntercept, isWeighted)
+      var i = 0
+      // Update matrixOfXX
+      while (i < xt.length) {
+        var j = i
+        while (j < xt.length) {
+          val xij = xt(i) * xt(j)
+          u.matrixOfXX.update(i, j, u.matrixOfXX(i, j) - xij)
+          u.matrixOfXX.update(j, i, u.matrixOfXX(i, j))
+          j += 1
+        }
+        i += 1
+      }
+
+      // Update vectorOfXY
+      i = 0
+      while (i < xt.length) {
+        u.vectorOfXY.update(i, u.vectorOfXY(i) - xt(i) * yt)
+        i += 1
+      }
+
+      u.sumOfYSquared -= yt * yt
+      u.count -= 1L
+      u.sumOfWeights -= yw._2
+      u.sumOfLogWeights -= math.log(yw._2)
+      u.sumOfY -= yw._1 * yw._2
+
+      // Update variances
+      i = 0
+      while (i < t.x.length) {
+        u.variancesOfPrimaryX(i) =
+          varianceSummarizer.subtract(u.variancesOfPrimaryX(i), t.x(i))
+        i += 1
+      }
+
+      u
+    }
+  }
+
+  private def almostZero(x: Double): Boolean =
+    x < constantErrorBound && x > -constantErrorBound
+
+  private def getPrimaryConstCoords(u: OLSRegressionState): Array[Int] =
+    u.variancesOfPrimaryX.zipWithIndex
+      .filter {
+        case (momentState, i) =>
+          almostZero(
+            u.count * varianceSummarizer.render(momentState).nthCentralMoment(2)
+          )
+      }
+      .map(_._2)
+
   /**
-   * @return a `dim`-dimension array where the value of `coordinates`(i)-th entry is `values`(i)
-   *         otherwise `defaultValue`.
-   */
+    * @return a `dim`-dimension array where the value of `coordinates`(i)-th entry is `values`(i)
+    *         otherwise `defaultValue`.
+    */
   private def stretch(
-    coordinates: IndexedSeq[Int],
-    dim: Int
+      coordinates: IndexedSeq[Int],
+      dim: Int
   )(
-    values: Array[Double],
-    defaultValue: Double
+      values: Array[Double],
+      defaultValue: Double
   ): Array[Double] = {
     assert(coordinates.length == values.length)
     val stretched = Array.fill[Double](dim)(defaultValue)
@@ -151,18 +288,27 @@ class OLSRegressionSummarizer(
   }
 
   /**
-   * @return a new state by taking the sub-matrix of matrixOfXX and sub-vector of vectorOfXY
-   *         from the given state. Also return a function to stretch beta, tStat etc. back to their
-   *         original raw dimension.
-   */
+    * @return a new state by taking the sub-matrix of matrixOfXX and sub-vector of vectorOfXY
+    *         from the given state. Also return a function to stretch beta, tStat etc. back to their
+    *         original raw dimension.
+    */
   private def shrink(
-    u: OLSRegressionState
+      u: OLSRegressionState
   ): (OLSRegressionState, (Array[Double], Double) => Array[Double]) = {
     if (shouldIgnoreConstants) {
       val primCoordinates =
-        u.variancesOfPrimaryX.zipWithIndex.filterNot{
-          case (momentState, i) => almostZero(u.count * varianceSummarizer.render(momentState).nthCentralMoment(2))
-        }.map(_._2).toIndexedSeq.sorted
+        u.variancesOfPrimaryX.zipWithIndex
+          .filterNot {
+            case (momentState, i) =>
+              almostZero(
+                u.count * varianceSummarizer
+                  .render(momentState)
+                  .nthCentralMoment(2)
+              )
+          }
+          .map(_._2)
+          .toIndexedSeq
+          .sorted
       var coordinates = primCoordinates
       if (shouldIntercept) {
         coordinates = 0 +: primCoordinates.map(_ + 1)
@@ -195,15 +341,17 @@ class OLSRegressionSummarizer(
       Math.sqrt(errorVariance * betaVar)
     }
     val stdErrs = vectorOfStdErrs.toArray
-    val vectorOfTStat = vectorOfBeta :/ vectorOfStdErrs
+    val vectorOfTStat = vectorOfBeta /:/ vectorOfStdErrs
     val tStat = vectorOfTStat.toArray
 
-    val (intercept,
+    val (
+      intercept,
       primeBeta,
       stdErrOfIntercept,
       stdErrOfPrimeBeta,
       tStatOfIntercept,
-      tStatOfPrimeBeta) =
+      tStatOfPrimeBeta
+    ) =
       if (shouldIntercept) {
         (beta(0), beta.tail, stdErrs(0), stdErrs.tail, tStat(0), tStat.tail)
       } else {
@@ -241,126 +389,5 @@ class OLSRegressionSummarizer(
       cond = condOfMatrixOfXX,
       constantsCoordinates = getPrimaryConstCoords(u)
     )
-  }
-
-  override def render(u: OLSRegressionState): OLSRegressionOutput = {
-    val (shrunkState, stretchFn) = shrink(u)
-    catching(classOf[MatrixSingularException]).withTry {
-      solve(shrunkState)
-    } match {
-      case Success(o) =>
-        o.copy(
-          beta = stretchFn(o.beta, 0.0),
-          stdErrOfBeta = stretchFn(o.stdErrOfBeta, 0.0),
-          tStatOfBeta = stretchFn(o.tStatOfBeta, Double.NaN)
-        )
-      case Failure(_) =>
-        OLSRegressionOutput(
-          count = u.count,
-          beta = Array.fill(dimensionOfX)(Double.NaN),
-          intercept = Double.NaN,
-          hasIntercept = shouldIntercept,
-          stdErrOfBeta = Array.fill(dimensionOfX)(Double.NaN),
-          stdErrOfIntercept = Double.NaN,
-          rSquared = Double.NaN,
-          r = Double.NaN,
-          tStatOfIntercept = Double.NaN,
-          tStatOfBeta = Array.fill(dimensionOfX)(Double.NaN),
-          logLikelihood = Double.NaN,
-          akaikeIC = Double.NaN,
-          bayesIC = Double.NaN,
-          cond = Double.NaN,
-          constantsCoordinates = getPrimaryConstCoords(u)
-        )
-    }
-  }
-
-  override def add(
-    u: OLSRegressionState,
-    t: RegressionRow
-  ): OLSRegressionState = {
-    val (xt, yt, yw) =
-      RegressionSummarizer.transform(t, shouldIntercept, isWeighted)
-    var i = 0
-    // Update matrixOfXX
-    while (i < xt.length) {
-      var j = i
-      while (j < xt.length) {
-        val xij = xt(i) * xt(j)
-        u.matrixOfXX.update(i, j, u.matrixOfXX(i, j) + xij)
-        u.matrixOfXX.update(j, i, u.matrixOfXX(i, j))
-        j += 1
-      }
-      i += 1
-    }
-
-    // Update vectorOfXY
-    i = 0
-    while (i < xt.length) {
-      u.vectorOfXY.update(i, u.vectorOfXY(i) + xt(i) * yt)
-      i += 1
-    }
-
-    u.sumOfYSquared += yt * yt
-    u.count += 1L
-    u.sumOfWeights += yw._2
-    u.sumOfLogWeights += math.log(yw._2)
-    u.sumOfY += yw._1 * yw._2
-
-    // Update variances
-    i = 0
-    while (i < t.x.length) {
-      u.variancesOfPrimaryX(i) = varianceSummarizer.add(u.variancesOfPrimaryX(i), t.x(i))
-      i += 1
-    }
-
-    u
-  }
-
-  override def subtract(
-    u: OLSRegressionState,
-    t: RegressionRow
-  ): OLSRegressionState = {
-    require(u.count > 0L)
-    if (u.count == 1L) {
-      zero()
-    } else {
-      val (xt, yt, yw) =
-        RegressionSummarizer.transform(t, shouldIntercept, isWeighted)
-      var i = 0
-      // Update matrixOfXX
-      while (i < xt.length) {
-        var j = i
-        while (j < xt.length) {
-          val xij = xt(i) * xt(j)
-          u.matrixOfXX.update(i, j, u.matrixOfXX(i, j) - xij)
-          u.matrixOfXX.update(j, i, u.matrixOfXX(i, j))
-          j += 1
-        }
-        i += 1
-      }
-
-      // Update vectorOfXY
-      i = 0
-      while (i < xt.length) {
-        u.vectorOfXY.update(i, u.vectorOfXY(i) - xt(i) * yt)
-        i += 1
-      }
-
-      u.sumOfYSquared -= yt * yt
-      u.count -= 1L
-      u.sumOfWeights -= yw._2
-      u.sumOfLogWeights -= math.log(yw._2)
-      u.sumOfY -= yw._1 * yw._2
-
-      // Update variances
-      i = 0
-      while (i < t.x.length) {
-        u.variancesOfPrimaryX(i) = varianceSummarizer.subtract(u.variancesOfPrimaryX(i), t.x(i))
-        i += 1
-      }
-
-      u
-    }
   }
 }

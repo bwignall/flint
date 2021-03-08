@@ -17,20 +17,32 @@
 package com.twosigma.flint.hadoop
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.mapreduce.{ Counter, TaskAttemptID, Job, TaskAttemptContext }
+import org.apache.hadoop.mapreduce.{
+  Counter,
+  TaskAttemptID,
+  Job,
+  TaskAttemptContext
+}
 
 // This exists just because of a quirk of the record reader api.
-case class ConfOnlyTAC(_conf: Configuration) extends Job with TaskAttemptContext {
+case class ConfOnlyTAC(_conf: Configuration)
+    extends Job
+    with TaskAttemptContext {
   // JobContextImpl and JobContext
   override def getConfiguration: Configuration = _conf
 
   // TaskAttemptContext
   override def getTaskAttemptID: TaskAttemptID = sys.error("not implemented")
-  override def setStatus(msg: String): Unit = sys.error("not implemented")
+
   override def getStatus = sys.error("not implemented")
+
+  override def setStatus(msg: String): Unit = sys.error("not implemented")
+
   override def getProgress: Float = sys.error("not implemented")
-  override def getCounter(counterName: Enum[_]): Counter = sys.error("not implemented")
-  override def getCounter(groupName: String, counterName: String): Counter = sys.error("not implemented")
+  override def getCounter(counterName: Enum[_]): Counter =
+    sys.error("not implemented")
+  override def getCounter(groupName: String, counterName: String): Counter =
+    sys.error("not implemented")
 
   // Progressable
   override def progress(): Unit = sys.error("not implemented")

@@ -19,7 +19,7 @@ package com.twosigma.flint.rdd.function.summarize.summarizer.subtractable
 import com.twosigma.flint.math.Kahan
 
 class DotProductSummarizer
-  extends LeftSubtractableSummarizer[(Double, Double), Kahan, Double] {
+    extends LeftSubtractableSummarizer[(Double, Double), Kahan, Double] {
 
   def zero(): Kahan = new Kahan()
 

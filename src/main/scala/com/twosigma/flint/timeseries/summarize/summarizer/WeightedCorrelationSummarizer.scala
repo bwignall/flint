@@ -29,20 +29,27 @@ import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.types._
 
 case class WeightedCorrelationSummarizerFactory(
-  xColumn: String,
-  yColumn: String,
-  weightColumn: String
+    xColumn: String,
+    yColumn: String,
+    weightColumn: String
 ) extends BaseSummarizerFactory(xColumn, yColumn, weightColumn) {
   override def apply(inputSchema: StructType): WeightedCorrelationSummarizer =
     WeightedCorrelationSummarizer(inputSchema, prefixOpt, requiredColumns)
 }
 
 case class WeightedCorrelationSummarizer(
-  override val inputSchema: StructType,
-  override val prefixOpt: Option[String],
-  override val requiredColumns: ColumnList
+    override val inputSchema: StructType,
+    override val prefixOpt: Option[String],
+    override val requiredColumns: ColumnList
 ) extends FlippableSummarizer
-  with FilterNullInput {
+    with FilterNullInput {
+  override type T = (Double, Double, Double)
+  override type U = WeightedCorrelationState
+  override type V = WeightedCorrelationOutput
+  override val summarizer = new OWeightedCorrelationSummarizer()
+  override val schema: StructType = Schema.of(
+    s"${columnPrefix}_weightedCorrelation" -> DoubleType
+  )
   private[this] val Sequence(Seq(xColumn, yColumn, weightColumn)) =
     requiredColumns
   private[this] val xColumnIndex = inputSchema.fieldIndex(xColumn)
@@ -57,16 +64,6 @@ case class WeightedCorrelationSummarizer(
     weightColumnIndex
   )
   private val columnPrefix = s"${xColumn}_${yColumn}_$weightColumn"
-
-  override type T = (Double, Double, Double)
-  override type U = WeightedCorrelationState
-  override type V = WeightedCorrelationOutput
-
-  override val summarizer = new OWeightedCorrelationSummarizer()
-
-  override val schema: StructType = Schema.of(
-    s"${columnPrefix}_weightedCorrelation" -> DoubleType
-  )
 
   override def toT(r: InternalRow): T =
     (

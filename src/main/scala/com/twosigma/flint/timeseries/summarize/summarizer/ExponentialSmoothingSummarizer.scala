@@ -44,13 +44,13 @@ object ExponentialSmoothingConvention extends Enumeration {
 }
 
 case class ExponentialSmoothingSummarizerFactory(
-  xColumn: String,
-  timeColumn: String,
-  alpha: Double,
-  primingPeriods: Double,
-  timestampsToPeriods: (Long, Long) => Double,
-  exponentialSmoothingInterpolation: ExponentialSmoothingInterpolation.Value,
-  exponentialSmoothingConvention: ExponentialSmoothingConvention.Value
+    xColumn: String,
+    timeColumn: String,
+    alpha: Double,
+    primingPeriods: Double,
+    timestampsToPeriods: (Long, Long) => Double,
+    exponentialSmoothingInterpolation: ExponentialSmoothingInterpolation.Value,
+    exponentialSmoothingConvention: ExponentialSmoothingConvention.Value
 ) extends BaseSummarizerFactory(xColumn, timeColumn) {
   override def apply(inputSchema: StructType): ExponentialSmoothingSummarizer =
     ExponentialSmoothingSummarizer(
@@ -66,29 +66,23 @@ case class ExponentialSmoothingSummarizerFactory(
 }
 
 case class ExponentialSmoothingSummarizer(
-  override val inputSchema: StructType,
-  override val prefixOpt: Option[String],
-  override val requiredColumns: ColumnList,
-  alpha: Double,
-  primingPeriods: Double,
-  timestampsToPeriods: (Long, Long) => Double,
-  exponentialSmoothingType: ExponentialSmoothingInterpolation.Value,
-  exponentialSmoothingConvention: ExponentialSmoothingConvention.Value
+    override val inputSchema: StructType,
+    override val prefixOpt: Option[String],
+    override val requiredColumns: ColumnList,
+    alpha: Double,
+    primingPeriods: Double,
+    timestampsToPeriods: (Long, Long) => Double,
+    exponentialSmoothingType: ExponentialSmoothingInterpolation.Value,
+    exponentialSmoothingConvention: ExponentialSmoothingConvention.Value
 ) extends FlippableSummarizer
-  with FilterNullInput
-  with TimeAwareSummarizer {
-
-  private val Sequence(Seq(xColumn, timeColumn)) = requiredColumns
-  private val xColumnId = inputSchema.fieldIndex(xColumn)
-  private val timeColumnId = inputSchema.fieldIndex(timeColumn)
-
-  private final val xExtractor =
-    asDoubleExtractor(inputSchema(xColumnId).dataType, xColumnId)
+    with FilterNullInput
+    with TimeAwareSummarizer {
 
   override type T = SmoothingRow
   override type U = ExponentialSmoothingState
   override type V = ExponentialSmoothingOutput
-
+  private final val xExtractor =
+    asDoubleExtractor(inputSchema(xColumnId).dataType, xColumnId)
   override val summarizer = ESSummarizer(
     alpha,
     primingPeriods,
@@ -96,8 +90,10 @@ case class ExponentialSmoothingSummarizer(
     exponentialSmoothingType,
     exponentialSmoothingConvention
   )
-
   override val schema: StructType = Schema.of(s"${xColumn}_ema" -> DoubleType)
+  private val Sequence(Seq(xColumn, timeColumn)) = requiredColumns
+  private val xColumnId = inputSchema.fieldIndex(xColumn)
+  private val timeColumnId = inputSchema.fieldIndex(timeColumn)
 
   override def toT(r: InternalRow): SmoothingRow = {
     SmoothingRow(

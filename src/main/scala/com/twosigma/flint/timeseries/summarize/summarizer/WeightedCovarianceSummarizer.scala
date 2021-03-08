@@ -28,20 +28,27 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.types._
 
 case class WeightedCovarianceSummarizerFactory(
-  xColumn: String,
-  yColumn: String,
-  weightColumn: String
+    xColumn: String,
+    yColumn: String,
+    weightColumn: String
 ) extends BaseSummarizerFactory(xColumn, yColumn, weightColumn) {
   override def apply(inputSchema: StructType): WeightedCovarianceSummarizer =
     WeightedCovarianceSummarizer(inputSchema, prefixOpt, requiredColumns)
 }
 
 case class WeightedCovarianceSummarizer(
-  override val inputSchema: StructType,
-  override val prefixOpt: Option[String],
-  override val requiredColumns: ColumnList
+    override val inputSchema: StructType,
+    override val prefixOpt: Option[String],
+    override val requiredColumns: ColumnList
 ) extends FlippableSummarizer
-  with FilterNullInput {
+    with FilterNullInput {
+  override type T = (Double, Double, Double)
+  override type U = WeightedCovarianceState
+  override type V = WeightedCovarianceOutput
+  override val summarizer = new OWeightedCovarianceSummarizer()
+  override val schema: StructType = Schema.of(
+    s"${columnPrefix}_weightedCovariance" -> DoubleType
+  )
   private[this] val Sequence(Seq(xColumn, yColumn, weightColumn)) =
     requiredColumns
   private[this] val xColumnIndex = inputSchema.fieldIndex(xColumn)
@@ -56,16 +63,6 @@ case class WeightedCovarianceSummarizer(
     weightColumnIndex
   )
   private val columnPrefix = s"${xColumn}_${yColumn}_$weightColumn"
-
-  override type T = (Double, Double, Double)
-  override type U = WeightedCovarianceState
-  override type V = WeightedCovarianceOutput
-
-  override val summarizer = new OWeightedCovarianceSummarizer()
-
-  override val schema: StructType = Schema.of(
-    s"${columnPrefix}_weightedCovariance" -> DoubleType
-  )
 
   override def toT(r: InternalRow): T =
     (

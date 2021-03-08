@@ -17,7 +17,9 @@
 package com.twosigma.flint.timeseries.summarize.summarizer
 
 import com.twosigma.flint.math.Kahan
-import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.{ DotProductSummarizer => DotProductSum }
+import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.{
+  DotProductSummarizer => DotProductSum
+}
 import com.twosigma.flint.timeseries.row.Schema
 import com.twosigma.flint.timeseries.summarize.ColumnList.Sequence
 import com.twosigma.flint.timeseries.summarize._
@@ -25,32 +27,35 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.types._
 
 case class DotProductSummarizerFactory(columnX: String, columnY: String)
-  extends BaseSummarizerFactory(columnX, columnY) {
-  override def apply(inputSchema: StructType): DotProductSummarizer = new DotProductSummarizer(
-    inputSchema,
-    prefixOpt,
-    requiredColumns
-  )
+    extends BaseSummarizerFactory(columnX, columnY) {
+  override def apply(inputSchema: StructType): DotProductSummarizer =
+    new DotProductSummarizer(
+      inputSchema,
+      prefixOpt,
+      requiredColumns
+    )
 }
 
 class DotProductSummarizer(
-  override val inputSchema: StructType,
-  override val prefixOpt: Option[String],
-  override val requiredColumns: ColumnList
-) extends LeftSubtractableSummarizer with FilterNullInput {
-  val Sequence(Seq(columnX, columnY)) = requiredColumns
-  private val columnXIndex = inputSchema.fieldIndex(columnX)
-  private val columnYIndex = inputSchema.fieldIndex(columnY)
-  private final val columnXExtractor = asDoubleExtractor(inputSchema(columnXIndex).dataType, columnXIndex)
-  private final val columnYExtractor = asDoubleExtractor(inputSchema(columnYIndex).dataType, columnYIndex)
-  private val columnPrefix = s"${columnX}_${columnY}"
-
+    override val inputSchema: StructType,
+    override val prefixOpt: Option[String],
+    override val requiredColumns: ColumnList
+) extends LeftSubtractableSummarizer
+    with FilterNullInput {
   override type T = (Double, Double)
   override type U = Kahan
   override type V = Double
+  private final val columnXExtractor =
+    asDoubleExtractor(inputSchema(columnXIndex).dataType, columnXIndex)
+  private final val columnYExtractor =
+    asDoubleExtractor(inputSchema(columnYIndex).dataType, columnYIndex)
   override val summarizer = new DotProductSum()
-
   override val schema = Schema.of(s"${columnPrefix}_dotProduct" -> DoubleType)
+  val Sequence(Seq(columnX, columnY)) = requiredColumns
+  private val columnXIndex = inputSchema.fieldIndex(columnX)
+  private val columnYIndex = inputSchema.fieldIndex(columnY)
+  private val columnPrefix = s"${columnX}_${columnY}"
+
   override def toT(r: InternalRow): T =
     (
       columnXExtractor(r),

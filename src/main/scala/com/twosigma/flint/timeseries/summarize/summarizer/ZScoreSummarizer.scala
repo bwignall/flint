@@ -16,33 +16,43 @@
 
 package com.twosigma.flint.timeseries.summarize.summarizer
 
-import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.{ ZScoreState, ZScoreSummarizer => ZSSummarizer }
+import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.{
+  ZScoreState,
+  ZScoreSummarizer => ZSSummarizer
+}
 import com.twosigma.flint.timeseries.row.Schema
 import com.twosigma.flint.timeseries.summarize.ColumnList.Sequence
 import com.twosigma.flint.timeseries.summarize._
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.types._
 
-case class ZScoreSummarizerFactory(column: String, includeCurrentObservation: Boolean)
-  extends BaseSummarizerFactory(column) {
+case class ZScoreSummarizerFactory(
+    column: String,
+    includeCurrentObservation: Boolean
+) extends BaseSummarizerFactory(column) {
   override def apply(inputSchema: StructType): ZScoreSummarizer =
-    ZScoreSummarizer(inputSchema, prefixOpt, requiredColumns: ColumnList, includeCurrentObservation)
+    ZScoreSummarizer(
+      inputSchema,
+      prefixOpt,
+      requiredColumns: ColumnList,
+      includeCurrentObservation
+    )
 }
 
 case class ZScoreSummarizer(
-  override val inputSchema: StructType,
-  override val prefixOpt: Option[String],
-  override val requiredColumns: ColumnList,
-  includeCurrentObservation: Boolean
-) extends LeftSubtractableSummarizer with FilterNullInput {
-  private val Sequence(Seq(column)) = requiredColumns
-  private val columnIndex = inputSchema.fieldIndex(column)
-
+    override val inputSchema: StructType,
+    override val prefixOpt: Option[String],
+    override val requiredColumns: ColumnList,
+    includeCurrentObservation: Boolean
+) extends LeftSubtractableSummarizer
+    with FilterNullInput {
   override type T = Double
   override type U = ZScoreState
   override type V = Double
   override val summarizer = ZSSummarizer(includeCurrentObservation)
   override val schema = Schema.of(s"${column}_zScore" -> DoubleType)
+  private val Sequence(Seq(column)) = requiredColumns
+  private val columnIndex = inputSchema.fieldIndex(column)
 
   override def toT(r: InternalRow): T = r.getDouble(columnIndex)
 

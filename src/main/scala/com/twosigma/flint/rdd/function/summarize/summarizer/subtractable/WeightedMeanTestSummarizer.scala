@@ -20,35 +20,39 @@ import com.twosigma.flint.math.Kahan
 import scala.math._
 
 /**
- * Calculates the weighted mean, weighted deviation, weighted t-stat, and the count of observations.
- *
- * Implemented based on
- * [[http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Weighted_incremental_algorithm Weighted incrememtal algorithm]] and
- * [[http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Parallel_algorithm Parallel algorithm]]
- * and replaces all "n" with corresponding "SumWeight"
- *
- */
+  * Calculates the weighted mean, weighted deviation, weighted t-stat, and the count of observations.
+  *
+  * Implemented based on
+  * [[http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Weighted_incremental_algorithm Weighted incrememtal algorithm]] and
+  * [[http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Parallel_algorithm Parallel algorithm]]
+  * and replaces all "n" with corresponding "SumWeight"
+  *
+  */
 case class WeightedMeanTestState(
-  var count: Long,
-  sumWeight: Kahan,
-  mean: Kahan,
-  sumSquareOfDiffFromMean: Kahan,
-  sumSquareOfWeights: Kahan
+    var count: Long,
+    sumWeight: Kahan,
+    mean: Kahan,
+    sumSquareOfDiffFromMean: Kahan,
+    sumSquareOfWeights: Kahan
 )
 
 case class WeightedMeanTestOutput(
-  weighedMean: Double,
-  weightedStandardDeviation: Double,
-  weightedTstat: Double,
-  observationCount: Long
+    weighedMean: Double,
+    weightedStandardDeviation: Double,
+    weightedTstat: Double,
+    observationCount: Long
 )
 
 case class WeightedMeanTestSummarizer()
-  extends LeftSubtractableSummarizer[(Double, Double), WeightedMeanTestState, WeightedMeanTestOutput] {
-  override def zero(): WeightedMeanTestState =
-    WeightedMeanTestState(0, new Kahan(), new Kahan(), new Kahan(), new Kahan())
-
-  override def add(u: WeightedMeanTestState, data: (Double, Double)): WeightedMeanTestState = {
+    extends LeftSubtractableSummarizer[
+      (Double, Double),
+      WeightedMeanTestState,
+      WeightedMeanTestOutput
+    ] {
+  override def add(
+      u: WeightedMeanTestState,
+      data: (Double, Double)
+  ): WeightedMeanTestState = {
     val (rawValue, rawWeight) = data
 
     // Skip the data point if weight is 0.0
@@ -75,7 +79,10 @@ case class WeightedMeanTestSummarizer()
     }
   }
 
-  override def subtract(u: WeightedMeanTestState, data: (Double, Double)): WeightedMeanTestState = {
+  override def subtract(
+      u: WeightedMeanTestState,
+      data: (Double, Double)
+  ): WeightedMeanTestState = {
     require(u.count != 0L)
     if (u.count == 1L) {
       zero()
@@ -90,7 +97,8 @@ case class WeightedMeanTestSummarizer()
         val oldSumWeight = u.sumWeight.value
         u.sumWeight.add(-weight)
 
-        val newMean = (u.mean.value * oldSumWeight - weight * value) / u.sumWeight.value
+        val newMean =
+          (u.mean.value * oldSumWeight - weight * value) / u.sumWeight.value
         val delta = value - newMean
         val R = delta * weight / oldSumWeight
 
@@ -106,7 +114,13 @@ case class WeightedMeanTestSummarizer()
     }
   }
 
-  override def merge(u1: WeightedMeanTestState, u2: WeightedMeanTestState): WeightedMeanTestState = {
+  override def zero(): WeightedMeanTestState =
+    WeightedMeanTestState(0, new Kahan(), new Kahan(), new Kahan(), new Kahan())
+
+  override def merge(
+      u1: WeightedMeanTestState,
+      u2: WeightedMeanTestState
+  ): WeightedMeanTestState = {
     if (u1.count == 0L) {
       u2
     } else if (u2.count == 0L) {
@@ -118,7 +132,9 @@ case class WeightedMeanTestSummarizer()
       u1.sumWeight.add(u2.sumWeight)
       u1.mean.add(u2.sumWeight.value * delta / u1.sumWeight.value)
       u1.sumSquareOfDiffFromMean.add(u2.sumSquareOfDiffFromMean)
-      u1.sumSquareOfDiffFromMean.add(delta * delta * oldSumWeight * u2.sumWeight.value / u1.sumWeight.value)
+      u1.sumSquareOfDiffFromMean.add(
+        delta * delta * oldSumWeight * u2.sumWeight.value / u1.sumWeight.value
+      )
       u1.sumSquareOfWeights.add(u2.sumSquareOfWeights)
       u1.count += u2.count
 
@@ -130,7 +146,8 @@ case class WeightedMeanTestSummarizer()
     val sumOfWeights = u.sumWeight.value
     val variance = u.sumSquareOfDiffFromMean.value * sumOfWeights /
       (sumOfWeights * sumOfWeights - u.sumSquareOfWeights.value)
-    val effectiveSampleSize = sumOfWeights * sumOfWeights / u.sumSquareOfWeights.value
+    val effectiveSampleSize =
+      sumOfWeights * sumOfWeights / u.sumSquareOfWeights.value
     val stdDev = sqrt(variance)
     val tStat = sqrt(effectiveSampleSize) * u.mean.value / stdDev
 

@@ -16,7 +16,10 @@
 
 package com.twosigma.flint.rdd
 
-import com.twosigma.flint.rdd.function.group.{ Intervalize, SummarizeByKeyIterator }
+import com.twosigma.flint.rdd.function.group.{
+  Intervalize,
+  SummarizeByKeyIterator
+}
 import com.twosigma.flint.rdd.function.join._
 import com.twosigma.flint.rdd.function.summarize._
 import com.twosigma.flint.rdd.function.summarize.summarizer.Summarizer
@@ -26,101 +29,109 @@ import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.RowsSum
 import com.twosigma.flint.rdd.function.window.SummarizeWindows
 import com.twosigma.flint.rdd.function.window.summarizer.WindowBatchSummarizer
 import org.apache.spark.annotation.DeveloperApi
-import org.apache.spark.rdd.{ RDD, ShuffledRDD }
+import org.apache.spark.rdd.{RDD, ShuffledRDD}
 import org.apache.spark._
 
 import scala.collection.mutable
 import scala.reflect.ClassTag
 
-private[flint] case class OrderedRDDPartition(override val index: Int) extends Partition
+private[flint] case class OrderedRDDPartition(override val index: Int)
+    extends Partition
 
 object OrderedRDD {
 
   /**
-   * Convert an [[org.apache.spark.rdd.RDD RDD]] to an [[OrderedRDD]].
-   *
-   * @param rdd     The [[org.apache.spark.rdd.RDD RDD]] of (K, V) tuples expected to convert.
-   * @param rddType The type of `rdd`.
-   * @param keyRdd  The [[org.apache.spark.rdd.RDD]] of keys of `rdd`. The `keyRdd` is expected to have exactly the
-   *                same distribution of keys as that of `rdd`, i.e. same number of partition; the i-th partitions
-   *                of `rdd` and `keyRdd` have exactly the same sequences of keys. An example of `keyRdd` could
-   *                be obtained by {{ rdd.map(_._1) }}. This parameter is optional with default null.
-   * @return an [[OrderedRDD]].
-   */
+    * Convert an [[org.apache.spark.rdd.RDD RDD]] to an [[OrderedRDD]].
+    *
+    * @param rdd     The [[org.apache.spark.rdd.RDD RDD]] of (K, V) tuples expected to convert.
+    * @param rddType The type of `rdd`.
+    * @param keyRdd  The [[org.apache.spark.rdd.RDD]] of keys of `rdd`. The `keyRdd` is expected to have exactly the
+    *                same distribution of keys as that of `rdd`, i.e. same number of partition; the i-th partitions
+    *                of `rdd` and `keyRdd` have exactly the same sequences of keys. An example of `keyRdd` could
+    *                be obtained by {{ rdd.map(_._1) }}. This parameter is optional with default null.
+    * @return an [[OrderedRDD]].
+    */
   def fromRDD[K: ClassTag, V: ClassTag](
-    rdd: RDD[(K, V)],
-    rddType: KeyPartitioningType,
-    keyRdd: RDD[K] = null
-  )(implicit ord: Ordering[K]): OrderedRDD[K, V] = rddType match {
-    case KeyPartitioningType.NormalizedSorted => Conversion.fromNormalizedSortedRDD(rdd)
-    case KeyPartitioningType.Sorted => Conversion.fromSortedRDD(rdd, keyRdd)
-    case KeyPartitioningType.UnSorted => Conversion.fromUnsortedRDD(rdd)
-  }
+      rdd: RDD[(K, V)],
+      rddType: KeyPartitioningType,
+      keyRdd: RDD[K] = null
+  )(implicit ord: Ordering[K]): OrderedRDD[K, V] =
+    rddType match {
+      case KeyPartitioningType.NormalizedSorted =>
+        Conversion.fromNormalizedSortedRDD(rdd)
+      case KeyPartitioningType.Sorted   => Conversion.fromSortedRDD(rdd, keyRdd)
+      case KeyPartitioningType.UnSorted => Conversion.fromUnsortedRDD(rdd)
+    }
 
   /**
-   * Convert a sorted [[org.apache.spark.rdd.RDD RDD]] to an [[OrderedRDD]] with no extra cost.
-   * This function takes an extra parameter `ranges` to specify partition boundaries.
-   *
-   * @param ranges The partition boundaries which must be close-open for all partitions.
-   * @note Unless you know what you are doing, do not use this function.
-   */
+    * Convert a sorted [[org.apache.spark.rdd.RDD RDD]] to an [[OrderedRDD]] with no extra cost.
+    * This function takes an extra parameter `ranges` to specify partition boundaries.
+    *
+    * @param ranges The partition boundaries which must be close-open for all partitions.
+    * @note Unless you know what you are doing, do not use this function.
+    */
   @DeveloperApi
   @PythonApi
   def fromRDD[K: Ordering: ClassTag, V: ClassTag](
-    rdd: RDD[(K, V)],
-    ranges: Seq[CloseOpen[K]]
+      rdd: RDD[(K, V)],
+      ranges: Seq[CloseOpen[K]]
   ): OrderedRDD[K, V] = Conversion.fromRDD(rdd, ranges)
 
   @DeveloperApi
   @PythonApi
   def fromRDD[K: Ordering: ClassTag, V: ClassTag](
-    rdd: RDD[(K, V)],
-    deps: Seq[Dependency[_]],
-    rangeSplits: Seq[RangeSplit[K]]
+      rdd: RDD[(K, V)],
+      deps: Seq[Dependency[_]],
+      rangeSplits: Seq[RangeSplit[K]]
   ): OrderedRDD[K, V] = Conversion.fromRDD(rdd, deps, rangeSplits)
 
   /**
-   * Convert a sorted rows stored as a CSV file into an [[OrderedRDD]].
-   *
-   * @param sc            The Spark context.
-   * @param file          The file path of CSV file.
-   * @param numPartitions The number of partitions expects to split the returning [[OrderedRDD]].
-   * @return an [[OrderedRDD]].
-   */
+    * Convert a sorted rows stored as a CSV file into an [[OrderedRDD]].
+    *
+    * @param sc            The Spark context.
+    * @param file          The file path of CSV file.
+    * @param numPartitions The number of partitions expects to split the returning [[OrderedRDD]].
+    * @return an [[OrderedRDD]].
+    */
   def fromCSV[V: ClassTag](
-    sc: SparkContext,
-    file: String,
-    numPartitions: Int
+      sc: SparkContext,
+      file: String,
+      numPartitions: Int
   )(parse: Iterator[String] => Iterator[(Long, V)]): OrderedRDD[Long, V] =
     Conversion.fromCSV(sc, file, numPartitions)(parse)
 }
 
 /**
- * An RDD extension that represents an ordered dataset.
- *
- * The rows of an [[OrderedRDD]] are key-value tuples (K, V) and they have been sorted by the ordering of K.
- * It associates a [[CloseOpen]] range [b, e) to each partition such that all keys of rows in the partition
- * are bounded by it.
- *
- * The following are the invariants of [[OrderedRDD]]:
- *   - partition range is close-open range [b, e), where b is the first key and e might NOT be the first key
- *     of the next partition;
- *   - a key cannot appear in more than one partition;
- */
+  * An RDD extension that represents an ordered dataset.
+  *
+  * The rows of an [[OrderedRDD]] are key-value tuples (K, V) and they have been sorted by the ordering of K.
+  * It associates a [[CloseOpen]] range [b, e) to each partition such that all keys of rows in the partition
+  * are bounded by it.
+  *
+  * The following are the invariants of [[OrderedRDD]]:
+  *   - partition range is close-open range [b, e), where b is the first key and e might NOT be the first key
+  *     of the next partition;
+  *   - a key cannot appear in more than one partition;
+  */
 class OrderedRDD[K: ClassTag, V: ClassTag](
-  @transient val sc: SparkContext,
-  @transient private[flint] val splits: Seq[RangeSplit[K]],
-  @transient private[flint] val deps: Seq[Dependency[_]] = Nil
-)(create: (Partition, TaskContext) => Iterator[(K, V)])(implicit ord: Ordering[K])
-  extends RDD[(K, V)](sc, deps) {
-
-  private val self = this
+    @transient val sc: SparkContext,
+    @transient private[flint] val splits: Seq[RangeSplit[K]],
+    @transient private[flint] val deps: Seq[Dependency[_]] = Nil
+)(create: (Partition, TaskContext) => Iterator[(K, V)])(implicit
+    ord: Ordering[K]
+) extends RDD[(K, V)](sc, deps) {
 
   /**
-   * A sequence of [[RangeSplit]]s sorted by their partitions' indices where a [[RangeSplit]]
-   * represents an non-empty partition with its [[Range]] information.
-   */
-  val rangeSplits: Array[RangeSplit[K]] = splits.sortBy(_.partition.index).toArray
+    * A sequence of [[RangeSplit]]s sorted by their partitions' indices where a [[RangeSplit]]
+    * represents an non-empty partition with its [[Range]] information.
+    */
+  val rangeSplits: Array[RangeSplit[K]] =
+    splits.sortBy(_.partition.index).toArray
+
+  /**
+    * Return the partition ranges for this [[OrderedRDD]] as a sequence.
+    */
+  val getPartitionRanges: Seq[CloseOpen[K]] = rangeSplits.map(_.range)
 
   // Sanity checks
   if (rangeSplits.length > 1) {
@@ -130,21 +141,23 @@ class OrderedRDD[K: ClassTag, V: ClassTag](
     )
 
     // Check whether they are increasing and non overlapping.
-    rangeSplits.headOption.map {
-      s0 =>
-        rangeSplits.foldLeft((s0, true)) {
-          case ((s1, isOrdered), s2) =>
-            s1.range.end.fold(sys.error("Only the final partition is allowed to be unbound.")) {
-              e => (s2, isOrdered && ord.lteq(e, s2.range.begin))
-            }
-        }
+    rangeSplits.headOption.map { s0 =>
+      rangeSplits.foldLeft((s0, true)) {
+        case ((s1, isOrdered), s2) =>
+          s1.range.end.fold(
+            sys.error("Only the final partition is allowed to be unbound.")
+          ) { e =>
+            (s2, isOrdered && ord.lteq(e, s2.range.begin))
+          }
+      }
     }
 
     rangeSplits.zipWithIndex.foreach {
-      case (split, idx) => require(
-        split.partition.index == idx,
-        "The indices of rangeSplits are not consistent to their partitions indices."
-      )
+      case (split, idx) =>
+        require(
+          split.partition.index == idx,
+          "The indices of rangeSplits are not consistent to their partitions indices."
+        )
     }
 
     deps.foreach {
@@ -165,29 +178,47 @@ class OrderedRDD[K: ClassTag, V: ClassTag](
   // ==============================================================================================
   // Internal or developer APIs
   // ==============================================================================================
+  private val self = this
 
-  override def compute(partition: Partition, context: TaskContext): Iterator[(K, V)] = create(partition, context)
-
-  override protected def getPartitions: Array[Partition] = rangeSplits.map(_.partition)
-
-  /**
-   * @note We can totally use the info that we get from the splits, but right now there is no point
-   * because we're not running on the HDFS nodes anyway.
-   */
-  override protected def getPreferredLocations(split: Partition): Seq[String] = Nil
+  override def compute(
+      partition: Partition,
+      context: TaskContext
+  ): Iterator[(K, V)] = create(partition, context)
 
   /**
-   * Similar to [[org.apache.spark.rdd.RDD.mapPartitionsWithIndex]], it returns an [[OrderedRDD]] by applying a function
-   * to each partition of this [[OrderedRDD]], while tracking the index of the original partition.
-   *
-   * @note key must not be changed.
-   */
+    * Similar to [[org.apache.spark.rdd.RDD.mapPartitionsWithIndex]], it returns an [[OrderedRDD]] by applying a function
+    * to each partition of this [[OrderedRDD]], while tracking the index of the original partition.
+    *
+    * @note key must not be changed.
+    */
   @DeveloperApi
   def mapPartitionsWithIndexOrdered[V2: ClassTag](
-    f: (Int, Iterator[(K, V)]) => Iterator[(K, V2)]
+      f: (Int, Iterator[(K, V)]) => Iterator[(K, V2)]
   ): OrderedRDD[K, V2] = {
     new OrderedRDD(self.sc, rangeSplits, Seq(new OneToOneDependency(self)))(
-      (partition, taskContext) => f(partition.index, self.iterator(partition, taskContext))
+      (partition, taskContext) =>
+        f(partition.index, self.iterator(partition, taskContext))
+    )
+  }
+
+  /**
+    * Return a new [[OrderedRDD]] that has exactly `numPartitions` partitions.
+    *
+    * Can increase or decrease the level of parallelism in this [[OrderedRDD]]. Internally, this uses
+    * a shuffle to redistribute data if it tries to increase the numPartitions.
+    *
+    * If you are decreasing the number of partitions in this [[OrderedRDD]], consider using
+    * [[OrderedRDD]]'s coalesce method, which can avoid performing a shuffle.
+    *
+    * @param numPartitions The expected number of partitions.
+    * @return a new [[OrderedRDD]] that has exactly `numPartitions` partitions.
+    */
+  def repartition(numPartitions: Int): OrderedRDD[K, V] = {
+    val partitioner = new RangePartitioner(numPartitions, self, true)
+    // TODO: we should improve the Partitioner or the ShuffledRDD to report the Range per partition
+    //       which we should use later for fromSortedRDD to avoid extra read and thus lazy.
+    Conversion.fromSortedRDD(
+      new ShuffledRDD[K, V, V](self, partitioner).setKeyOrdering(ord)
     )
   }
 
@@ -196,36 +227,12 @@ class OrderedRDD[K: ClassTag, V: ClassTag](
   // ==============================================================================================
 
   /**
-   * Return the partition ranges for this [[OrderedRDD]] as a sequence.
-   */
-  val getPartitionRanges: Seq[CloseOpen[K]] = rangeSplits.map(_.range)
-
-  /**
-   * Return a new [[OrderedRDD]] that has exactly `numPartitions` partitions.
-   *
-   * Can increase or decrease the level of parallelism in this [[OrderedRDD]]. Internally, this uses
-   * a shuffle to redistribute data if it tries to increase the numPartitions.
-   *
-   * If you are decreasing the number of partitions in this [[OrderedRDD]], consider using
-   * [[OrderedRDD]]'s coalesce method, which can avoid performing a shuffle.
-   *
-   * @param numPartitions The expected number of partitions.
-   * @return a new [[OrderedRDD]] that has exactly `numPartitions` partitions.
-   */
-  def repartition(numPartitions: Int): OrderedRDD[K, V] = {
-    val partitioner = new RangePartitioner(numPartitions, self, true)
-    // TODO: we should improve the Partitioner or the ShuffledRDD to report the Range per partition
-    //       which we should use later for fromSortedRDD to avoid extra read and thus lazy.
-    Conversion.fromSortedRDD(new ShuffledRDD[K, V, V](self, partitioner).setKeyOrdering(ord))
-  }
-
-  /**
-   * Return a new [[OrderedRDD]] that is reduced to numPartitions partitions.
-   *
-   * @param numPartitions The number of target partitions which must be positive and less then the number of
-   *                      partitions of this [[OrderedRDD]].
-   * @return a new [[OrderedRDD]] with partitions.length == numPartitions
-   */
+    * Return a new [[OrderedRDD]] that is reduced to numPartitions partitions.
+    *
+    * @param numPartitions The number of target partitions which must be positive and less then the number of
+    *                      partitions of this [[OrderedRDD]].
+    * @return a new [[OrderedRDD]] with partitions.length == numPartitions
+    */
   def coalesce(numPartitions: Int): OrderedRDD[K, V] = {
     require(numPartitions > 0, "Must coalesce to more than 0 partitions")
 
@@ -235,25 +242,24 @@ class OrderedRDD[K: ClassTag, V: ClassTag](
       return this
     } else {
       // table of ranges and partitions from coalescing
-      val coalesced = (0 until numPartitions).map {
-        i =>
-          // array indices of aggregated partitions
-          val begin = ((i.toLong * rangeSplits.length) / numPartitions).toInt
-          val end = (((i.toLong + 1) * rangeSplits.length) / numPartitions).toInt
+      val coalesced = (0 until numPartitions).map { i =>
+        // array indices of aggregated partitions
+        val begin = ((i.toLong * rangeSplits.length) / numPartitions).toInt
+        val end = (((i.toLong + 1) * rangeSplits.length) / numPartitions).toInt
 
-          // ranges and partitions that will be coalesced together
-          val mySplits = rangeSplits.slice(begin, end)
-          val coalescedRanges = CloseOpen(
-            mySplits(0).range.begin,
-            mySplits(mySplits.length - 1).range.end
-          )
-          val coalescedPartitions = mySplits.map(_.partition)
-          (i, coalescedRanges, coalescedPartitions)
+        // ranges and partitions that will be coalesced together
+        val mySplits = rangeSplits.slice(begin, end)
+        val coalescedRanges = CloseOpen(
+          mySplits(0).range.begin,
+          mySplits(mySplits.length - 1).range.end
+        )
+        val coalescedPartitions = mySplits.map(_.partition)
+        (i, coalescedRanges, coalescedPartitions)
       }
 
       // array of RangeSplits with new partition index
-      val coalescedSplits = coalesced.map {
-        x => RangeSplit(OrderedRDDPartition(x._1).asInstanceOf[Partition], x._2)
+      val coalescedSplits = coalesced.map { x =>
+        RangeSplit(OrderedRDDPartition(x._1).asInstanceOf[Partition], x._2)
       }
 
       // dependencies to parent RDD
@@ -272,231 +278,256 @@ class OrderedRDD[K: ClassTag, V: ClassTag](
   }
 
   /**
-   * Merge this [[OrderedRDD]] with another [[OrderedRDD]] while preserving the ordering of key.
-   *
-   * See [[com.twosigma.flint.rdd.function.join.Merge\$.apply]] for more information.
-   *
-   * @param that The other [[OrderedRDD]] expected to merge with.
-   * @return the merged [[OrderedRDD]].
-   */
+    * Merge this [[OrderedRDD]] with another [[OrderedRDD]] while preserving the ordering of key.
+    *
+    * See [[com.twosigma.flint.rdd.function.join.Merge\$.apply]] for more information.
+    *
+    * @param that The other [[OrderedRDD]] expected to merge with.
+    * @return the merged [[OrderedRDD]].
+    */
   // TODO: check the invariants of the merged OrderedRDD.
   def merge(that: OrderedRDD[K, V]): OrderedRDD[K, V] = Merge(self, that)
 
   /**
-   * Merge this [[OrderedRDD]] with another [[OrderedRDD]] while preserving the ordering of key.
-   *
-   * The other [[OrderedRDD]] could have different value type. See [[com.twosigma.flint.rdd.function.join.Merge\$.++]]
-   * for more information.
-   *
-   * @param that The other [[OrderedRDD]] expected to merge with.
-   * @return the merged [[OrderedRDD]].
-   */
+    * Merge this [[OrderedRDD]] with another [[OrderedRDD]] while preserving the ordering of key.
+    *
+    * The other [[OrderedRDD]] could have different value type. See [[com.twosigma.flint.rdd.function.join.Merge\$.++]]
+    * for more information.
+    *
+    * @param that The other [[OrderedRDD]] expected to merge with.
+    * @return the merged [[OrderedRDD]].
+    */
   // TODO: check the invariants of the merged OrderedRDD.
-  def ++[V2: ClassTag](that: OrderedRDD[K, V2]): OrderedRDD[K, Either[V, V2]] = Merge.++(self, that)
+  def ++[V2: ClassTag](that: OrderedRDD[K, V2]): OrderedRDD[K, Either[V, V2]] =
+    Merge.++(self, that)
 
   /**
-   * Left-join two tables as of a key and or on a secondary key.
-   *
-   * See [[com.twosigma.flint.rdd.function.join.LeftJoin\$.apply]] for more information.
-   *
-   * @param that        Right [[OrderedRDD]] to join; the left one is simply this object.
-   * @param toleranceFn Function that provides the maximum allowed tolerance to lookback.
-   * @param leftSk      Function that returns the desired secondary key from the left.
-   * @param rightSk     Function that returns the desired secondary key from the right.
-   * @note consider allowing more than one right at the time. It should avoid an extra scan on the
-   *       left. Need to muse on how spark will schedule that, because it may pipeline straight into the
-   *       next stage and be good enough.
-   */
+    * Left-join two tables as of a key and or on a secondary key.
+    *
+    * See [[com.twosigma.flint.rdd.function.join.LeftJoin\$.apply]] for more information.
+    *
+    * @param that        Right [[OrderedRDD]] to join; the left one is simply this object.
+    * @param toleranceFn Function that provides the maximum allowed tolerance to lookback.
+    * @param leftSk      Function that returns the desired secondary key from the left.
+    * @param rightSk     Function that returns the desired secondary key from the right.
+    * @note consider allowing more than one right at the time. It should avoid an extra scan on the
+    *       left. Need to muse on how spark will schedule that, because it may pipeline straight into the
+    *       next stage and be good enough.
+    */
   def leftJoin[SK1, SK2, V2: ClassTag](
-    that: OrderedRDD[K, V2],
-    toleranceFn: K => K,
-    leftSk: V => SK1,
-    rightSk: V2 => SK2
-  )(implicit ev: SK1 =:= SK2): OrderedRDD[K, (V, Option[(K, V2)])] = LeftJoin(self, that, toleranceFn, leftSk, rightSk)
+      that: OrderedRDD[K, V2],
+      toleranceFn: K => K,
+      leftSk: V => SK1,
+      rightSk: V2 => SK2
+  )(implicit ev: SK1 =:= SK2): OrderedRDD[K, (V, Option[(K, V2)])] =
+    LeftJoin(self, that, toleranceFn, leftSk, rightSk)
 
   /**
-   * Left-join this and the other [[OrderedRDD]] as of a key and or on a secondary key using inexact key
-   * matches. For each row in the left, append the first row from the right at or
-   * after the same time. Similar to [[OrderedRDD.leftJoin]] except that it joins with future rows when no matching
-   * key are found.
-   *
-   * @param that          Right [[OrderedRDD]] to join; the left is simply this object.
-   * @param toleranceFn   Function that provides the maximum allowed tolerance to lookahead.
-   * @param leftSk        Function that returns the desired secondary key from the left table.
-   * @param rightSk       Function that returns the desired secondary key from the right table.
-   * @param strictForward A flag specifies when performing a future left join, join rows where keys
-   *                      exactly match. The default is false.
-   * @note consider allowing more than one right at the time. It should avoid an extra scan on the
-   *       left. Need to muse on how spark will schedule that, because it may pipeline straight into the
-   *       next stage and be good enough.
-   */
+    * Left-join this and the other [[OrderedRDD]] as of a key and or on a secondary key using inexact key
+    * matches. For each row in the left, append the first row from the right at or
+    * after the same time. Similar to [[OrderedRDD.leftJoin]] except that it joins with future rows when no matching
+    * key are found.
+    *
+    * @param that          Right [[OrderedRDD]] to join; the left is simply this object.
+    * @param toleranceFn   Function that provides the maximum allowed tolerance to lookahead.
+    * @param leftSk        Function that returns the desired secondary key from the left table.
+    * @param rightSk       Function that returns the desired secondary key from the right table.
+    * @param strictForward A flag specifies when performing a future left join, join rows where keys
+    *                      exactly match. The default is false.
+    * @note consider allowing more than one right at the time. It should avoid an extra scan on the
+    *       left. Need to muse on how spark will schedule that, because it may pipeline straight into the
+    *       next stage and be good enough.
+    */
   def futureLeftJoin[SK1, SK2, V2: ClassTag](
-    that: OrderedRDD[K, V2],
-    toleranceFn: K => K,
-    leftSk: V => SK1,
-    rightSk: V2 => SK2,
-    strictForward: Boolean
+      that: OrderedRDD[K, V2],
+      toleranceFn: K => K,
+      leftSk: V => SK1,
+      rightSk: V2 => SK2,
+      strictForward: Boolean
   )(implicit ev: SK1 =:= SK2): OrderedRDD[K, (V, Option[(K, V2)])] =
     FutureLeftJoin(self, that, toleranceFn, leftSk, rightSk, strictForward)
 
   /**
-   * Outer-join two tables as of a timestamp and on a secondary key.
-   *
-   * @param that        Right table to join; the left table is simply this object
-   * @param toleranceFn Function that provides the maximum allowed time to lookback
-   * @param leftSk      Function that returns the desired secondary key from the left table
-   * @param rightSk     Function that returns the desired secondary key from the right table
-   */
+    * Outer-join two tables as of a timestamp and on a secondary key.
+    *
+    * @param that        Right table to join; the left table is simply this object
+    * @param toleranceFn Function that provides the maximum allowed time to lookback
+    * @param leftSk      Function that returns the desired secondary key from the left table
+    * @param rightSk     Function that returns the desired secondary key from the right table
+    */
   def symmetricJoin[SK, V2: ClassTag](
-    that: OrderedRDD[K, V2],
-    toleranceFn: K => K,
-    leftSk: V => SK,
-    rightSk: V2 => SK
-  ): OrderedRDD[K, (Option[(K, V)], Option[(K, V2)])] = SymmetricJoin(self, that, toleranceFn, leftSk, rightSk)
+      that: OrderedRDD[K, V2],
+      toleranceFn: K => K,
+      leftSk: V => SK,
+      rightSk: V2 => SK
+  ): OrderedRDD[K, (Option[(K, V)], Option[(K, V2)])] =
+    SymmetricJoin(self, that, toleranceFn, leftSk, rightSk)
 
   /**
-   * For each row of an [[OrderedRDD]], apply a [[Summarizer]] to all rows of its window.
-   *
-   * @param window     A function defines the window for a given key.
-   * @param summarizer A [[Summarizer]] expects to apply.
-   * @return a [[OrderedRDD]] with windowing summaries.
-   */
+    * For each row of an [[OrderedRDD]], apply a [[Summarizer]] to all rows of its window.
+    *
+    * @param window     A function defines the window for a given key.
+    * @param summarizer A [[Summarizer]] expects to apply.
+    * @return a [[OrderedRDD]] with windowing summaries.
+    */
   def summarizeWindows[SK, V1, U, V2: ClassTag](
-    window: K => (K, K),
-    summarizer: Summarizer[V, U, V2],
-    sk: V => SK
+      window: K => (K, K),
+      summarizer: Summarizer[V, U, V2],
+      sk: V => SK
   ): OrderedRDD[K, (V, V2)] = SummarizeWindows(self, window, summarizer, sk)
 
   /**
-   * For each row of an [[OrderedRDD]], apply a [[Summarizer]] to all rows of its window.
-   *
-   * @param window     A function defines the window for a given key.
-   * @param summarizer A [[Summarizer]] expects to apply.
-   * @return a [[OrderedRDD]] with windowing summaries.
-   */
+    * For each row of an [[OrderedRDD]], apply a [[Summarizer]] to all rows of its window.
+    *
+    * @param window     A function defines the window for a given key.
+    * @param summarizer A [[Summarizer]] expects to apply.
+    * @return a [[OrderedRDD]] with windowing summaries.
+    */
   def summarizeWindows[SK, V1, U, V2: ClassTag](
-    window: K => (K, K),
-    summarizer: OverlappableSummarizer[V, U, V2],
-    sk: V => SK,
-    overlapWindow: K => (K, K)
+      window: K => (K, K),
+      summarizer: OverlappableSummarizer[V, U, V2],
+      sk: V => SK,
+      overlapWindow: K => (K, K)
   ): OrderedRDD[K, (V, V2)] =
-    SummarizeWindows.applyOverlapped(self, window, summarizer, sk, overlapWindow)
+    SummarizeWindows.applyOverlapped(
+      self,
+      window,
+      summarizer,
+      sk,
+      overlapWindow
+    )
 
   def summarizeWindowBatches[SK: ClassTag, U, V2: ClassTag](
-    window: K => (K, K),
-    summarizer: WindowBatchSummarizer[K, SK, V, U, V2],
-    sk: V => SK,
-    other: OrderedRDD[K, V],
-    otherSk: V => SK,
-    batchSize: Int
+      window: K => (K, K),
+      summarizer: WindowBatchSummarizer[K, SK, V, U, V2],
+      sk: V => SK,
+      other: OrderedRDD[K, V],
+      otherSk: V => SK,
+      batchSize: Int
   ): OrderedRDD[K, V2] =
-    SummarizeWindows.applyBatch(self, window, summarizer, sk, other, otherSk, batchSize)
+    SummarizeWindows.applyBatch(
+      self,
+      window,
+      summarizer,
+      sk,
+      other,
+      otherSk,
+      batchSize
+    )
 
   /**
-   * Apply a [[Summarizer]] to all rows of an [[OrderedRDD]].
-   *
-   * @param summarizer A [[Summarizer]] expects to apply.
-   * @param skFn       A function to extract keys from rows. The summarization will be applied per key level.
-   * @param depth      The depth of tree for merging partial summarized results across different partitions
-   *                   in a a multi-level tree aggregation fashion.
-   * @return the summarized result(s).
-   */
+    * Apply a [[Summarizer]] to all rows of an [[OrderedRDD]].
+    *
+    * @param summarizer A [[Summarizer]] expects to apply.
+    * @param skFn       A function to extract keys from rows. The summarization will be applied per key level.
+    * @param depth      The depth of tree for merging partial summarized results across different partitions
+    *                   in a a multi-level tree aggregation fashion.
+    * @return the summarized result(s).
+    */
   def summarize[SK, U, V2](
-    summarizer: Summarizer[V, U, V2],
-    skFn: V => SK,
-    depth: Int
+      summarizer: Summarizer[V, U, V2],
+      skFn: V => SK,
+      depth: Int
   ): Map[SK, V2] = Summarize(self, summarizer, skFn, depth)
 
   /**
-   * Apply an [[OverlappableSummarizer]] to all rows of an [[OrderedRDD]].
-   *
-   * @param summarizer A [[OverlappableSummarizer]] expects to apply.
-   * @param windowFn   A function that defines how much it needs to overlap, i.e. for a particular row, how much it
-   *                   needs to look-back or look-forward. Internally, a partition will be expanded by the windows of
-   *                   its first row and last row.
-   * @param skFn       A function to extract keys from rows. The summarization will be applied per key level.
-   * @param depth      The depth of tree for merging partial summarized results across different partitions
-   *                   in a a multi-level tree aggregation fashion.
-   * @return the summarized result(s).
-   */
+    * Apply an [[OverlappableSummarizer]] to all rows of an [[OrderedRDD]].
+    *
+    * @param summarizer A [[OverlappableSummarizer]] expects to apply.
+    * @param windowFn   A function that defines how much it needs to overlap, i.e. for a particular row, how much it
+    *                   needs to look-back or look-forward. Internally, a partition will be expanded by the windows of
+    *                   its first row and last row.
+    * @param skFn       A function to extract keys from rows. The summarization will be applied per key level.
+    * @param depth      The depth of tree for merging partial summarized results across different partitions
+    *                   in a a multi-level tree aggregation fashion.
+    * @return the summarized result(s).
+    */
   def summarize[SK, U, V2](
-    summarizer: OverlappableSummarizer[V, U, V2],
-    windowFn: K => (K, K),
-    skFn: V => SK,
-    depth: Int
+      summarizer: OverlappableSummarizer[V, U, V2],
+      windowFn: K => (K, K),
+      skFn: V => SK,
+      depth: Int
   ): Map[SK, V2] = Summarize(self, summarizer, windowFn, skFn, depth)
 
   /**
-   * Summarize and return both state and output
-   */
+    * Summarize and return both state and output
+    */
   def summarizeState[SK, U, V2](
-    summarizer: OverlappableSummarizer[V, U, V2],
-    windowFn: K => (K, K),
-    skFn: V => SK,
-    depth: Int
-  ): Map[SK, (U, V2)] = Summarize.summarizeState(self, summarizer, windowFn, skFn, depth)
+      summarizer: OverlappableSummarizer[V, U, V2],
+      windowFn: K => (K, K),
+      skFn: V => SK,
+      depth: Int
+  ): Map[SK, (U, V2)] =
+    Summarize.summarizeState(self, summarizer, windowFn, skFn, depth)
 
   /**
-   * Similar to [[org.apache.spark.rdd.RDD.zipWithIndex]], it zips values of this [[OrderedRDD]] with
-   * its element indices. The ordering of this [[OrderedRDD]] will be preserved.
-   *
-   * @return a new [[OrderedRDD]] by zipping its element indices to all values of this [[OrderedRDD]].
-   */
+    * Similar to [[org.apache.spark.rdd.RDD.zipWithIndex]], it zips values of this [[OrderedRDD]] with
+    * its element indices. The ordering of this [[OrderedRDD]] will be preserved.
+    *
+    * @return a new [[OrderedRDD]] by zipping its element indices to all values of this [[OrderedRDD]].
+    */
   def zipWithIndexOrdered: OrderedRDD[K, (V, Long)] = {
     val withIndex = self.zipWithIndex
-    val indexToPartition = sc.broadcast(withIndex.partitions.map { p => (p.index, p) }.toMap)
+    val indexToPartition = sc.broadcast(withIndex.partitions.map { p =>
+      (p.index, p)
+    }.toMap)
     new OrderedRDD(sc, rangeSplits, Seq(new OneToOneDependency(withIndex)))(
-      (p, tc) => withIndex.iterator(indexToPartition.value(p.index), tc).map {
-        case ((k, v), idx) => (k, (v, idx))
-      }
+      (p, tc) =>
+        withIndex.iterator(indexToPartition.value(p.index), tc).map {
+          case ((k, v), idx) => (k, (v, idx))
+        }
     )
   }
 
   /**
-   * Applies a function to all rows and sorts the result RDD. Use the [[OrderedRDD.mapValues]]
-   * transformation if you don't need to update keys.
-   *
-   * @param fn A function that takes and returns a key-value pair.
-   * @return a new [[OrderedRDD]] by applying a function to all rows and sorting the result by key.
-   */
+    * Applies a function to all rows and sorts the result RDD. Use the [[OrderedRDD.mapValues]]
+    * transformation if you don't need to update keys.
+    *
+    * @param fn A function that takes and returns a key-value pair.
+    * @return a new [[OrderedRDD]] by applying a function to all rows and sorting the result by key.
+    */
   def mapOrdered[V2: ClassTag](fn: ((K, V)) => (K, V2)): OrderedRDD[K, V2] =
     OrderedRDD.fromRDD(super.map(fn), KeyPartitioningType.UnSorted)
 
   /**
-   * Similar to [[org.apache.spark.rdd.RDD.map]], but the ordering of this [[OrderedRDD]] will be preserved.
-   *
-   * @return a new [[OrderedRDD]] by applying a function to all values of this [[OrderedRDD]].
-   */
+    * Similar to [[org.apache.spark.rdd.RDD.map]], but the ordering of this [[OrderedRDD]] will be preserved.
+    *
+    * @return a new [[OrderedRDD]] by applying a function to all values of this [[OrderedRDD]].
+    */
   def mapValues[V2: ClassTag](fn: (K, V) => V2): OrderedRDD[K, V2] =
     new OrderedRDD(sc, rangeSplits, Seq(new OneToOneDependency(self)))(
       (p, tc) => iterator(p, tc).map { case (k, v) => (k, fn(k, v)) }
     )
 
   /**
-   * Similar to [[org.apache.spark.rdd.RDD.flatMap]], but the ordering of this [[OrderedRDD]] will be preserved.
-   *
-   * @return a new [[OrderedRDD]] by applying a function to all values of this [[OrderedRDD]] and then
-   *         flattening the results.
-   */
-  def flatMapValues[V2: ClassTag](fn: (K, V) => TraversableOnce[V2]): OrderedRDD[K, V2] =
+    * Similar to [[org.apache.spark.rdd.RDD.flatMap]], but the ordering of this [[OrderedRDD]] will be preserved.
+    *
+    * @return a new [[OrderedRDD]] by applying a function to all values of this [[OrderedRDD]] and then
+    *         flattening the results.
+    */
+  def flatMapValues[V2: ClassTag](
+      fn: (K, V) => TraversableOnce[V2]
+  ): OrderedRDD[K, V2] =
     new OrderedRDD(sc, rangeSplits, Seq(new OneToOneDependency(self)))(
       (p, tc) => iterator(p, tc).flatMap { case (k, v) => fn(k, v).map((k, _)) }
     )
 
   /**
-   * Similar to [[org.apache.spark.rdd.RDD.filter]], but the ordering of this [[OrderedRDD]] will be preserved.
-   *
-   * @return a new [[OrderedRDD]] containing only the elements that satisfy a predicate.
-   */
+    * Similar to [[org.apache.spark.rdd.RDD.filter]], but the ordering of this [[OrderedRDD]] will be preserved.
+    *
+    * @return a new [[OrderedRDD]] containing only the elements that satisfy a predicate.
+    */
   def filterOrdered(fn: (K, V) => Boolean): OrderedRDD[K, V] =
     new OrderedRDD(sc, rangeSplits, Seq(new OneToOneDependency(self)))(
       (p, tc) => iterator(p, tc).filter { case (k, v) => fn(k, v) }
     )
 
   /**
-   * Similar to [[org.apache.spark.rdd.RDD]]'s collect, but the ordering of this [[OrderedRDD]] will be preserved.
-   */
-  def collectOrdered[V2: ClassTag](fn: PartialFunction[(K, V), V2]): OrderedRDD[K, V2] =
+    * Similar to [[org.apache.spark.rdd.RDD]]'s collect, but the ordering of this [[OrderedRDD]] will be preserved.
+    */
+  def collectOrdered[V2: ClassTag](
+      fn: PartialFunction[(K, V), V2]
+  ): OrderedRDD[K, V2] =
     new OrderedRDD(sc, rangeSplits, Seq(new OneToOneDependency(self)))(
       (p, tc) =>
         iterator(p, tc).collect(new PartialFunction[(K, V), (K, V2)] {
@@ -507,82 +538,106 @@ class OrderedRDD[K: ClassTag, V: ClassTag](
     )
 
   /**
-   * Group by the primary keys.
-   *
-   * If a function mapping from rows to their secondary keys is provided, it will return an [[OrderedRDD]]
-   * whose rows are further partitioned into subgroups by their secondary keys.
-   *
-   * @param skFn A function that extracts a secondary key from a row.
-   * @return an [[OrderedRDD]] of grouped rows with the same key. The ordering of rows in each group is preserved.
-   */
+    * Group by the primary keys.
+    *
+    * If a function mapping from rows to their secondary keys is provided, it will return an [[OrderedRDD]]
+    * whose rows are further partitioned into subgroups by their secondary keys.
+    *
+    * @param skFn A function that extracts a secondary key from a row.
+    * @return an [[OrderedRDD]] of grouped rows with the same key. The ordering of rows in each group is preserved.
+    */
   def groupByKey[SK](skFn: V => SK): OrderedRDD[K, Array[V]] =
-    new OrderedRDD[K, Array[V]](sc, rangeSplits, Seq(new OneToOneDependency(self)))(
-      (p, tc) => {
-        val iter = new SummarizeByKeyIterator(iterator(p, tc), skFn, new RowsSummarizer[V])
-        tc.addTaskCompletionListener[Unit]((_) => iter.close())
-        iter.map { case (k, (_, v)) => (k, v) }
-      }
-    )
+    new OrderedRDD[K, Array[V]](
+      sc,
+      rangeSplits,
+      Seq(new OneToOneDependency(self))
+    )((p, tc) => {
+      val iter =
+        new SummarizeByKeyIterator(iterator(p, tc), skFn, new RowsSummarizer[V])
+      tc.addTaskCompletionListener[Unit]((_) => iter.close())
+      iter.map { case (k, (_, v)) => (k, v) }
+    })
 
   /**
-   * Takes an ordered RDD and summarizes it using the summarizer provided
-   * over each key and secondary key (as provided by the secondary key function)
-   *
-   * This is equivalent to calling groupByKey and then applying the summarizer over
-   * the provided array, but is more memory efficient because it processes the summarizer
-   * iteratively during the grouping.
-   *
-   * @param skFn       A function that extracts a secondary key from a row.
-   * @param summarizer The summarizer to summarize each (key, sk) pair.
-   * @tparam SK the secondary key type.
-   * @tparam U  the intermediate type of the summarizer.
-   * @tparam V2 the output type which will determine the value of the summarizer.
-   * @return an [[OrderedRDD]] of summarized rows with the same key. The ordering of each key is preserved.
-   */
-  def summarizeByKey[SK, U, V2: ClassTag](skFn: V => SK, summarizer: Summarizer[V, U, V2]): OrderedRDD[K, (SK, V2)] =
-    new OrderedRDD[K, (SK, V2)](sc, rangeSplits, Seq(new OneToOneDependency(self)))(
-      (p, tc) => {
-        val iter = new SummarizeByKeyIterator(iterator(p, tc), skFn, summarizer)
-        tc.addTaskCompletionListener[Unit]((_) => iter.close())
-        iter
-      }
-    )
+    * Takes an ordered RDD and summarizes it using the summarizer provided
+    * over each key and secondary key (as provided by the secondary key function)
+    *
+    * This is equivalent to calling groupByKey and then applying the summarizer over
+    * the provided array, but is more memory efficient because it processes the summarizer
+    * iteratively during the grouping.
+    *
+    * @param skFn       A function that extracts a secondary key from a row.
+    * @param summarizer The summarizer to summarize each (key, sk) pair.
+    * @tparam SK the secondary key type.
+    * @tparam U  the intermediate type of the summarizer.
+    * @tparam V2 the output type which will determine the value of the summarizer.
+    * @return an [[OrderedRDD]] of summarized rows with the same key. The ordering of each key is preserved.
+    */
+  def summarizeByKey[SK, U, V2: ClassTag](
+      skFn: V => SK,
+      summarizer: Summarizer[V, U, V2]
+  ): OrderedRDD[K, (SK, V2)] =
+    new OrderedRDD[K, (SK, V2)](
+      sc,
+      rangeSplits,
+      Seq(new OneToOneDependency(self))
+    )((p, tc) => {
+      val iter = new SummarizeByKeyIterator(iterator(p, tc), skFn, summarizer)
+      tc.addTaskCompletionListener[Unit]((_) => iter.close())
+      iter
+    })
 
   /**
-   * Intervalize this [[OrderedRDD]] by mapping its keys to the begin or the end of an interval
-   * where they fall into. The intervals are defined by the given intervalizer.
-   *
-   * @param intervalizer   A sequence of sorted keys where two sequential keys are treated as an interval.
-   * @return An [[OrderedRDD]] whose keys are intervalized and the original keys are kept in the
-   *         values as (K, V)s.
-   */
-  def intervalize(intervalizer: Array[K], inclusion: String, rounding: String): OrderedRDD[K, (K, V)] =
+    * Intervalize this [[OrderedRDD]] by mapping its keys to the begin or the end of an interval
+    * where they fall into. The intervals are defined by the given intervalizer.
+    *
+    * @param intervalizer   A sequence of sorted keys where two sequential keys are treated as an interval.
+    * @return An [[OrderedRDD]] whose keys are intervalized and the original keys are kept in the
+    *         values as (K, V)s.
+    */
+  def intervalize(
+      intervalizer: Array[K],
+      inclusion: String,
+      rounding: String
+  ): OrderedRDD[K, (K, V)] =
     Intervalize.intervalize(self, intervalizer, inclusion, rounding)
 
   /**
-   * See doc [[com.twosigma.flint.rdd.function.summarize.Summarizations.apply]] for more information.
-   *
-   * @return an [[OrderedRDD]] of tuples (K, (V, V2)) where V2 is the summary of all rows prior
-   * to and also including the current row.
-   */
+    * See doc [[com.twosigma.flint.rdd.function.summarize.Summarizations.apply]] for more information.
+    *
+    * @return an [[OrderedRDD]] of tuples (K, (V, V2)) where V2 is the summary of all rows prior
+    * to and also including the current row.
+    */
   def summarizations[SK, U, V2](
-    summarizer: Summarizer[V, U, V2],
-    sk: V => SK
+      summarizer: Summarizer[V, U, V2],
+      sk: V => SK
   ): OrderedRDD[K, (V, V2)] = Summarizations(self, summarizer, sk)
 
   /**
-   * Change the key for each row.
-   *
-   * @param fn Function that monotonically shifts keys in one direction.
-   * @return an [[OrderedRDD]] whose row keys have been shifted monotonically to one direction.
-   * @note It may break the invariants of OrderedRDD, i.e. no key across multiple partitions.
-   */
+    * Change the key for each row.
+    *
+    * @param fn Function that monotonically shifts keys in one direction.
+    * @return an [[OrderedRDD]] whose row keys have been shifted monotonically to one direction.
+    * @note It may break the invariants of OrderedRDD, i.e. no key across multiple partitions.
+    */
   // TODO: check the invariants of the merged OrderedRDD.
   def shift(fn: K => K): OrderedRDD[K, V] = {
-    val newRangeSplits = rangeSplits.map { rs => RangeSplit(rs.partition, rs.range.shift(fn)) }
+    val newRangeSplits = rangeSplits.map { rs =>
+      RangeSplit(rs.partition, rs.range.shift(fn))
+    }
     new OrderedRDD(sc, newRangeSplits, Seq(new OneToOneDependency(self)))(
       (p, tc) => iterator(p, tc).map { case (k, v) => (fn(k), v) }
     )
   }
+
+  override protected def getPartitions: Array[Partition] =
+    rangeSplits.map(_.partition)
+
+  /**
+    * @note We can totally use the info that we get from the splits, but right now there is no point
+    * because we're not running on the HDFS nodes anyway.
+    */
+  override protected def getPreferredLocations(split: Partition): Seq[String] =
+    Nil
 
 }

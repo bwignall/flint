@@ -16,7 +16,11 @@
 
 package com.twosigma.flint.timeseries.summarize.summarizer
 
-import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.{ NthCentralMomentOutput, NthCentralMomentState, NthCentralMomentSummarizer => NthCentralMomentSum }
+import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.{
+  NthCentralMomentOutput,
+  NthCentralMomentState,
+  NthCentralMomentSummarizer => NthCentralMomentSum
+}
 import com.twosigma.flint.timeseries.row.Schema
 import com.twosigma.flint.timeseries.summarize.ColumnList.Sequence
 import com.twosigma.flint.timeseries.summarize._
@@ -24,29 +28,31 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.types._
 
 case class NthCentralMomentSummarizerFactory(column: String, moment: Int)
-  extends BaseSummarizerFactory(column) {
+    extends BaseSummarizerFactory(column) {
   override def apply(inputSchema: StructType): NthCentralMomentSummarizer =
     NthCentralMomentSummarizer(inputSchema, prefixOpt, requiredColumns, moment)
 }
 
 case class NthCentralMomentSummarizer(
-  override val inputSchema: StructType,
-  override val prefixOpt: Option[String],
-  requiredColumns: ColumnList,
-  moment: Int
-) extends LeftSubtractableSummarizer with FilterNullInput {
-  private val Sequence(Seq(column)) = requiredColumns
-  private val columnIndex = inputSchema.fieldIndex(column)
-  private final val valueExtractor = asDoubleExtractor(inputSchema(columnIndex).dataType, columnIndex)
-
+    override val inputSchema: StructType,
+    override val prefixOpt: Option[String],
+    requiredColumns: ColumnList,
+    moment: Int
+) extends LeftSubtractableSummarizer
+    with FilterNullInput {
   override type T = Double
   override type U = NthCentralMomentState
   override type V = NthCentralMomentOutput
-
+  private final val valueExtractor =
+    asDoubleExtractor(inputSchema(columnIndex).dataType, columnIndex)
   override val summarizer = NthCentralMomentSum(moment)
-  override val schema = Schema.of(s"${column}_${moment}thCentralMoment" -> DoubleType)
+  override val schema =
+    Schema.of(s"${column}_${moment}thCentralMoment" -> DoubleType)
+  private val Sequence(Seq(column)) = requiredColumns
+  private val columnIndex = inputSchema.fieldIndex(column)
 
   override def toT(r: InternalRow): T = valueExtractor(r)
 
-  override def fromV(v: V): InternalRow = InternalRow(v.nthCentralMoment(moment))
+  override def fromV(v: V): InternalRow =
+    InternalRow(v.nthCentralMoment(moment))
 }

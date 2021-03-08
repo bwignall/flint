@@ -17,29 +17,23 @@
 package com.twosigma.flint.rdd.function.summarize.summarizer.subtractable
 
 /**
- * Computes the z-score with the option for out-of-sample calculation. Formulas are taken from
- * "Numerically Stable, Single-Pass, Parallel Statistics Algorithms" by Janine Bennett et al.
- *
- * http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.214.8508&rep=rep1&type=pdf
- */
+  * Computes the z-score with the option for out-of-sample calculation. Formulas are taken from
+  * "Numerically Stable, Single-Pass, Parallel Statistics Algorithms" by Janine Bennett et al.
+  *
+  * http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.214.8508&rep=rep1&type=pdf
+  */
 case class ZScoreState(
-  var count: Long,
-  var value: Double,
-  var meanState: WeightedMeanTestState
+    var count: Long,
+    var value: Double,
+    var meanState: WeightedMeanTestState
 )
 
 // This summarizer uses mutable state
 case class ZScoreSummarizer(includeCurrentObservation: Boolean)
-  extends LeftSubtractableSummarizer[Double, ZScoreState, Double] {
+    extends LeftSubtractableSummarizer[Double, ZScoreState, Double] {
 
   // We only need the unweighted mean so we always pass in a weight of 1
   val meanSummarizer = WeightedMeanTestSummarizer()
-
-  override def zero(): ZScoreState = ZScoreState(
-    0L,
-    Double.NaN,
-    meanSummarizer.zero()
-  )
 
   override def add(u: ZScoreState, value: Double): ZScoreState = {
     u.count += 1L
@@ -65,6 +59,13 @@ case class ZScoreSummarizer(includeCurrentObservation: Boolean)
     }
   }
 
+  override def zero(): ZScoreState =
+    ZScoreState(
+      0L,
+      Double.NaN,
+      meanSummarizer.zero()
+    )
+
   override def merge(u1: ZScoreState, u2: ZScoreState): ZScoreState = {
     // Add u1's stored value if it was not already added
     if (u1.count > 0L && !includeCurrentObservation) {
@@ -84,7 +85,8 @@ case class ZScoreSummarizer(includeCurrentObservation: Boolean)
     if (u.value != Double.NaN) {
       val meanTestOutput = meanSummarizer.render(u.meanState)
       if (meanTestOutput.observationCount > 1) {
-        zScore = (u.value - meanTestOutput.weighedMean) / meanTestOutput.weightedStandardDeviation
+        zScore =
+          (u.value - meanTestOutput.weighedMean) / meanTestOutput.weightedStandardDeviation
       }
     }
 

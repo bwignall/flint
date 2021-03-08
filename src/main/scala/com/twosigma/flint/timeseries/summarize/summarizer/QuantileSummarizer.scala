@@ -16,7 +16,10 @@
 
 package com.twosigma.flint.timeseries.summarize.summarizer
 
-import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.{ SequentialArrayQueue, QuantileSummarizer => QSummarizer }
+import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.{
+  SequentialArrayQueue,
+  QuantileSummarizer => QSummarizer
+}
 import com.twosigma.flint.timeseries.row.Schema
 import com.twosigma.flint.timeseries.summarize.ColumnList.Sequence
 import com.twosigma.flint.timeseries.summarize._
@@ -24,27 +27,29 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.types._
 
 case class QuantileSummarizerFactory(column: String, p: Array[Double])
-  extends BaseSummarizerFactory(column) {
+    extends BaseSummarizerFactory(column) {
   override def apply(inputSchema: StructType): QuantileSummarizer =
     QuantileSummarizer(inputSchema, prefixOpt, requiredColumns, p)
 }
 
 case class QuantileSummarizer(
-  override val inputSchema: StructType,
-  override val prefixOpt: Option[String],
-  override val requiredColumns: ColumnList,
-  p: Array[Double]
-) extends LeftSubtractableSummarizer with FilterNullInput {
-  private val Sequence(Seq(column)) = requiredColumns
-  private val columnIndex = inputSchema.fieldIndex(column)
-  private final val valueExtractor = asDoubleExtractor(inputSchema(columnIndex).dataType, columnIndex)
-
+    override val inputSchema: StructType,
+    override val prefixOpt: Option[String],
+    override val requiredColumns: ColumnList,
+    p: Array[Double]
+) extends LeftSubtractableSummarizer
+    with FilterNullInput {
   override type T = Double
   override type U = SequentialArrayQueue[Double]
   override type V = Array[Double]
-
+  private final val valueExtractor =
+    asDoubleExtractor(inputSchema(columnIndex).dataType, columnIndex)
   override val summarizer = QSummarizer(p)
-  override val schema = Schema.of(p.map { q => s"${column}_${q}quantile" -> DoubleType }: _*)
+  override val schema = Schema.of(p.map { q =>
+    s"${column}_${q}quantile" -> DoubleType
+  }: _*)
+  private val Sequence(Seq(column)) = requiredColumns
+  private val columnIndex = inputSchema.fieldIndex(column)
 
   override def toT(r: InternalRow): T = valueExtractor(r)
 

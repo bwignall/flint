@@ -19,28 +19,29 @@ package com.twosigma.flint.rdd.function.summarize.summarizer.subtractable
 import com.twosigma.flint.math.Kahan
 
 /**
- * @param count              The count of rows
- * @param zeroCount          The count of zero-valued rows
- * @param isPositive         Whether or not the current product is positive.
- * @param sumOfLogs          The sum of the log of rows
- */
+  * @param count              The count of rows
+  * @param zeroCount          The count of zero-valued rows
+  * @param isPositive         Whether or not the current product is positive.
+  * @param sumOfLogs          The sum of the log of rows
+  */
 case class ProductState(
-  var count: Long,
-  var zeroCount: Long,
-  var isPositive: Boolean,
-  sumOfLogs: Kahan
+    var count: Long,
+    var zeroCount: Long,
+    var isPositive: Boolean,
+    sumOfLogs: Kahan
 )
 
 /**
- * To minimize floating point errors, we keep the sum of the logs of the values as opposed to directly storing the
- * product at each iteration. This is because the following expressions are equivalent:
- * exp(ln x_1 + ln x_2 + ln x_3 + ...) = x_1 * x_2 * x_3 * ...
- *
- * We must keep track of zeroes as having any zeroes will result in a product of zero. Similarly, we also must
- * keep track of the sign of the product, as this is flipped for every negative value encountered. This is necessary
- * with the sum of logs approach as we cannot take the log of a negative number.
- */
-class ProductSummarizer extends LeftSubtractableSummarizer[Double, ProductState, Double] {
+  * To minimize floating point errors, we keep the sum of the logs of the values as opposed to directly storing the
+  * product at each iteration. This is because the following expressions are equivalent:
+  * exp(ln x_1 + ln x_2 + ln x_3 + ...) = x_1 * x_2 * x_3 * ...
+  *
+  * We must keep track of zeroes as having any zeroes will result in a product of zero. Similarly, we also must
+  * keep track of the sign of the product, as this is flipped for every negative value encountered. This is necessary
+  * with the sum of logs approach as we cannot take the log of a negative number.
+  */
+class ProductSummarizer
+    extends LeftSubtractableSummarizer[Double, ProductState, Double] {
   def zero(): ProductState = ProductState(0L, 0L, true, new Kahan())
 
   def add(u: ProductState, data: Double): ProductState = {

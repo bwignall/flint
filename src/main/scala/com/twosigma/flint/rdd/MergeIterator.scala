@@ -17,26 +17,20 @@
 package com.twosigma.flint.rdd
 
 /**
- * Merge two iterators of different types into one single iterator. The types of iterators to be merged are (K, A)
- * and (K, B). The merged iterator is of type (K, Either[A, B]) and of order K.
- */
+  * Merge two iterators of different types into one single iterator. The types of iterators to be merged are (K, A)
+  * and (K, B). The merged iterator is of type (K, Either[A, B]) and of order K.
+  */
 case class MergeIterator[K, A, B](
-  leftIter: PeekableIterator[(K, A)],
-  rightIter: PeekableIterator[(K, B)]
-)(
-  implicit
-  ord: Ordering[K]
+    leftIter: PeekableIterator[(K, A)],
+    rightIter: PeekableIterator[(K, B)]
+)(implicit
+    ord: Ordering[K]
 ) extends Iterator[(K, Either[A, B])] {
-
-  def e(t: (K, A)): (K, Either[A, B]) = (t._1, Left(t._2))
-
-  def e(t: (K, B))(implicit dumb: Null = null): (K, Either[A, B]) =
-    (t._1, Right(t._2))
 
   override def hasNext: Boolean = leftIter.hasNext || rightIter.hasNext
 
-  override def next: (K, Either[A, B]) = leftIter.peek.fold(e(rightIter.next)) {
-    left =>
+  override def next: (K, Either[A, B]) =
+    leftIter.peek.fold(e(rightIter.next)) { left =>
       rightIter.peek.fold(e(leftIter.next)) { right =>
         if (ord.lteq(left._1, right._1)) {
           e(leftIter.next)
@@ -44,5 +38,10 @@ case class MergeIterator[K, A, B](
           e(rightIter.next)
         }
       }
-  }
+    }
+
+  def e(t: (K, A)): (K, Either[A, B]) = (t._1, Left(t._2))
+
+  def e(t: (K, B))(implicit dumb: Null = null): (K, Either[A, B]) =
+    (t._1, Right(t._2))
 }

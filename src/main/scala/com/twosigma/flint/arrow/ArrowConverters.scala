@@ -27,25 +27,18 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.UnsafeRow
 import org.apache.spark.sql.types._
 import com.twosigma.flint.util.Utils
-import org.apache.arrow.vector.ipc.{ ArrowFileReader, ArrowFileWriter }
+import org.apache.arrow.vector.ipc.{ArrowFileReader, ArrowFileWriter}
 import org.apache.arrow.vector.ipc.message.ArrowRecordBatch
 
 trait ClosableIterator[T] extends Iterator[T] with AutoCloseable
 
 class ConcatClosableIterator[T](iters: Iterator[ClosableIterator[T]])
-  extends ClosableIterator[T] {
+    extends ClosableIterator[T] {
   var curIter: ClosableIterator[T] = _
 
-  private def advance(): Unit = {
-    require(curIter == null || !curIter.hasNext, "Should not advance if curIter is not empty")
-    require(iters.hasNext, "Should not advance if iters doesn't have next")
-    closeCurrent()
-    curIter = iters.next()
-  }
+  override def close(): Unit = closeCurrent()
 
   private def closeCurrent(): Unit = if (curIter != null) curIter.close()
-
-  override def close(): Unit = closeCurrent()
 
   override def hasNext: Boolean = {
     if (curIter == null || !curIter.hasNext) {
@@ -61,44 +54,58 @@ class ConcatClosableIterator[T](iters: Iterator[ClosableIterator[T]])
   }
 
   override def next(): T = curIter.next()
+
+  private def advance(): Unit = {
+    require(
+      curIter == null || !curIter.hasNext,
+      "Should not advance if curIter is not empty"
+    )
+    require(iters.hasNext, "Should not advance if iters doesn't have next")
+    closeCurrent()
+    curIter = iters.next()
+  }
 }
 
 /**
- * Store Arrow data in a form that can be serialized by Spark and served to a Python process.
- * The bytes are in arrow file format that containing one batches
- */
+  * Store Arrow data in a form that can be serialized by Spark and served to a Python process.
+  * The bytes are in arrow file format that containing one batches
+  */
 class ArrowPayload(payload: Array[Byte]) extends Serializable {
 
   /**
-   * Convert the ArrowPayload to an ArrowRecordBatch.
-   */
+    * Convert the ArrowPayload to an ArrowRecordBatch.
+    */
   def loadBatch(allocator: BufferAllocator): ArrowRecordBatch = {
 
     ArrowConverters.byteArrayToBatch(payload, allocator)
   }
 
   /**
-   * Get the ArrowPayload as a type that can be served to Python.
-   */
+    * Get the ArrowPayload as a type that can be served to Python.
+    */
   def asPythonSerializable: Array[Byte] = payload
 }
 
 object ArrowConverters {
 
   /**
-   * Maps Iterator from InternalRow to ArrowPayload. Limit ArrowRecordBatch size in ArrowPayload
-   * by setting maxRecordsPerBatch or use 0 to fully consume rowIter.
-   */
+    * Maps Iterator from InternalRow to ArrowPayload. Limit ArrowRecordBatch size in ArrowPayload
+    * by setting maxRecordsPerBatch or use 0 to fully consume rowIter.
+    */
   def toPayloadIterator(
-    rowIter: Iterator[InternalRow],
-    schema: StructType,
-    maxRecordsPerBatch: Int,
-    context: TaskContext
+      rowIter: Iterator[InternalRow],
+      schema: StructType,
+      maxRecordsPerBatch: Int,
+      context: TaskContext
   ): Iterator[ArrowPayload] = {
 
     val arrowSchema = ArrowUtils.toArrowSchema(schema)
     val allocator =
-      ArrowUtils.rootAllocator.newChildAllocator("toPayloadIterator", 0, Long.MaxValue)
+      ArrowUtils.rootAllocator.newChildAllocator(
+        "toPayloadIterator",
+        0,
+        Long.MaxValue
+      )
 
     val root = VectorSchemaRoot.create(arrowSchema, allocator)
     val arrowWriter = ArrowWriter.create(root)
@@ -114,12 +121,13 @@ object ArrowConverters {
 
     new Iterator[ArrowPayload] {
 
-      override def hasNext: Boolean = rowIter.hasNext || {
-        root.close()
-        allocator.close()
-        closed = true
-        false
-      }
+      override def hasNext: Boolean =
+        rowIter.hasNext || {
+          root.close()
+          allocator.close()
+          closed = true
+          false
+        }
 
       override def next(): ArrowPayload = {
         val out = new ByteArrayOutputStream()
@@ -127,7 +135,9 @@ object ArrowConverters {
 
         Utils.tryWithSafeFinally {
           var rowCount = 0
-          while (rowIter.hasNext && (maxRecordsPerBatch <= 0 || rowCount < maxRecordsPerBatch)) {
+          while (
+            rowIter.hasNext && (maxRecordsPerBatch <= 0 || rowCount < maxRecordsPerBatch)
+          ) {
             val row = rowIter.next()
             arrowWriter.write(row)
             rowCount += 1
@@ -145,9 +155,9 @@ object ArrowConverters {
   }
 
   def toUnsafeRowsIter(
-    payload: ArrowPayload,
-    sparkSchema: StructType,
-    allocator: BufferAllocator
+      payload: ArrowPayload,
+      sparkSchema: StructType,
+      allocator: BufferAllocator
   ): ClosableIterator[UnsafeRow] = {
     val bytes = payload.asPythonSerializable
     val inputChannel = new ByteArrayReadableSeekableByteChannel(bytes)
@@ -162,11 +172,11 @@ object ArrowConverters {
   }
 
   /**
-   * Convert a byte array to an ArrowRecordBatch.
-   */
+    * Convert a byte array to an ArrowRecordBatch.
+    */
   def byteArrayToBatch(
-    batchBytes: Array[Byte],
-    allocator: BufferAllocator
+      batchBytes: Array[Byte],
+      allocator: BufferAllocator
   ): ArrowRecordBatch = {
     val in = new ByteArrayReadableSeekableByteChannel(batchBytes)
     val reader = new ArrowFileReader(in, allocator)

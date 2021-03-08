@@ -17,10 +17,14 @@
 package com.twosigma.flint.hadoop
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{ FileSystem, Path }
-import org.apache.hadoop.io.{ LongWritable, Text, Writable }
-import org.apache.hadoop.mapreduce.{ InputFormat, InputSplit, Job, RecordReader }
-import org.apache.hadoop.mapreduce.lib.input.{ FileInputFormat, FileSplit, TextInputFormat }
+import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.io.{LongWritable, Text, Writable}
+import org.apache.hadoop.mapreduce.{InputFormat, InputSplit, Job, RecordReader}
+import org.apache.hadoop.mapreduce.lib.input.{
+  FileInputFormat,
+  FileSplit,
+  TextInputFormat
+}
 
 import scala.collection.immutable
 
@@ -40,8 +44,11 @@ trait InputFormatConf[K, V] extends Serializable {
   def makeSplits(hadoopConf: Configuration): IndexedSeq[WriSer[Split]]
 
   // TODO do we want to require typing of the RecordReader as well?
-  final def createRecordReader(hadoopConf: Configuration, split: Split,
-    inputFormat: IF = makeInputFormat()): RecordReader[K, V] = {
+  final def createRecordReader(
+      hadoopConf: Configuration,
+      split: Split,
+      inputFormat: IF = makeInputFormat()
+  ): RecordReader[K, V] = {
     val tac = ConfOnlyTAC(hadoopConf)
     val recordReader = inputFormat.createRecordReader(split, tac)
     recordReader.initialize(split, tac)
@@ -50,22 +57,21 @@ trait InputFormatConf[K, V] extends Serializable {
 }
 
 case class TextInputFormatConf(file: String, partitions: Int)
-  extends InputFormatConf[LongWritable, Text] {
+    extends InputFormatConf[LongWritable, Text] {
   type IF = TextInputFormat
   type Split = FileSplit
-
+  type KExtract = internalK.type
+  type VExtract = internalV.type
+  override val kExtract: KExtract = internalK
+  override val vExtract: VExtract = internalV
   // TODO now that we figured out what's up, see if we can't eliminate the need for this...
   val internalK = Extract.unit[LongWritable]
   val internalV = Extract.text
 
-  type KExtract = internalK.type
-  type VExtract = internalV.type
-
-  override val kExtract: KExtract = internalK
-  override val vExtract: VExtract = internalV
-
   def makeInputFormat() = new TextInputFormat()
-  def makeSplits(hadoopConf: Configuration): immutable.IndexedSeq[WriSer[FileSplit]] = {
+  def makeSplits(
+      hadoopConf: Configuration
+  ): immutable.IndexedSeq[WriSer[FileSplit]] = {
     val job = Job.getInstance(hadoopConf)
     FileInputFormat.setInputPaths(job, file)
     val path = new Path(file)
@@ -83,32 +89,42 @@ case class TextInputFormatConf(file: String, partitions: Int)
 
 // TODO do we really get much from having this as its own class? consider just making a def csv method in TextInputFormatConf
 object CSVInputFormatConf {
-  def apply[V](ifc: InputFormatConf[LongWritable, V] { type Split = FileSplit }): InputFormatConf[LongWritable, V] {
+  def apply[V](
+      ifc: InputFormatConf[LongWritable, V] { type Split = FileSplit }
+  ): InputFormatConf[LongWritable, V] {
     type IF = ifc.IF
     type Split = ifc.Split
     type KExtract = ifc.KExtract
     type VExtract = ifc.VExtract
-  } = new InputFormatConf[LongWritable, V] {
-    type IF = ifc.IF
-    type Split = ifc.Split
-    type KExtract = ifc.KExtract
-    type VExtract = ifc.VExtract
+  } =
+    new InputFormatConf[LongWritable, V] {
+      type IF = ifc.IF
+      type Split = ifc.Split
+      type KExtract = ifc.KExtract
+      type VExtract = ifc.VExtract
 
-    override val kExtract: KExtract = ifc.kExtract
-    override val vExtract: VExtract = ifc.vExtract
+      override val kExtract: KExtract = ifc.kExtract
+      override val vExtract: VExtract = ifc.vExtract
 
-    override def makeInputFormat() = ifc.makeInputFormat()
-    override def makeSplits(hadoopConf: Configuration) = {
-      val splits = ifc.makeSplits(hadoopConf)
-      splits.headOption.fold(IndexedSeq.empty[WriSer[Split]]) {
-        case WriSer(head) =>
-          val rr = createRecordReader(hadoopConf, head)
-          require(rr.nextKeyValue, "csv has no header, first line was empty")
-          val afterHeader = rr.getCurrentKey.get
-          require(rr.nextKeyValue, "first split is empty")
-          WriSer(new FileSplit(head.getPath, afterHeader, head.getLength - afterHeader, null)) +:
-            splits.tail
+      override def makeInputFormat() = ifc.makeInputFormat()
+      override def makeSplits(hadoopConf: Configuration) = {
+        val splits = ifc.makeSplits(hadoopConf)
+        splits.headOption.fold(IndexedSeq.empty[WriSer[Split]]) {
+          case WriSer(head) =>
+            val rr = createRecordReader(hadoopConf, head)
+            require(rr.nextKeyValue, "csv has no header, first line was empty")
+            val afterHeader = rr.getCurrentKey.get
+            require(rr.nextKeyValue, "first split is empty")
+            WriSer(
+              new FileSplit(
+                head.getPath,
+                afterHeader,
+                head.getLength - afterHeader,
+                null
+              )
+            ) +:
+              splits.tail
+        }
       }
     }
-  }
 }

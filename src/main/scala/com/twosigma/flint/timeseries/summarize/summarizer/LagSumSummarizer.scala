@@ -21,14 +21,17 @@ import com.twosigma.flint.timeseries.window.TimeWindow
 import com.twosigma.flint.timeseries.Windows
 import com.twosigma.flint.timeseries.row.Schema
 import org.apache.spark.sql.types._
-import com.twosigma.flint.rdd.function.summarize.summarizer.overlappable.{ LagSumSummarizerState, LagSumSummarizer => LSSummarizer }
+import com.twosigma.flint.rdd.function.summarize.summarizer.overlappable.{
+  LagSumSummarizerState,
+  LagSumSummarizer => LSSummarizer
+}
 import com.twosigma.flint.timeseries.summarize.ColumnList.Sequence
 import org.apache.spark.sql.catalyst.InternalRow
 
 /**
- * N.B. LagSumSummarizer exists solely to be a trivial example of an OverlappableSummarizerFactory that we can
- * use to test common functionality. It should not be depended on by application classes or exposed
- */
+  * N.B. LagSumSummarizer exists solely to be a trivial example of an OverlappableSummarizerFactory that we can
+  * use to test common functionality. It should not be depended on by application classes or exposed
+  */
 private[flint] object LagSumSummarizer {
   val lagSumColumn: String = "lagSum"
   val sumColumn: String = "sum"
@@ -39,8 +42,10 @@ private[flint] object LagSumSummarizer {
   )
 }
 
-private[flint] case class LagSumSummarizerFactory(column: String, maxLookback: String)
-  extends OverlappableSummarizerFactory {
+private[flint] case class LagSumSummarizerFactory(
+    column: String,
+    maxLookback: String
+) extends OverlappableSummarizerFactory {
   override val window: TimeWindow = Windows.pastAbsoluteTime(maxLookback)
 
   override val requiredColumns: ColumnList = {
@@ -56,30 +61,30 @@ private[flint] case class LagSumSummarizerFactory(column: String, maxLookback: S
 }
 
 private[flint] case class LagSumSummarizer(
-  override val inputSchema: StructType,
-  override val prefixOpt: Option[String],
-  requiredColumns: ColumnList
-) extends OverlappableSummarizer with FilterNullInput {
-
-  private val Sequence(Seq(column)) = requiredColumns
-  private val columnId = inputSchema.fieldIndex(column)
-
-  private final val columnExtractor = asDoubleExtractor(inputSchema(columnId).dataType, columnId)
+    override val inputSchema: StructType,
+    override val prefixOpt: Option[String],
+    requiredColumns: ColumnList
+) extends OverlappableSummarizer
+    with FilterNullInput {
 
   override type T = Double
   override type U = LagSumSummarizerState
   override type V = LagSumSummarizerState
-
+  private final val columnExtractor =
+    asDoubleExtractor(inputSchema(columnId).dataType, columnId)
   override val summarizer = new LSSummarizer
+  override val schema = LagSumSummarizer.outputSchema
+  private val Sequence(Seq(column)) = requiredColumns
+  private val columnId = inputSchema.fieldIndex(column)
 
   override def toT(r: InternalRow): Double = columnExtractor(r)
 
-  override val schema = LagSumSummarizer.outputSchema
-
   override def fromV(o: LagSumSummarizerState): InternalRow = {
-    InternalRow.fromSeq(Array[Any](
-      o.lagSum,
-      o.sum
-    ))
+    InternalRow.fromSeq(
+      Array[Any](
+        o.lagSum,
+        o.sum
+      )
+    )
   }
 }

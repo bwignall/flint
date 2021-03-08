@@ -19,12 +19,12 @@ package com.twosigma.flint.util
 object Timer {
 
   /**
-   * Measure the average running time in milliseconds to execute a piece of codes.
-   *
-   * @param repeat The number of times expected to run the given piece of codes
-   * @param block  The piece of codes expected to measure the running time
-   * @return the average running time and the return value of the last execution.
-   */
+    * Measure the average running time in milliseconds to execute a piece of codes.
+    *
+    * @param repeat The number of times expected to run the given piece of codes
+    * @param block  The piece of codes expected to measure the running time
+    * @return the average running time and the return value of the last execution.
+    */
   def time[T](repeat: Int)(block: => T): (Long, T) = {
     val t1 = System.currentTimeMillis()
     var ret = block

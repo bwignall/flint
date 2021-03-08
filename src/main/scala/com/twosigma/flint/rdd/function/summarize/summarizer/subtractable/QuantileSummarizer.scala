@@ -22,10 +22,11 @@ import org.apache.commons.math3.stat.descriptive.rank.Percentile
 import scala.reflect.ClassTag
 
 /**
- * A resizing array queue that does not utilize wraparound. Instead, when begin is halfway through the array, the queue
- * shifts all elements back to the beginning of the underlying array. This is not thread-safe.
- */
-protected[flint] class SequentialArrayQueue[@specialized(Double) T: ClassTag] extends Serializable {
+  * A resizing array queue that does not utilize wraparound. Instead, when begin is halfway through the array, the queue
+  * shifts all elements back to the beginning of the underlying array. This is not thread-safe.
+  */
+protected[flint] class SequentialArrayQueue[@specialized(Double) T: ClassTag]
+    extends Serializable {
   private var begin: Int = 0
   private var end: Int = 0
   private var values: Array[T] = new Array[T](32)
@@ -38,16 +39,6 @@ protected[flint] class SequentialArrayQueue[@specialized(Double) T: ClassTag] ex
     end += 1
   }
 
-  def remove(): Unit = {
-    require(size > 0)
-    begin += 1
-    if (begin >= (values.length >> 1)) {
-      shift()
-    }
-  }
-
-  def size(): Int = end - begin
-
   private def doubleCapacity(): Unit = {
     val newCapacity = values.length << 1
     require(newCapacity > 0)
@@ -57,6 +48,16 @@ protected[flint] class SequentialArrayQueue[@specialized(Double) T: ClassTag] ex
     begin = 0
     values = newValues
   }
+
+  def remove(): Unit = {
+    require(size > 0)
+    begin += 1
+    if (begin >= (values.length >> 1)) {
+      shift()
+    }
+  }
+
+  def size(): Int = end - begin
 
   private def shift(): Unit = {
     System.arraycopy(values, begin, values, 0, size)
@@ -89,27 +90,30 @@ protected[flint] class SequentialArrayQueue[@specialized(Double) T: ClassTag] ex
 }
 
 /**
- * Return a list of quantiles for a given list of quantile probabilities.
- *
- * @note The implementation of this summarizer is not quite in a streaming and parallel fashion as there
- *       is no way to compute exact quantile using one-pass streaming algorithm. When this summarizer is
- *       used in summarize() API, it will collect all the data under the `column` to the driver and thus may not
- *       be that efficient in the sense of IO and memory intensive. However, it should be fine to use
- *       it in the other summarize APIs like summarizeWindows(), summarizeIntervals(), summarizeCycles() etc.
- * @param p The list of quantile probabilities. The probabilities must be great than 0.0 and less than or equal
- *          to 1.0.
- */
+  * Return a list of quantiles for a given list of quantile probabilities.
+  *
+  * @note The implementation of this summarizer is not quite in a streaming and parallel fashion as there
+  *       is no way to compute exact quantile using one-pass streaming algorithm. When this summarizer is
+  *       used in summarize() API, it will collect all the data under the `column` to the driver and thus may not
+  *       be that efficient in the sense of IO and memory intensive. However, it should be fine to use
+  *       it in the other summarize APIs like summarizeWindows(), summarizeIntervals(), summarizeCycles() etc.
+  * @param p The list of quantile probabilities. The probabilities must be great than 0.0 and less than or equal
+  *          to 1.0.
+  */
 case class QuantileSummarizer(
-  p: Array[Double]
-) extends LeftSubtractableSummarizer[Double, SequentialArrayQueue[Double], Array[Double]] {
+    p: Array[Double]
+) extends LeftSubtractableSummarizer[Double, SequentialArrayQueue[
+      Double
+    ], Array[Double]] {
 
   require(p.nonEmpty, "The list of quantiles must be non-empty.")
 
-  override def zero(): SequentialArrayQueue[Double] = new SequentialArrayQueue[Double]()
+  override def zero(): SequentialArrayQueue[Double] =
+    new SequentialArrayQueue[Double]()
 
   override def merge(
-    u1: SequentialArrayQueue[Double],
-    u2: SequentialArrayQueue[Double]
+      u1: SequentialArrayQueue[Double],
+      u2: SequentialArrayQueue[Double]
   ): SequentialArrayQueue[Double] = {
     u1.addAll(u2)
     u1
@@ -127,12 +131,18 @@ case class QuantileSummarizer(
     }
   }
 
-  override def add(u: SequentialArrayQueue[Double], t: Double): SequentialArrayQueue[Double] = {
+  override def add(
+      u: SequentialArrayQueue[Double],
+      t: Double
+  ): SequentialArrayQueue[Double] = {
     u.add(t)
     u
   }
 
-  override def subtract(u: SequentialArrayQueue[Double], t: Double): SequentialArrayQueue[Double] = {
+  override def subtract(
+      u: SequentialArrayQueue[Double],
+      t: Double
+  ): SequentialArrayQueue[Double] = {
     u.remove()
     u
   }

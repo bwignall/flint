@@ -19,37 +19,42 @@ package com.twosigma.flint.rdd.function.summarize.summarizer
 import com.twosigma.flint.math.Kahan
 
 case class WeightedCovarianceState(
-  var count: Long, // number of observations
-  var meanX: Double, // mean of x's
-  var meanY: Double, // mean of y's
-  sumWeight: Kahan, // sum of weights
-  sumWeightSquare: Kahan, // sum of square of weights
-  var coMoment: Double // sum of w_i * (x_i - meanX) * (y_i - meanY)
+    var count: Long, // number of observations
+    var meanX: Double, // mean of x's
+    var meanY: Double, // mean of y's
+    sumWeight: Kahan, // sum of weights
+    sumWeightSquare: Kahan, // sum of square of weights
+    var coMoment: Double // sum of w_i * (x_i - meanX) * (y_i - meanY)
 )
 
 case class WeightedCovarianceOutput(
-  covariance: Double,
-  observationCount: Long
+    covariance: Double,
+    observationCount: Long
 )
 
 /**
- * This implementation follow the [[https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Covariance]].
- */
+  * This implementation follow the [[https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Covariance]].
+  */
 class WeightedCovarianceSummarizer
-  extends FlippableSummarizer[(Double, Double, Double), WeightedCovarianceState, WeightedCovarianceOutput] {
+    extends FlippableSummarizer[
+      (Double, Double, Double),
+      WeightedCovarianceState,
+      WeightedCovarianceOutput
+    ] {
 
-  override def zero(): WeightedCovarianceState = WeightedCovarianceState(
-    0L,
-    0d,
-    0d,
-    new Kahan(),
-    new Kahan(),
-    0d
-  )
+  override def zero(): WeightedCovarianceState =
+    WeightedCovarianceState(
+      0L,
+      0d,
+      0d,
+      new Kahan(),
+      new Kahan(),
+      0d
+    )
 
   override def add(
-    u: WeightedCovarianceState,
-    t: (Double, Double, Double)
+      u: WeightedCovarianceState,
+      t: (Double, Double, Double)
   ): WeightedCovarianceState = {
 
     val (x, y, w) = t
@@ -67,8 +72,8 @@ class WeightedCovarianceSummarizer
   }
 
   override def merge(
-    u1: WeightedCovarianceState,
-    u2: WeightedCovarianceState
+      u1: WeightedCovarianceState,
+      u2: WeightedCovarianceState
   ): WeightedCovarianceState = {
     u1.count += u2.count
 
@@ -95,7 +100,8 @@ class WeightedCovarianceSummarizer
 
   override def render(u: WeightedCovarianceState): WeightedCovarianceOutput =
     WeightedCovarianceOutput(
-      covariance = u.coMoment / (u.sumWeight.value() - u.sumWeightSquare.value() / u.sumWeight.value()),
+      covariance = u.coMoment / (u.sumWeight
+        .value() - u.sumWeightSquare.value() / u.sumWeight.value()),
       observationCount = u.count
     )
 

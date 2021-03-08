@@ -21,55 +21,49 @@ import com.twosigma.flint.timeseries.summarize.summarizer.ExponentialWeightedMov
 case class EWMARow(time: Long, x: Double)
 
 /**
- * @param primaryESValue     Current primary smoothing series value (up to prevTime if update has not been called)
- * @param auxiliaryESValue   Current auxiliary smoothing series value (up to prevTime if update has not been called)
- * @param count              The count of rows
- */
+  * @param primaryESValue     Current primary smoothing series value (up to prevTime if update has not been called)
+  * @param auxiliaryESValue   Current auxiliary smoothing series value (up to prevTime if update has not been called)
+  * @param count              The count of rows
+  */
 case class ExponentialWeightedMovingAverageState(
-  var primaryESValue: Double,
-  var auxiliaryESValue: Double,
-  var time: Long,
-  var count: Long
+    var primaryESValue: Double,
+    var auxiliaryESValue: Double,
+    var time: Long,
+    var count: Long
 )
 
 case class ExponentialWeightedMovingAverageOutput(ewma: Double)
 
 /**
- * @param alpha               The proportion by which the average will decay over one period
- *                            A period is a duration of time defined by the function provided for timestampsToPeriods.
- *                            For instance, if the timestamps in the dataset are in nanoseconds, and the function
- *                            provided in timestampsToPeriods is (t2 - t1)/nanosecondsInADay, then the summarizer will
- *                            take the number of periods between rows to be the number of days elapsed between their
- *                            timestamps.
- * @param timestampsToPeriods Function that given two timestamps, returns how many periods should be considered to
- *                            have passed between them
- * @param constantPeriods     Whether to assume that the number of periods between rows is a constant (c = 1), or use
- *                            timestampsToPeriods to calculate it.
- * @param convention          Parameter used to determine the convention. If it is "core", the result
- *                            primary exponential weighted moving average will be further divided by its auxiliary;
- *                            if it is "legacy", it will return the primary exponential weighted moving average.
- */
+  * @param alpha               The proportion by which the average will decay over one period
+  *                            A period is a duration of time defined by the function provided for timestampsToPeriods.
+  *                            For instance, if the timestamps in the dataset are in nanoseconds, and the function
+  *                            provided in timestampsToPeriods is (t2 - t1)/nanosecondsInADay, then the summarizer will
+  *                            take the number of periods between rows to be the number of days elapsed between their
+  *                            timestamps.
+  * @param timestampsToPeriods Function that given two timestamps, returns how many periods should be considered to
+  *                            have passed between them
+  * @param constantPeriods     Whether to assume that the number of periods between rows is a constant (c = 1), or use
+  *                            timestampsToPeriods to calculate it.
+  * @param convention          Parameter used to determine the convention. If it is "core", the result
+  *                            primary exponential weighted moving average will be further divided by its auxiliary;
+  *                            if it is "legacy", it will return the primary exponential weighted moving average.
+  */
 class ExponentialWeightedMovingAverageSummarizer(
-  alpha: Double,
-  timestampsToPeriods: (Long, Long) => Double,
-  constantPeriods: Boolean,
-  convention: ExponentialWeightedMovingAverageConvention.Value
-) extends LeftSubtractableSummarizer[EWMARow, ExponentialWeightedMovingAverageState, ExponentialWeightedMovingAverageOutput] {
+    alpha: Double,
+    timestampsToPeriods: (Long, Long) => Double,
+    constantPeriods: Boolean,
+    convention: ExponentialWeightedMovingAverageConvention.Value
+) extends LeftSubtractableSummarizer[
+      EWMARow,
+      ExponentialWeightedMovingAverageState,
+      ExponentialWeightedMovingAverageOutput
+    ] {
   private val logDecayPerPeriod = math.log(1.0 - alpha)
 
-  def getDecay(periods: Double): Double = math.exp(periods * logDecayPerPeriod)
-
-  override def zero(): ExponentialWeightedMovingAverageState =
-    ExponentialWeightedMovingAverageState(
-      primaryESValue = 0.0,
-      auxiliaryESValue = 0.0,
-      time = 0L,
-      count = 0L
-    )
-
   override def merge(
-    u1: ExponentialWeightedMovingAverageState,
-    u2: ExponentialWeightedMovingAverageState
+      u1: ExponentialWeightedMovingAverageState,
+      u2: ExponentialWeightedMovingAverageState
   ): ExponentialWeightedMovingAverageState = {
     require(u1.time < u2.time || u1.count == 0L || u2.count == 0L)
     if (u1.count == 0L) {
@@ -93,7 +87,17 @@ class ExponentialWeightedMovingAverageSummarizer(
     }
   }
 
-  override def render(u: ExponentialWeightedMovingAverageState): ExponentialWeightedMovingAverageOutput = {
+  override def zero(): ExponentialWeightedMovingAverageState =
+    ExponentialWeightedMovingAverageState(
+      primaryESValue = 0.0,
+      auxiliaryESValue = 0.0,
+      time = 0L,
+      count = 0L
+    )
+
+  override def render(
+      u: ExponentialWeightedMovingAverageState
+  ): ExponentialWeightedMovingAverageOutput = {
     if (u.count > 0L) {
       convention match {
         case ExponentialWeightedMovingAverageConvention.Core =>
@@ -103,7 +107,9 @@ class ExponentialWeightedMovingAverageSummarizer(
         case ExponentialWeightedMovingAverageConvention.Legacy =>
           ExponentialWeightedMovingAverageOutput(u.primaryESValue)
         case _ =>
-          throw new IllegalArgumentException(s"Not supported convention $convention")
+          throw new IllegalArgumentException(
+            s"Not supported convention $convention"
+          )
       }
     } else {
       ExponentialWeightedMovingAverageOutput(Double.NaN)
@@ -111,8 +117,8 @@ class ExponentialWeightedMovingAverageSummarizer(
   }
 
   override def add(
-    u: ExponentialWeightedMovingAverageState,
-    row: EWMARow
+      u: ExponentialWeightedMovingAverageState,
+      row: EWMARow
   ): ExponentialWeightedMovingAverageState = {
     if (u.count == 0L) {
       u.primaryESValue = row.x
@@ -133,9 +139,11 @@ class ExponentialWeightedMovingAverageSummarizer(
     u
   }
 
+  def getDecay(periods: Double): Double = math.exp(periods * logDecayPerPeriod)
+
   override def subtract(
-    u: ExponentialWeightedMovingAverageState,
-    row: EWMARow
+      u: ExponentialWeightedMovingAverageState,
+      row: EWMARow
   ): ExponentialWeightedMovingAverageState = {
     require(u.count > 0L)
     if (u.count == 1L) {

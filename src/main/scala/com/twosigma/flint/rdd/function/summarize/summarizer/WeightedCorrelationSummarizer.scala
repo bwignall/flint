@@ -17,30 +17,35 @@
 package com.twosigma.flint.rdd.function.summarize.summarizer
 
 case class WeightedCorrelationState(
-  var sx: WeightedCovarianceState,
-  var sy: WeightedCovarianceState,
-  var sxy: WeightedCovarianceState
+    var sx: WeightedCovarianceState,
+    var sy: WeightedCovarianceState,
+    var sxy: WeightedCovarianceState
 )
 
 case class WeightedCorrelationOutput(
-  correlation: Double,
-  count: Long
+    correlation: Double,
+    count: Long
 )
 
 class WeightedCorrelationSummarizer
-  extends FlippableSummarizer[(Double, Double, Double), WeightedCorrelationState, WeightedCorrelationOutput] {
+    extends FlippableSummarizer[
+      (Double, Double, Double),
+      WeightedCorrelationState,
+      WeightedCorrelationOutput
+    ] {
   private[this] val weightedCovarianceSummarizer =
     new WeightedCovarianceSummarizer()
 
-  override def zero(): WeightedCorrelationState = WeightedCorrelationState(
-    weightedCovarianceSummarizer.zero(),
-    weightedCovarianceSummarizer.zero(),
-    weightedCovarianceSummarizer.zero()
-  )
+  override def zero(): WeightedCorrelationState =
+    WeightedCorrelationState(
+      weightedCovarianceSummarizer.zero(),
+      weightedCovarianceSummarizer.zero(),
+      weightedCovarianceSummarizer.zero()
+    )
 
   override def add(
-    u: WeightedCorrelationState,
-    t: (Double, Double, Double)
+      u: WeightedCorrelationState,
+      t: (Double, Double, Double)
   ): WeightedCorrelationState = {
     val (x, y, w) = t
     u.sx = weightedCovarianceSummarizer.add(u.sx, (x, x, w))
@@ -51,8 +56,8 @@ class WeightedCorrelationSummarizer
   }
 
   override def merge(
-    u1: WeightedCorrelationState,
-    u2: WeightedCorrelationState
+      u1: WeightedCorrelationState,
+      u2: WeightedCorrelationState
   ): WeightedCorrelationState = {
 
     u1.sx = weightedCovarianceSummarizer.merge(u1.sx, u2.sx)

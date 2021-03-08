@@ -35,7 +35,7 @@ object ExtremeSummarizerType extends Enumeration {
 }
 
 case class ExtremeSummarizerFactory(column: String, extremeType: ExtremeType)
-  extends BaseSummarizerFactory(column) {
+    extends BaseSummarizerFactory(column) {
   override def apply(inputSchema: StructType): Summarizer = {
     val dataType = inputSchema(column).dataType
     val ctag = toClassTag(dataType)
@@ -43,29 +43,38 @@ case class ExtremeSummarizerFactory(column: String, extremeType: ExtremeType)
     if (extremeType == ExtremeSummarizerType.Min) {
       order = order.reverse
     }
-    ExtremeSummarizer(inputSchema, prefixOpt, requiredColumns, ctag, order, extremeType.toString)
+    ExtremeSummarizer(
+      inputSchema,
+      prefixOpt,
+      requiredColumns,
+      ctag,
+      order,
+      extremeType.toString
+    )
   }
 }
 
 case class ExtremeSummarizer[E](
-  override val inputSchema: StructType,
-  override val prefixOpt: Option[String],
-  override val requiredColumns: ColumnList,
-  tag: ClassTag[E],
-  order: Ordering[_],
-  outputColumnName: String
-) extends FlippableSummarizer with FilterNullInput {
-  private val Sequence(Seq(column)) = requiredColumns
-  private val columnIndex = inputSchema.fieldIndex(column)
-
+    override val inputSchema: StructType,
+    override val prefixOpt: Option[String],
+    override val requiredColumns: ColumnList,
+    tag: ClassTag[E],
+    order: Ordering[_],
+    outputColumnName: String
+) extends FlippableSummarizer
+    with FilterNullInput {
   override type T = E
   override type U = mutable.PriorityQueue[E]
   override type V = Array[E]
+  override val summarizer: ExtremesSummarizer[E] =
+    ExtremesSummarizer[E](1, tag, order.asInstanceOf[Ordering[E]])
+  override val schema: StructType =
+    Schema.of(s"${column}_$outputColumnName" -> inputSchema(column).dataType)
+  private val Sequence(Seq(column)) = requiredColumns
+  private val columnIndex = inputSchema.fieldIndex(column)
 
-  override val summarizer: ExtremesSummarizer[E] = ExtremesSummarizer[E](1, tag, order.asInstanceOf[Ordering[E]])
-  override val schema: StructType = Schema.of(s"${column}_$outputColumnName" -> inputSchema(column).dataType)
-
-  override def toT(r: InternalRow): T = r.get(columnIndex, inputSchema(columnIndex).dataType).asInstanceOf[E]
+  override def toT(r: InternalRow): T =
+    r.get(columnIndex, inputSchema(columnIndex).dataType).asInstanceOf[E]
 
   override def fromV(v: V): InternalRow = {
     if (v.isEmpty) {

@@ -27,22 +27,28 @@ trait Window extends Serializable {
 trait TimeWindow extends Window with rdd.Window[Long]
 
 /**
- * A [[TimeWindow]] that supports `shift`.
- *
- * A [[ShiftTimeWindow]] is associated with a direction which could be forward or backward.
- * This decides the direction of time shifting of the window.
- *
- * A [[ShiftTimeWindow]] must also be monotonic:
- *  - if backward, window.of(t1)._1 >= window.of(t2)._1 must be true for all t1 >= t2
- *  - if not backward, window.of(t1)._2 >= window.of(t2)._2 must be true for all t1 >= t2
- *
- */
+  * A [[TimeWindow]] that supports `shift`.
+  *
+  * A [[ShiftTimeWindow]] is associated with a direction which could be forward or backward.
+  * This decides the direction of time shifting of the window.
+  *
+  * A [[ShiftTimeWindow]] must also be monotonic:
+  *  - if backward, window.of(t1)._1 >= window.of(t2)._1 must be true for all t1 >= t2
+  *  - if not backward, window.of(t1)._2 >= window.of(t2)._2 must be true for all t1 >= t2
+  *
+  */
 trait ShiftTimeWindow extends TimeWindow {
   protected val backward: Boolean
-  /**
-   * Given a time, return the length of the window
-   */
-  protected def length(time: Long): Long
+
+  final override def of(time: Long): (Long, Long) = of(time, length(time))
+
+  final def shift(time: Long): Long =
+    if (backward) of(time, length(time))._1 else of(time, length(time))._2
+
+  final protected def of(time: Long, length: Long): (Long, Long) = {
+    if (backward) (safeMinus(time, length), time)
+    else (time, safePlus(time, length))
+  }
 
   protected def safeMinus(a: Long, b: Long): Long = {
     require(b >= 0)
@@ -62,18 +68,19 @@ trait ShiftTimeWindow extends TimeWindow {
     }
   }
 
-  final protected def of(time: Long, length: Long): (Long, Long) = {
-    if (backward) (safeMinus(time, length), time) else (time, safePlus(time, length))
-  }
-
-  final override def of(time: Long): (Long, Long) = of(time, length(time))
-  final def shift(time: Long): Long = if (backward) of(time, length(time))._1 else of(time, length(time))._2
+  /**
+    * Given a time, return the length of the window
+    */
+  protected def length(time: Long): Long
 }
 
 trait RowCountWindow extends Window with CountWindow
 
-case class AbsoluteTimeWindow(override val name: String, val length: Long, override val backward: Boolean = true)
-  extends ShiftTimeWindow {
+case class AbsoluteTimeWindow(
+    override val name: String,
+    val length: Long,
+    override val backward: Boolean = true
+) extends ShiftTimeWindow {
   def length(t: Long): Long = length
 
   override def toString(): String = s"${this.getClass.getSimpleName}(${name})"

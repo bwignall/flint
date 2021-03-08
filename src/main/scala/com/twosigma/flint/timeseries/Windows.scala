@@ -16,19 +16,22 @@
 
 package com.twosigma.flint.timeseries
 
-import com.twosigma.flint.timeseries.window.{ ShiftTimeWindow, AbsoluteTimeWindow }
+import com.twosigma.flint.timeseries.window.{
+  ShiftTimeWindow,
+  AbsoluteTimeWindow
+}
 import scala.concurrent.duration.Duration
 
 object Windows {
 
   /**
-   * Provide a past [[AbsoluteTimeWindow]] for a given length.
-   *
-   * @param length A string representation of window length, like `10s` or `10sec` etc. The
-   * the unit could be one of the follows: `d day`, `h hour`, `min minute`, `s sec second`,
-   * `ms milli millisecond`, `µs micro microsecond`, and `ns nano nanosecond`.
-   * @return a past [[AbsoluteTimeWindow]] for the given window length.
-   */
+    * Provide a past [[AbsoluteTimeWindow]] for a given length.
+    *
+    * @param length A string representation of window length, like `10s` or `10sec` etc. The
+    * the unit could be one of the follows: `d day`, `h hour`, `min minute`, `s sec second`,
+    * `ms milli millisecond`, `µs micro microsecond`, and `ns nano nanosecond`.
+    * @return a past [[AbsoluteTimeWindow]] for the given window length.
+    */
   def pastAbsoluteTime(length: String): ShiftTimeWindow = {
     val ns = Duration(length).toNanos
     require(ns >= 0)
@@ -36,13 +39,13 @@ object Windows {
   }
 
   /**
-   * Provide a future [[AbsoluteTimeWindow]] for a given length.
-   *
-   * @param length A string representation of window length, like `10s` or `10sec` etc. The
-   * the unit could be one of the follows: `d day`, `h hour`, `min minute`, `s sec second`,
-   * `ms milli millisecond`, `µs micro microsecond`, and `ns nano nanosecond`.
-   * @return a future [[AbsoluteTimeWindow]] for the given window length.
-   */
+    * Provide a future [[AbsoluteTimeWindow]] for a given length.
+    *
+    * @param length A string representation of window length, like `10s` or `10sec` etc. The
+    * the unit could be one of the follows: `d day`, `h hour`, `min minute`, `s sec second`,
+    * `ms milli millisecond`, `µs micro microsecond`, and `ns nano nanosecond`.
+    * @return a future [[AbsoluteTimeWindow]] for the given window length.
+    */
   def futureAbsoluteTime(length: String): ShiftTimeWindow = {
     val ns = Duration(length).toNanos
     require(ns >= 0)

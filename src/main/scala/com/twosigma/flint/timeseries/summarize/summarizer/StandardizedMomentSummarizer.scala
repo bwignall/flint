@@ -17,7 +17,11 @@
 package com.twosigma.flint.timeseries.summarize.summarizer
 
 import breeze.numerics.pow
-import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.{ NthCentralMomentOutput, NthCentralMomentState, NthCentralMomentSummarizer => NthCentralMomentSum }
+import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.{
+  NthCentralMomentOutput,
+  NthCentralMomentState,
+  NthCentralMomentSummarizer => NthCentralMomentSum
+}
 import com.twosigma.flint.timeseries.summarize.summarizer.StandardizedMomentSummarizerType.StandardizedMomentType
 import com.twosigma.flint.timeseries.row.Schema
 import com.twosigma.flint.timeseries.summarize.ColumnList.Sequence
@@ -26,17 +30,19 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.types._
 
 /**
- * See https://en.wikipedia.org/wiki/Skewness and https://en.wikipedia.org/wiki/Kurtosis for the formulas to calculate
- * these values.
- */
+  * See https://en.wikipedia.org/wiki/Skewness and https://en.wikipedia.org/wiki/Kurtosis for the formulas to calculate
+  * these values.
+  */
 object StandardizedMomentSummarizerType extends Enumeration {
   type StandardizedMomentType = Value
   val Skewness = Value("skewness")
   val Kurtosis = Value("kurtosis")
 }
 
-case class StandardizedMomentSummarizerFactory(column: String, standardizedMomentType: StandardizedMomentType)
-  extends BaseSummarizerFactory(column) {
+case class StandardizedMomentSummarizerFactory(
+    column: String,
+    standardizedMomentType: StandardizedMomentType
+) extends BaseSummarizerFactory(column) {
   override def apply(inputSchema: StructType): StandardizedMomentSummarizer = {
     val moment = standardizedMomentType match {
       case StandardizedMomentSummarizerType.Skewness => 3
@@ -54,29 +60,30 @@ case class StandardizedMomentSummarizerFactory(column: String, standardizedMomen
 }
 
 case class StandardizedMomentSummarizer(
-  override val inputSchema: StructType,
-  override val prefixOpt: Option[String],
-  requiredColumns: ColumnList,
-  moment: Integer,
-  standardizedMomentType: StandardizedMomentType,
-  outputColumnName: String
-) extends LeftSubtractableSummarizer with FilterNullInput {
-  private val Sequence(Seq(column)) = requiredColumns
-  private val columnIndex = inputSchema.fieldIndex(column)
-  private final val valueExtractor = asDoubleExtractor(inputSchema(columnIndex).dataType, columnIndex)
-
+    override val inputSchema: StructType,
+    override val prefixOpt: Option[String],
+    requiredColumns: ColumnList,
+    moment: Integer,
+    standardizedMomentType: StandardizedMomentType,
+    outputColumnName: String
+) extends LeftSubtractableSummarizer
+    with FilterNullInput {
   override type T = Double
   override type U = NthCentralMomentState
   override type V = NthCentralMomentOutput
-
+  private final val valueExtractor =
+    asDoubleExtractor(inputSchema(columnIndex).dataType, columnIndex)
   override val summarizer = NthCentralMomentSum(moment)
   override val schema = Schema.of(s"${column}_$outputColumnName" -> DoubleType)
+  private val Sequence(Seq(column)) = requiredColumns
+  private val columnIndex = inputSchema.fieldIndex(column)
 
   override def toT(r: InternalRow): T = valueExtractor(r)
 
   override def fromV(v: V): InternalRow = {
     val variance = v.nthCentralMoment(2)
-    val standardizedMoment = v.nthCentralMoment(moment) / pow(variance, moment / 2.0)
+    val standardizedMoment =
+      v.nthCentralMoment(moment) / pow(variance, moment / 2.0)
     standardizedMomentType match {
       case StandardizedMomentSummarizerType.Kurtosis =>
         InternalRow(standardizedMoment - 3.0)

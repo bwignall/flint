@@ -16,19 +16,19 @@
 
 package com.twosigma.flint.util.collection
 
-import java.util.{ LinkedList => JLinkedList }
+import java.util.{LinkedList => JLinkedList}
 
 private[flint] class LinkedListHolder[V](l: JLinkedList[V]) {
 
   /**
-   * Drop elements from the beginning of held list while they satisfy the predicate `p`.
-   *
-   * @note The held list will be modified.
-   * @param p A predicate
-   * @return a tuple where the left is the list of removed elements and the right is the list of left elements.
-   */
+    * Drop elements from the beginning of held list while they satisfy the predicate `p`.
+    *
+    * @note The held list will be modified.
+    * @param p A predicate
+    * @return a tuple where the left is the list of removed elements and the right is the list of left elements.
+    */
   def dropWhile(
-    p: (V) => Boolean
+      p: (V) => Boolean
   ): (JLinkedList[V], JLinkedList[V]) = {
     val dropped = new JLinkedList[V]()
     while (!l.isEmpty && p(l.getFirst)) {

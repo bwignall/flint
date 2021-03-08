@@ -24,27 +24,28 @@ import org.apache.spark.sql.types._
 import com.twosigma.flint.timeseries.TimeSeriesRDD.timeColumnName
 import com.twosigma.flint.timeseries.summarize.ColumnList.Sequence
 
-case class CountSummarizerFactory(col: String = timeColumnName) extends BaseSummarizerFactory(col) {
+case class CountSummarizerFactory(col: String = timeColumnName)
+    extends BaseSummarizerFactory(col) {
   override def apply(inputSchema: StructType): CountSummarizer =
     CountSummarizer(inputSchema, prefixOpt, requiredColumns)
 }
 
 case class CountSummarizer(
-  override val inputSchema: StructType,
-  override val prefixOpt: Option[String],
-  override val requiredColumns: ColumnList
-) extends LeftSubtractableSummarizer with FilterNullInput {
+    override val inputSchema: StructType,
+    override val prefixOpt: Option[String],
+    override val requiredColumns: ColumnList
+) extends LeftSubtractableSummarizer
+    with FilterNullInput {
   override type T = Any
   override type U = Long
   override type V = Long
   override val summarizer = subtractable.CountSummarizer()
-  val Sequence(Seq(col)) = requiredColumns
-
   override val schema = if (col == timeColumnName) {
     Schema.of("count" -> LongType)
   } else {
     Schema.of(s"${col}_count" -> LongType)
   }
+  val Sequence(Seq(col)) = requiredColumns
 
   override def toT(r: InternalRow): T = r
   override def fromV(v: V): InternalRow = InternalRow(v)
