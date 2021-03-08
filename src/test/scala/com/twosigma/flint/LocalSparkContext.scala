@@ -17,12 +17,12 @@
 package com.twosigma.flint
 
 import org.apache.spark.SparkContext
-import org.scalatest.{ BeforeAndAfterAll, BeforeAndAfterEach }
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import org.scalatest.Suite
 
 /**
- *  Manages a local `sc` variable, properly stopping it after each test.
- */
+  *  Manages a local `sc` variable, properly stopping it after each test.
+  */
 trait LocalSparkContext extends BeforeAndAfterEach with BeforeAndAfterAll {
 
   self: Suite =>

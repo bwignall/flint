@@ -18,7 +18,7 @@ package com.twosigma.flint.timeseries.io.read
 
 import java.util.concurrent.TimeUnit
 
-import org.apache.spark.sql.{ functions => F }
+import org.apache.spark.sql.{functions => F}
 import com.twosigma.flint.SharedSparkContext
 import com.twosigma.flint.timeseries.io.read.ReadBuilder._
 import com.twosigma.flint.timeseries.time.TimeFormat
@@ -45,14 +45,18 @@ class ReadBuilderSpec extends FlatSpec with SharedSparkContext {
 
   it should "set begin and end range" in {
     val b1 = new ReadBuilder().range("20170101", "20170201", "UTC")
-    val b2 = new ReadBuilder().range(parseNano("20170101"), parseNano("20170201"))
-    val b3 = new ReadBuilder().range("20161231 19:00:00", "20170131 19:00:00", "America/New_York")
+    val b2 =
+      new ReadBuilder().range(parseNano("20170101"), parseNano("20170201"))
+    val b3 = new ReadBuilder()
+      .range("20161231 19:00:00", "20170131 19:00:00", "America/New_York")
 
     assert(b1.parameters.range === b2.parameters.range)
     assert(b1.parameters.range === b3.parameters.range)
 
     val b4 = new ReadBuilder().range(null, "20170201")
-    assert(b4.parameters.range == BeginEndRange(None, Some(parseNano("20170201"))))
+    assert(
+      b4.parameters.range == BeginEndRange(None, Some(parseNano("20170201")))
+    )
   }
 
   it should "set default options" in {
@@ -65,7 +69,8 @@ class ReadBuilderSpec extends FlatSpec with SharedSparkContext {
 
   behavior of "Parquet reader"
 
-  private val priceWithHeaderParquetPath = "src/test/resources/timeseries/parquet/PriceWithHeader.parquet"
+  private val priceWithHeaderParquetPath =
+    "src/test/resources/timeseries/parquet/PriceWithHeader.parquet"
   private val priceWithHeaderUnsortedParquetPath =
     "src/test/resources/timeseries/parquet/PriceWithHeaderUnsorted.parquet"
   private val priceWithHeaderTimeRenamedParquetPath =
@@ -139,7 +144,8 @@ class ReadBuilderSpec extends FlatSpec with SharedSparkContext {
       val time = row.getAs[Long]("time")
       TimeUnit.NANOSECONDS.convert(time, TimeUnit.SECONDS)
     }
-    val actualTime = withTimeUnit.toDF.select("time").collect().map(_.getAs[Long]("time"))
+    val actualTime =
+      withTimeUnit.toDF.select("time").collect().map(_.getAs[Long]("time"))
     assert(actualTime === expectedTime)
   }
 
@@ -150,7 +156,8 @@ class ReadBuilderSpec extends FlatSpec with SharedSparkContext {
       .toDF
       .drop("timeRenamed")
 
-    val df = sqlContext.read.parquet(priceWithHeaderTimeRenamedParquetPath)
+    val df = sqlContext.read
+      .parquet(priceWithHeaderTimeRenamedParquetPath)
       .withColumn("time", F.col("timeRenamed"))
       .drop("timeRenamed")
 
@@ -164,7 +171,8 @@ class ReadBuilderSpec extends FlatSpec with SharedSparkContext {
       .option("isSorted", "false")
       .parquet(priceWithHeaderUnsortedParquetPath)
 
-    val expected = sqlContext.read.parquet(priceWithHeaderUnsortedParquetPath).sort("time")
+    val expected =
+      sqlContext.read.parquet(priceWithHeaderUnsortedParquetPath).sort("time")
 
     assert(actual.collect() === expected.collect())
   }

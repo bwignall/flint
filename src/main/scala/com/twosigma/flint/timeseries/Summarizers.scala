@@ -24,6 +24,7 @@ import com.twosigma.flint.timeseries.summarize.{
 import com.twosigma.flint.timeseries.summarize.summarizer._
 import org.apache.spark.sql.types._
 
+import scala.annotation.tailrec
 import scala.concurrent.duration.Duration
 
 object Summarizers {
@@ -319,7 +320,7 @@ object Summarizers {
    *   - "logLikelihood": [[DoubleType]], the log-likelihood of the data given the fitted betas.
    *   - "akaikeIC": [[DoubleType]], the Akaike information criterion.
    *   - "bayesIC": [[DoubleType]], the Bayes information criterion.
-   *   - "cond": [[DoubleType]], the condition number Gramian matrix, i.e. X^TX.
+   *   - "cond": [[DoubleType]], the condition number Gramian matrix, i.e. X.T X.
    *   - "const_columns": [[ArrayType]] of [[StringType]], the list of variables in `xColumns` that are constants.
    *
    *
@@ -729,6 +730,7 @@ object Summarizers {
     ArrowSummarizerFactory(columns, includeBaseRows)
 
   @PythonApi(until = "0.2.5")
+  @tailrec
   private def OLSRegression(
     yColumn: String,
     xColumns: Seq[String],

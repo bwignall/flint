@@ -21,6 +21,8 @@ import org.apache.spark.sql.execution._
 import org.apache.spark.sql.execution.columnar.InMemoryTableScanExec
 import org.apache.spark.sql.execution.python.BatchEvalPythonExec
 
+import scala.annotation.tailrec
+
 /**
  * A class to used to check whether a DataFrame operation is partition preserving.
  *
@@ -96,6 +98,7 @@ object PartitionPreservingOperation {
     }
   }
 
+  @tailrec
   private def isPartitionPreservingPlan(node: SparkPlan): Boolean =
     if (node.children.isEmpty) {
       isPartitionPreservingLeafNode(node)

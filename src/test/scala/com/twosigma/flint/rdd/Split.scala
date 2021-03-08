@@ -19,16 +19,17 @@ package com.twosigma.flint.rdd
 import org.apache.spark.Partition
 
 /**
- * In Spark 2, Partition.equals() uses Serializable.equals(). This breaks equality comparision of OrderedRDDPartition
- * in tests. We need to investigate why Serializable.equals() returns false for two OrderedRDDPartitions, but for
- * now, we are going to use this class for equality comparison.
- */
+  * In Spark 2, Partition.equals() uses Serializable.equals(). This breaks equality comparision of OrderedRDDPartition
+  * in tests. We need to investigate why Serializable.equals() returns false for two OrderedRDDPartitions, but for
+  * now, we are going to use this class for equality comparison.
+  */
 case class Split(override val index: Int) extends Partition {
   // http://stackoverflow.com/questions/11890805/hashcode-of-an-int
   override def hashCode(): Int = index
 
-  override def equals(other: Any): Boolean = other match {
-    case that: Partition => this.index == that.index
-    case _ => false
-  }
+  override def equals(other: Any): Boolean =
+    other match {
+      case that: Partition => this.index == that.index
+      case _               => false
+    }
 }

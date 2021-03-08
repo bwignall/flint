@@ -18,7 +18,7 @@ package com.twosigma.flint.timeseries
 
 import com.twosigma.flint.timeseries.row.Schema
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.types.{ DoubleType, IntegerType, LongType }
+import org.apache.spark.sql.types.{DoubleType, IntegerType, LongType}
 
 import scala.collection.mutable
 
@@ -61,58 +61,70 @@ class TimeSeriesGeneratorSpec extends TimeSeriesSuite {
 
     assert(randomTSRdd.schema == schema)
     assert(randomTSRdd.groupByCycle().count() == (end - begin) / frequency + 1)
-    randomTSRdd.groupByCycle().collect().foreach{
-      r =>
-        val ids = r.getAs[mutable.WrappedArray[Row]]("rows").map {
-          r => r.getAs[Int]("id")
-        }.sorted
-        assert(ids.size == 5)
-        assert(ids.deep == (1 to 5).toArray.deep)
+    randomTSRdd.groupByCycle().collect().foreach { r =>
+      val ids = r
+        .getAs[mutable.WrappedArray[Row]]("rows")
+        .map { r =>
+          r.getAs[Int]("id")
+        }
+        .sorted
+      assert(ids.size == 5)
+      assert(ids.deep == (1 to 5).toArray.deep)
     }
   }
 
   it should "generate TimeSeriesRDD randomly with random ids set for different cycles" in {
-    (1 to 10).foreach {
-      i =>
-        val randomTSRdd = new TimeSeriesGenerator(sc, begin, end, frequency)(
-          columns = Seq(
-            "x1" -> nextDouble,
-            "x2" -> nextDouble
-          ),
-          seed = seed + i,
-          ids = 1 to 5,
-          ratioOfCycleSize = 0.5
-        ).generate()
+    (1 to 10).foreach { i =>
+      val randomTSRdd = new TimeSeriesGenerator(sc, begin, end, frequency)(
+        columns = Seq(
+          "x1" -> nextDouble,
+          "x2" -> nextDouble
+        ),
+        seed = seed + i,
+        ids = 1 to 5,
+        ratioOfCycleSize = 0.5
+      ).generate()
 
-        assert(randomTSRdd.schema == schema)
-        assert(randomTSRdd.groupByCycle().count() == (end - begin) / frequency + 1)
+      assert(randomTSRdd.schema == schema)
+      assert(
+        randomTSRdd.groupByCycle().count() == (end - begin) / frequency + 1
+      )
 
-        val setsOfIds = randomTSRdd.groupByCycle().collect().map {
-          r =>
-            val currentIds = r.getAs[mutable.WrappedArray[Row]]("rows").map { r => r.getAs[Int]("id") }.sorted
-            assert(currentIds.size == 3)
-            currentIds
-        }.toSet
-        assert(setsOfIds.size <= 10)
-        assert(setsOfIds.size > 5)
+      val setsOfIds = randomTSRdd
+        .groupByCycle()
+        .collect()
+        .map { r =>
+          val currentIds = r
+            .getAs[mutable.WrappedArray[Row]]("rows")
+            .map { r => r.getAs[Int]("id") }
+            .sorted
+          assert(currentIds.size == 3)
+          currentIds
+        }
+        .toSet
+      assert(setsOfIds.size <= 10)
+      assert(setsOfIds.size > 5)
     }
   }
 
   it should "generate TimeSeriesRDD randomly with uneven intervals" in {
-    (1 to 10).foreach {
-      i =>
-        val randomTSRdd = new TimeSeriesGenerator(sc, begin, end, frequency)(
-          columns = Seq(
-            "x1" -> nextDouble,
-            "x2" -> nextDouble
-          ),
-          seed = seed + i,
-          uniform = false
-        ).generate()
+    (1 to 10).foreach { i =>
+      val randomTSRdd = new TimeSeriesGenerator(sc, begin, end, frequency)(
+        columns = Seq(
+          "x1" -> nextDouble,
+          "x2" -> nextDouble
+        ),
+        seed = seed + i,
+        uniform = false
+      ).generate()
 
-        assert(randomTSRdd.schema == schema)
-        assert(randomTSRdd.groupByCycle().count() > 1.25 * (end - begin) / frequency)
-        assert(randomTSRdd.groupByCycle().count() < 3.0 * (end - begin) / frequency)
+      assert(randomTSRdd.schema == schema)
+      assert(
+        randomTSRdd.groupByCycle().count() > 1.25 * (end - begin) / frequency
+      )
+      assert(
+        randomTSRdd.groupByCycle().count() < 3.0 * (end - begin) / frequency
+      )
     }
   }
 }

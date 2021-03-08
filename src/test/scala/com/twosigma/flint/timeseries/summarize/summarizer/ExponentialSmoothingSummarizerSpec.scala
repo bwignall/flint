@@ -20,17 +20,53 @@ import com.twosigma.flint.timeseries._
 import com.twosigma.flint.timeseries.row.Schema
 import com.twosigma.flint.timeseries.summarize.SummarizerSuite
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.types.{ DoubleType, IntegerType }
-import org.scalactic.{ Equality, TolerantNumerics }
+import org.apache.spark.sql.types.{DoubleType, IntegerType}
+import org.scalactic.{Equality, TolerantNumerics}
 
-class ExponentialSmoothingSummarizerSpec extends SummarizerSuite with TimeTypeSuite {
+class ExponentialSmoothingSummarizerSpec
+    extends SummarizerSuite
+    with TimeTypeSuite {
 
   override val defaultPartitionParallelism: Int = 10
 
-  override val defaultResourceDir = "/timeseries/summarize/summarizer/exponentialsmoothingsummarizer"
+  override val defaultResourceDir =
+    "/timeseries/summarize/summarizer/exponentialsmoothingsummarizer"
 
   private var price1: TimeSeriesRDD = _
   private var price2: TimeSeriesRDD = _
+
+  private def test(
+      primingPeriods: Double,
+      exponentialSmoothingInterpolation: String,
+      exponentialSmoothingConvention: String
+  ): Unit = {
+    withTimeType("long", "timestamp") {
+      init()
+      val results = price1.addSummaryColumns(
+        Summarizers.exponentialSmoothing(
+          xColumn = "price",
+          timestampsToPeriods = (a, b) => (b - a) / 100000000000.0,
+          alpha = 0.5,
+          primingPeriods = primingPeriods,
+          interpolation = exponentialSmoothingInterpolation,
+          convention = exponentialSmoothingConvention
+        )
+      )
+
+      results.rdd.collect().foreach { row =>
+        val predVal = row.getAs[Double]("price_ema")
+        val trueVal = row.getAs[Double](
+          s"expected_" +
+            s"${exponentialSmoothingConvention}_$exponentialSmoothingInterpolation"
+        )
+        if (predVal.isNaN) {
+          assert(trueVal.isNaN)
+        } else {
+          assert(predVal === trueVal)
+        }
+      }
+    }
+  }
 
   private def init(): Unit = {
     price1 = fromCSV(
@@ -57,66 +93,46 @@ class ExponentialSmoothingSummarizerSpec extends SummarizerSuite with TimeTypeSu
     )
   }
 
-  private def test(
-    primingPeriods: Double,
-    exponentialSmoothingInterpolation: String,
-    exponentialSmoothingConvention: String
-  ): Unit = {
-    withTimeType("long", "timestamp") {
-      init()
-      val results = price1.addSummaryColumns(Summarizers.exponentialSmoothing(
-        xColumn = "price",
-        timestampsToPeriods = (a, b) => (b - a) / 100000000000.0,
-        alpha = 0.5,
-        primingPeriods = primingPeriods,
-        interpolation = exponentialSmoothingInterpolation,
-        convention = exponentialSmoothingConvention
-      ))
-
-      results.rdd.collect().foreach { row =>
-        val predVal = row.getAs[Double]("price_ema")
-        val trueVal = row.getAs[Double](s"expected_" +
-          s"${exponentialSmoothingConvention}_$exponentialSmoothingInterpolation")
-        if (predVal.isNaN) {
-          assert(trueVal.isNaN)
-        } else {
-          assert(predVal === trueVal)
-        }
-      }
-    }
-  }
-
   "ExponentialSmoothingSummarizer" should "smooth correctly" in {
     withTimeType("long", "timestamp") {
       init()
-      val results = price1.addSummaryColumns(Summarizers.exponentialSmoothing(
-        xColumn = "price",
-        timestampsToPeriods = (a, b) => (b - a) / 100000000000.0
-      ), Seq("id"))
-      results.rdd.collect().foreach(row => {
-        val predVal = row.getAs[Double]("price_ema")
-        val trueVal = row.getAs[Double]("expected")
-        assert(predVal === trueVal)
-      })
+      val results = price1.addSummaryColumns(
+        Summarizers.exponentialSmoothing(
+          xColumn = "price",
+          timestampsToPeriods = (a, b) => (b - a) / 100000000000.0
+        ),
+        Seq("id")
+      )
+      results.rdd
+        .collect()
+        .foreach(row => {
+          val predVal = row.getAs[Double]("price_ema")
+          val trueVal = row.getAs[Double]("expected")
+          assert(predVal === trueVal)
+        })
     }
   }
 
   it should "decay using half life correctly" in {
     withTimeType("long", "timestamp") {
       init()
-      val results = price1.addSummaryColumns(Summarizers.emaHalfLife(
-        xColumn = "price",
-        halfLifeDuration = "100s"
-      ))
-      results.rdd.collect().foreach(row => {
-        val predVal = row.getAs[Double]("price_ema")
-        val trueVal = row.getAs[Double]("expected_legacy_previous")
-        if (predVal.isNaN) {
-          assert(trueVal.isNaN)
-        } else {
-          assert(predVal === trueVal)
-        }
-      })
+      val results = price1.addSummaryColumns(
+        Summarizers.emaHalfLife(
+          xColumn = "price",
+          halfLifeDuration = "100s"
+        )
+      )
+      results.rdd
+        .collect()
+        .foreach(row => {
+          val predVal = row.getAs[Double]("price_ema")
+          val trueVal = row.getAs[Double]("expected_legacy_previous")
+          if (predVal.isNaN) {
+            assert(trueVal.isNaN)
+          } else {
+            assert(predVal === trueVal)
+          }
+        })
     }
   }
 
@@ -161,37 +177,54 @@ class ExponentialSmoothingSummarizerSpec extends SummarizerSuite with TimeTypeSu
 
   it should "smooth sin correctly" in {
     def getSinRDDWithID(id: Int, constant: Double = 1.0): TimeSeriesRDD = {
-      var rdd = Clocks.uniform(sc, "1d", beginDateTime = "1960-01-01", endDateTime = "2030-01-01")
+      var rdd = Clocks.uniform(
+        sc,
+        "1d",
+        beginDateTime = "1960-01-01",
+        endDateTime = "2030-01-01"
+      )
       rdd = rdd.addColumns("value" -> DoubleType -> { (row: Row) => constant })
       rdd = rdd.addColumns("id" -> IntegerType -> { (row: Row) => id })
       rdd.addColumns("expected" -> DoubleType -> { (row: Row) => constant })
     }
 
-    var rdd = getSinRDDWithID(1, 1.0).merge(getSinRDDWithID(2, 2.0)).merge(getSinRDDWithID(3, 3.0))
+    var rdd = getSinRDDWithID(1, 1.0)
+      .merge(getSinRDDWithID(2, 2.0))
+      .merge(getSinRDDWithID(3, 3.0))
     val nanosToDays = (t1: Long, t2: Long) => (t2 - t1) / (24 * 60 * 60 * 1e9)
-    rdd = rdd.addSummaryColumns(Summarizers.exponentialSmoothing(
-      xColumn = "value",
-      timestampsToPeriods = nanosToDays
-    ), Seq("id"))
-    rdd.rdd.collect().foreach(row => {
-      val predVal = row.getAs[Double]("value_ema")
-      val trueVal = row.getAs[Double]("expected")
-      assert(predVal === trueVal)
-    })
+    rdd = rdd.addSummaryColumns(
+      Summarizers.exponentialSmoothing(
+        xColumn = "value",
+        timestampsToPeriods = nanosToDays
+      ),
+      Seq("id")
+    )
+    rdd.rdd
+      .collect()
+      .foreach(row => {
+        val predVal = row.getAs[Double]("value_ema")
+        val trueVal = row.getAs[Double]("expected")
+        assert(predVal === trueVal)
+      })
   }
 
   it should "pass summarizer property test" in {
     val primingPeriods = Seq(0.0, 1.0)
     val exponentialSmoothingInterpolation = Seq("current", "previous", "linear")
     val exponentialSmoothingConventions = Seq("core", "convolution")
-    for (pp <- primingPeriods; esi <- exponentialSmoothingInterpolation; esc <- exponentialSmoothingConventions) {
-      summarizerPropertyTest(AllProperties)(Summarizers.exponentialSmoothing(
-        xColumn = "x1",
-        timestampsToPeriods = (a, b) => (b - a) / 100.0,
-        primingPeriods = pp,
-        interpolation = esi,
-        convention = esc
-      ))
+    for (
+      pp <- primingPeriods; esi <- exponentialSmoothingInterpolation;
+      esc <- exponentialSmoothingConventions
+    ) {
+      summarizerPropertyTest(AllProperties)(
+        Summarizers.exponentialSmoothing(
+          xColumn = "x1",
+          timestampsToPeriods = (a, b) => (b - a) / 100.0,
+          primingPeriods = pp,
+          interpolation = esi,
+          convention = esc
+        )
+      )
     }
   }
 
@@ -212,16 +245,17 @@ class ExponentialSmoothingSummarizerSpec extends SummarizerSuite with TimeTypeSu
         )
         val result = price2.summarizeWindows(window, summarizer1)
 
-        result.collect().foreach {
-          row: Row =>
-            val result = row.getAs[Double]("v_ema")
-            val expected = row.getAs[Double](s"expected_${smoothingConversion}_$smoothingInterpolation")
-            if (result.isNaN || expected.isNaN) {
-              assert(result.isNaN)
-              assert(expected.isNaN)
-            } else {
-              assert(result === expected)
-            }
+        result.collect().foreach { row: Row =>
+          val result = row.getAs[Double]("v_ema")
+          val expected = row.getAs[Double](
+            s"expected_${smoothingConversion}_$smoothingInterpolation"
+          )
+          if (result.isNaN || expected.isNaN) {
+            assert(result.isNaN)
+            assert(expected.isNaN)
+          } else {
+            assert(result === expected)
+          }
         }
       }
     }

@@ -24,7 +24,6 @@ import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.LongType
 
 class QuantileSummarizerSpec extends SummarizerSuite {
-  var clockTSRdd: TimeSeriesRDD = _
   private lazy val init = {
     clockTSRdd = Clocks.uniform(
       sc,
@@ -34,6 +33,7 @@ class QuantileSummarizerSpec extends SummarizerSuite {
       endDateTime = "1980-01-01"
     )
   }
+  var clockTSRdd: TimeSeriesRDD = _
 
   "SequentialArrayQueue" should "resize up correctly" in {
     val queue = new SequentialArrayQueue[Double]()

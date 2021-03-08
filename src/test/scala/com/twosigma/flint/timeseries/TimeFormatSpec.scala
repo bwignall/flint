@@ -24,8 +24,23 @@ class TimeFormatSpec extends FlatSpec {
 
   "TimeFormat" should "parse time correctly" in {
     assert(TimeFormat.parseNano("1970-01-01") == 0L)
-    assert(TimeFormat.parseNano("1970-01-01 00:00:00.000 +0000", DateTimeZone.forOffsetHours(2)) == 0L)
-    assert(TimeFormat.parseNano("1970-01-01 00:00:00.000 -1000", DateTimeZone.forOffsetHours(1)) == 36000000000000L)
-    assert(TimeFormat.parseNano("1970-01-01 00:00:00.000 -1000", DateTimeZone.forOffsetHours(3)) == 36000000000000L)
+    assert(
+      TimeFormat.parseNano(
+        "1970-01-01 00:00:00.000 +0000",
+        DateTimeZone.forOffsetHours(2)
+      ) == 0L
+    )
+    assert(
+      TimeFormat.parseNano(
+        "1970-01-01 00:00:00.000 -1000",
+        DateTimeZone.forOffsetHours(1)
+      ) == 36000000000000L
+    )
+    assert(
+      TimeFormat.parseNano(
+        "1970-01-01 00:00:00.000 -1000",
+        DateTimeZone.forOffsetHours(3)
+      ) == 36000000000000L
+    )
   }
 }

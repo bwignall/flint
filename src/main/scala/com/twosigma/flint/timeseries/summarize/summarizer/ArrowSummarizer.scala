@@ -42,7 +42,8 @@ object ArrowSummarizer {
 /**
  * Summarize columns into arrow batch.
  *
- * @param columns
+ * @param columns Columns to include
+ * @param includeBaseRows Whether or not to include include base rows
  */
 case class ArrowSummarizerFactory(
   columns: Seq[String],

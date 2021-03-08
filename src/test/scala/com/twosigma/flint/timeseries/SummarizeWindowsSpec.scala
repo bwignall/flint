@@ -18,7 +18,11 @@ package com.twosigma.flint.timeseries
 
 import java.util.concurrent.TimeUnit
 
-import com.twosigma.flint.timeseries.PartitionStrategy.{ ExtendEnd, MultiTimestampUnnormailzed, OneTimestampTightBound }
+import com.twosigma.flint.timeseries.PartitionStrategy.{
+  ExtendEnd,
+  MultiTimestampUnnormailzed,
+  OneTimestampTightBound
+}
 import com.twosigma.flint.timeseries.row.Schema
 import com.twosigma.flint.timeseries.summarize.summarizer.LagSumSummarizerFactory
 import com.twosigma.flint.timeseries.window.ShiftTimeWindow
@@ -29,13 +33,21 @@ import org.scalatest.prop.PropertyChecks
 
 import scala.util.Random
 
-class SummarizeWindowsSpec extends MultiPartitionSuite with TimeSeriesTestData with PropertyChecks with TimeTypeSuite {
+class SummarizeWindowsSpec
+    extends MultiPartitionSuite
+    with TimeSeriesTestData
+    with PropertyChecks
+    with TimeTypeSuite {
 
   override val defaultResourceDir: String = "/timeseries/summarizewindows"
 
-  private val volumeSchema = Schema("id" -> IntegerType, "volume" -> LongType, "v2" -> DoubleType)
+  private val volumeSchema =
+    Schema("id" -> IntegerType, "volume" -> LongType, "v2" -> DoubleType)
   private val volumeWithGroupSchema = Schema(
-    "id" -> IntegerType, "group" -> IntegerType, "volume" -> LongType, "v2" -> DoubleType
+    "id" -> IntegerType,
+    "group" -> IntegerType,
+    "volume" -> LongType,
+    "v2" -> DoubleType
   )
 
   private val valueSchema = Schema(
@@ -44,7 +56,8 @@ class SummarizeWindowsSpec extends MultiPartitionSuite with TimeSeriesTestData w
 
   private def toTSRdd(clock: Seq[Int]): TimeSeriesRDD = {
     val clockDF = sqlContext.createDataFrame(
-      sc.parallelize(clock).map { v => Row.fromSeq(Seq(v.toLong)) }, Schema()
+      sc.parallelize(clock).map { v => Row.fromSeq(Seq(v.toLong)) },
+      Schema()
     )
     TimeSeriesRDD.fromDF(clockDF)(isSorted = true, TimeUnit.NANOSECONDS)
   }
@@ -57,7 +70,10 @@ class SummarizeWindowsSpec extends MultiPartitionSuite with TimeSeriesTestData w
       )
 
       def test(rdd: TimeSeriesRDD): Unit = {
-        val summarizedTSRdd = rdd.summarizeWindows(Windows.pastAbsoluteTime("100s"), Summarizers.sum("volume"))
+        val summarizedTSRdd = rdd.summarizeWindows(
+          Windows.pastAbsoluteTime("100s"),
+          Summarizers.sum("volume")
+        )
         assertEquals(summarizedTSRdd, resultsTSRdd)
       }
 
@@ -77,7 +93,9 @@ class SummarizeWindowsSpec extends MultiPartitionSuite with TimeSeriesTestData w
 
       def test(rdd: TimeSeriesRDD): Unit = {
         val summarizedTSRdd = rdd.summarizeWindows(
-          Windows.pastAbsoluteTime("100s"), Summarizers.sum("volume"), Seq("id")
+          Windows.pastAbsoluteTime("100s"),
+          Summarizers.sum("volume"),
+          Seq("id")
         )
         assertEquals(summarizedTSRdd, resultsTSRdd)
       }
@@ -98,13 +116,16 @@ class SummarizeWindowsSpec extends MultiPartitionSuite with TimeSeriesTestData w
 
       def test(volumeTSRdd: TimeSeriesRDD): Unit = {
         val summarizedTSRdd = volumeTSRdd.summarizeWindows(
-          Windows.pastAbsoluteTime("100s"), Summarizers.sum("volume"), Seq("id", "group")
+          Windows.pastAbsoluteTime("100s"),
+          Summarizers.sum("volume"),
+          Seq("id", "group")
         )
         assertEquals(summarizedTSRdd, resultsTSRdd)
       }
 
       {
-        val volumeTSRdd = fromCSV("VolumeWithIndustryGroup.csv", volumeWithGroupSchema)
+        val volumeTSRdd =
+          fromCSV("VolumeWithIndustryGroup.csv", volumeWithGroupSchema)
         withPartitionStrategy(volumeTSRdd)(NONE)(test)
       }
     }
@@ -118,7 +139,10 @@ class SummarizeWindowsSpec extends MultiPartitionSuite with TimeSeriesTestData w
       )
 
       def test(rdd: TimeSeriesRDD): Unit = {
-        val summarizedTSRdd = rdd.summarizeWindows(Windows.pastAbsoluteTime("5s"), Summarizers.count())
+        val summarizedTSRdd = rdd.summarizeWindows(
+          Windows.pastAbsoluteTime("5s"),
+          Summarizers.count()
+        )
         assertEquals(summarizedTSRdd, resultsTSRdd)
       }
 
@@ -161,14 +185,17 @@ class SummarizeWindowsSpec extends MultiPartitionSuite with TimeSeriesTestData w
 
       val window = Windows.pastAbsoluteTime(s"$step ns")
 
-      val summarized1 = clockTSRdd.summarizeWindows(
-        window, Summarizers.count()
-      ).rdd.map(_.getAs[Long]("count"))
+      val summarized1 = clockTSRdd
+        .summarizeWindows(
+          window,
+          Summarizers.count()
+        )
+        .rdd
+        .map(_.getAs[Long]("count"))
 
-      val results = clock.map {
-        t1 =>
-          val (b, e) = window.of(t1.toLong)
-          clock.count { t2 => t2 >= b && t2 <= e }
+      val results = clock.map { t1 =>
+        val (b, e) = window.of(t1.toLong)
+        clock.count { t2 => t2 >= b && t2 <= e }
       }
       assert(summarized1.collect().deep == results.toArray.deep)
     }
@@ -177,13 +204,21 @@ class SummarizeWindowsSpec extends MultiPartitionSuite with TimeSeriesTestData w
   {
     val cycleWidth = cycleMetaData1.cycleWidth
     val intervalWidth = cycleMetaData1.intervalWidth
-    val params = for (
-      windowFn <- Seq(Windows.pastAbsoluteTime _, Windows.futureAbsoluteTime _);
-      width <- Seq(
-        0, cycleWidth / 2, cycleWidth, cycleWidth * 2, intervalWidth / 2, intervalWidth, intervalWidth * 2
-      ).map(w => s"${w}ns");
-      key <- Seq(Seq.empty, Seq("id"))
-    ) yield Seq(windowFn(width), key)
+    val params =
+      for (
+        windowFn <-
+          Seq(Windows.pastAbsoluteTime _, Windows.futureAbsoluteTime _);
+        width <- Seq(
+          0,
+          cycleWidth / 2,
+          cycleWidth,
+          cycleWidth * 2,
+          intervalWidth / 2,
+          intervalWidth,
+          intervalWidth * 2
+        ).map(w => s"${w}ns");
+        key <- Seq(Seq.empty, Seq("id"))
+      ) yield Seq(windowFn(width), key)
 
     def addWindows(rdd: TimeSeriesRDD, param: Seq[Any]): TimeSeriesRDD = {
       val window = param(0).asInstanceOf[ShiftTimeWindow]
@@ -193,7 +228,9 @@ class SummarizeWindowsSpec extends MultiPartitionSuite with TimeSeriesTestData w
 
     def gen(): TimeSeriesRDD = cycleData1
 
-    withPartitionStrategyAndParams(gen)("addWindows")(DEFAULT)(params)(addWindows)
+    withPartitionStrategyAndParams(gen)("addWindows")(DEFAULT)(params)(
+      addWindows
+    )
 
   }
 }

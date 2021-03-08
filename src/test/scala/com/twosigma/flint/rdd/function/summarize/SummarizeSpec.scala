@@ -28,10 +28,12 @@ case class KVSumSummarizer()
     extends LeftSubtractableSummarizer[(Int, Double), Double, Double] {
   val sum = SumSum[Double]()
 
+  override def zero(): Double = sum.zero()
+
+  override def add(u: Double, t: (Int, Double)): Double = sum.add(u, toT(t))
+
   def toT(input: (Int, Double)): Double = input._2
 
-  override def zero(): Double = sum.zero()
-  override def add(u: Double, t: (Int, Double)): Double = sum.add(u, toT(t))
   override def subtract(u: Double, t: (Int, Double)): Double =
     sum.subtract(u, toT(t))
   override def merge(u1: Double, u2: Double): Double = sum.merge(u1, u2)

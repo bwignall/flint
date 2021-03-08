@@ -19,7 +19,7 @@ package com.twosigma.flint.timeseries
 import com.twosigma.flint.timeseries.row.Schema
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
-import org.apache.spark.sql.types.{ LongType, IntegerType, DoubleType }
+import org.apache.spark.sql.types.{LongType, IntegerType, DoubleType}
 
 class SummarizeSpec extends MultiPartitionSuite {
 
@@ -27,7 +27,8 @@ class SummarizeSpec extends MultiPartitionSuite {
 
   it should "`summarize` correctly" in {
     val expectedSchema = Schema("volume_sum" -> DoubleType)
-    val expectedResults = Array[Row](new GenericRowWithSchema(Array(0L, 7800.0), expectedSchema))
+    val expectedResults =
+      Array[Row](new GenericRowWithSchema(Array(0L, 7800.0), expectedSchema))
 
     def test(rdd: TimeSeriesRDD): Unit = {
       val results = rdd.summarize(Summarizers.sum("volume"))
@@ -36,7 +37,8 @@ class SummarizeSpec extends MultiPartitionSuite {
     }
 
     {
-      val volumeRdd = fromCSV("Volume.csv", Schema("id" -> IntegerType, "volume" -> LongType))
+      val volumeRdd =
+        fromCSV("Volume.csv", Schema("id" -> IntegerType, "volume" -> LongType))
       withPartitionStrategy(volumeRdd)(DEFAULT)(test)
     }
 
@@ -52,11 +54,16 @@ class SummarizeSpec extends MultiPartitionSuite {
     def test(rdd: TimeSeriesRDD): Unit = {
       val results = rdd.summarize(Summarizers.sum("volume"), Seq("id"))
       assert(results.schema == expectedSchema)
-      assert(results.collect().sortBy(_.getAs[Int]("id")).deep == expectedResults.sortBy(_.getAs[Int]("id")).deep)
+      assert(
+        results.collect().sortBy(_.getAs[Int]("id")).deep == expectedResults
+          .sortBy(_.getAs[Int]("id"))
+          .deep
+      )
     }
 
     {
-      val volumeTSRdd = fromCSV("Volume.csv", Schema("id" -> IntegerType, "volume" -> LongType))
+      val volumeTSRdd =
+        fromCSV("Volume.csv", Schema("id" -> IntegerType, "volume" -> LongType))
       withPartitionStrategy(volumeTSRdd)(DEFAULT)(test)
     }
   }

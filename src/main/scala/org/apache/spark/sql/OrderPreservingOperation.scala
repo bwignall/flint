@@ -17,13 +17,14 @@
 package org.apache.spark.sql
 
 import com.twosigma.flint.annotation.PythonApi
-
 import org.apache.spark.sql.catalyst.plans.logical.{
   Filter,
+  Generate,
   LogicalPlan,
-  Project,
-  Generate
+  Project
 }
+
+import scala.annotation.tailrec
 
 /**
  * A class to used to check whether a DataFrame operation is partition preserving.
@@ -97,6 +98,7 @@ object OrderPreservingOperation {
     }
   }
 
+  @tailrec
   private def isOrderPreserving(
     plan1: LogicalPlan,
     plan2: LogicalPlan

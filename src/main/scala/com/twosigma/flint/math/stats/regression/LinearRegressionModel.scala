@@ -204,9 +204,9 @@ trait LinearRegression {
  * @param input RDD of WeightedLabeledPoint.
  * @param intercept Whether to use intercept.
  * @param n The number of points.
- * @param xx The k-by-k matrix of X^TX.
- * @param xy The k-vector of X^Ty.
- * @param swx The k-vector of X^Tw.
+ * @param xx The k-by-k matrix of X.T X.
+ * @param xy The k-vector of X.T y.
+ * @param swx The k-vector of X.T w.
  * @param srwsl The square root weighted sum of labels.
  * @param ssrw The sum of square root of weights.
  * @param wsl The weighted sum of labels.

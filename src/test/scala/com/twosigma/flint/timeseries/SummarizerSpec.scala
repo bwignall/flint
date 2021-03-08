@@ -18,16 +18,22 @@ package com.twosigma.flint.timeseries
 
 import com.twosigma.flint.timeseries.row.Schema
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.types.{ DoubleType, IntegerType }
+import org.apache.spark.sql.types.{DoubleType, IntegerType}
 
 class SummarizerSpec extends TimeSeriesSuite {
 
   "SummarizerFactory" should "support alias." in {
     withResource("/timeseries/csv/Price.csv") { source =>
       val expectedSchema = Schema("C1" -> IntegerType, "C2" -> DoubleType)
-      val timeseriesRdd = CSV.from(sqlContext, "file://" + source, sorted = true, schema = expectedSchema)
+      val timeseriesRdd = CSV.from(
+        sqlContext,
+        "file://" + source,
+        sorted = true,
+        schema = expectedSchema
+      )
       assert(timeseriesRdd.schema == expectedSchema)
-      val result: Row = timeseriesRdd.summarize(Summarizers.count().prefix("alias")).first()
+      val result: Row =
+        timeseriesRdd.summarize(Summarizers.count().prefix("alias")).first()
       assert(result.getAs[Long]("alias_count") == timeseriesRdd.count())
     }
   }

@@ -52,14 +52,14 @@ import scala.collection.JavaConverters._
  * @param currentEndIndices Similar to [[currentEndIndices]]
  */
 private[flint] case class WindowBatchSummarizerState(
-  val leftRows: util.ArrayList[InternalRow],
+  leftRows: util.ArrayList[InternalRow],
   var rightRows: util.ArrayList[InternalRow],
-  val rightRowsMap: util.LinkedHashMap[Any, util.ArrayList[InternalRow]],
-  val beginIndices: util.ArrayList[Int],
-  val endIndices: util.ArrayList[Int],
-  val sks: util.ArrayList[Any],
-  val currentBeginIndices: util.HashMap[Any, Int],
-  val currentEndIndices: util.HashMap[Any, Int]
+  rightRowsMap: util.LinkedHashMap[Any, util.ArrayList[InternalRow]],
+  beginIndices: util.ArrayList[Int],
+  endIndices: util.ArrayList[Int],
+  sks: util.ArrayList[Any],
+  currentBeginIndices: util.HashMap[Any, Int],
+  currentEndIndices: util.HashMap[Any, Int]
 ) {
   def this() {
     this(

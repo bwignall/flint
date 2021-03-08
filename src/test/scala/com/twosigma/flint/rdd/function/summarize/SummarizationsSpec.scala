@@ -17,13 +17,17 @@
 package com.twosigma.flint.rdd.function.summarize
 
 import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.LeftSubtractableSummarizer
-import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.{ SumSummarizer => SumSum }
+import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.{
+  SumSummarizer => SumSum
+}
 
 import scala.Serializable
 import org.scalatest.FlatSpec
-import org.scalactic.{ TolerantNumerics, Equality }
+import org.scalactic.{Equality, TolerantNumerics}
 import com.twosigma.flint.SharedSparkContext
-import com.twosigma.flint.rdd.{ KeyPartitioningType, OrderedRDD }
+import com.twosigma.flint.rdd.{KeyPartitioningType, OrderedRDD}
+
+import scala.annotation.tailrec
 
 class SummarizationsSpec extends FlatSpec with SharedSparkContext {
 
@@ -101,19 +105,22 @@ class SummarizationsSpec extends FlatSpec with SharedSparkContext {
 
   implicit val doubleEq = TolerantNumerics.tolerantDoubleEquality(1.0e-6)
   implicit val equality = new Equality[List[Double]] {
+    @tailrec
     override def areEqual(a: List[Double], b: Any): Boolean = {
       (a, b) match {
-        case (Nil, Nil) => true
+        case (Nil, Nil)         => true
         case (x :: xs, y :: ys) => x === y && areEqual(xs, ys)
-        case _ => false
+        case _                  => false
       }
     }
   }
 
   override def beforeAll() {
     super.beforeAll()
-    orderedRDD = OrderedRDD.fromRDD(sc.parallelize(data, 4), KeyPartitioningType.Sorted)
-    orderedRDD1 = OrderedRDD.fromRDD(sc.parallelize(data, 1), KeyPartitioningType.Sorted)
+    orderedRDD =
+      OrderedRDD.fromRDD(sc.parallelize(data, 4), KeyPartitioningType.Sorted)
+    orderedRDD1 =
+      OrderedRDD.fromRDD(sc.parallelize(data, 1), KeyPartitioningType.Sorted)
   }
 
   "Summarizations" should "apply correctly" in {

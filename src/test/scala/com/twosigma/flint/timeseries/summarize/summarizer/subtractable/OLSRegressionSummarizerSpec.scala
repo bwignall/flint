@@ -44,7 +44,7 @@ class OLSRegressionSummarizerSpec extends SummarizerSuite {
       ) === 3.117181999992637
     )
     assert(
-      result.getAs[Boolean](OLSRegressionSummarizer.hasInterceptColumn) == true
+      result.getAs[Boolean](OLSRegressionSummarizer.hasInterceptColumn)
     )
     assert(result.getAs[Long](OLSRegressionSummarizer.samplesColumn) == count)
     assert(
@@ -115,7 +115,7 @@ class OLSRegressionSummarizerSpec extends SummarizerSuite {
       result.getAs[Double](OLSRegressionSummarizer.interceptColumn) === 0.0
     )
     assert(
-      result.getAs[Boolean](OLSRegressionSummarizer.hasInterceptColumn) == false
+      !result.getAs[Boolean](OLSRegressionSummarizer.hasInterceptColumn)
     )
     assert(result.getAs[Long](OLSRegressionSummarizer.samplesColumn) == count)
     assert(

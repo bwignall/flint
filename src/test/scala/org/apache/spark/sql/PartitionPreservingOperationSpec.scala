@@ -19,14 +19,14 @@ package org.apache.spark.sql
 import com.twosigma.flint.FlintSuite
 import org.apache.spark.sql.execution._
 import org.apache.spark.sql.execution.columnar.InMemoryTableScanExec
-import org.apache.spark.sql.{ functions => F }
+import org.apache.spark.sql.{functions => F}
 
 class PartitionPreservingOperationSpec extends FlintSuite with FlintTestData {
   import PartitionPreservingOperation._
 
   def assertPartitionPreserving(
-    op: (DataFrame) => DataFrame,
-    expected: Boolean
+      op: (DataFrame) => DataFrame,
+      expected: Boolean
   ): Unit = {
     assert(isPartitionPreserving(testData, op(testData)) == expected)
     assert(
@@ -115,7 +115,10 @@ class PartitionPreservingOperationSpec extends FlintSuite with FlintTestData {
     orderedData.cache()
     orderedData.count()
     // first node is WholeStageCodegen
-    assert(executedPlan(orderedData).children.head.isInstanceOf[InMemoryTableScanExec])
+    assert(
+      executedPlan(orderedData).children.head
+        .isInstanceOf[InMemoryTableScanExec]
+    )
     assert(leafExecutedPlan(orderedData).isInstanceOf[InMemoryTableScanExec])
     orderedData.unpersist()
   }

@@ -26,22 +26,25 @@ class TreeReduceSpec extends FlatSpec with SharedSparkContext {
     val numOfPartitions = 1023
     val scale = 5
     val maxDepth = 5
-    val rdd = sc.parallelize(1 to numOfPartitions, numOfPartitions).mapPartitionsWithIndex {
-      (idx, _) => (1 to scale).map { x => idx * scale + x }.toIterator
-    }
+    val rdd = sc
+      .parallelize(1 to numOfPartitions, numOfPartitions)
+      .mapPartitionsWithIndex { (idx, _) =>
+        (1 to scale).map { x => idx * scale + x }.toIterator
+      }
 
     // Use -1 as a "bad" state and propagate through the aggregation, otherwise
     // it is just simply a Math.max() operator.
-    val op = (u1: Int, u2: Int) => if (u1 >= u2 || u1 < 0 || u2 < 0) {
-      -1
-    } else {
-      u2
-    }
+    val op = (u1: Int, u2: Int) =>
+      if (u1 >= u2 || u1 < 0 || u2 < 0) {
+        -1
+      } else {
+        u2
+      }
 
     val expectedReducedResult = rdd.max()
 
-    (1 to maxDepth).foreach {
-      depth => assert(TreeReduce(rdd)(op, depth) == expectedReducedResult)
+    (1 to maxDepth).foreach { depth =>
+      assert(TreeReduce(rdd)(op, depth) == expectedReducedResult)
     }
   }
 
@@ -49,15 +52,17 @@ class TreeReduceSpec extends FlatSpec with SharedSparkContext {
     val numOfPartitions = 1111
     val scale = 5
     val maxDepth = 5
-    val rdd = sc.parallelize(1 to numOfPartitions, numOfPartitions).mapPartitionsWithIndex {
-      (idx, _) => (1 to scale).map { x => s"${idx * scale + x}" }.toIterator
-    }
+    val rdd = sc
+      .parallelize(1 to numOfPartitions, numOfPartitions)
+      .mapPartitionsWithIndex { (idx, _) =>
+        (1 to scale).map { x => s"${idx * scale + x}" }.toIterator
+      }
 
     val f = (u1: String, u2: String) => u1 + u2
     val expectedReducedResult = rdd.collect().mkString("")
 
-    (1 to maxDepth).foreach {
-      depth => assert(TreeReduce(rdd)(f, depth) == expectedReducedResult)
+    (1 to maxDepth).foreach { depth =>
+      assert(TreeReduce(rdd)(f, depth) == expectedReducedResult)
     }
   }
 
@@ -65,16 +70,18 @@ class TreeReduceSpec extends FlatSpec with SharedSparkContext {
     val numOfPartitions = 1023
     val scale = 5
     val maxDepth = 5
-    val rdd = sc.parallelize(1 to numOfPartitions, numOfPartitions).mapPartitionsWithIndex {
-      (idx, _) => (1 to scale).map { x => idx * scale + x }.toIterator
-    }
+    val rdd = sc
+      .parallelize(1 to numOfPartitions, numOfPartitions)
+      .mapPartitionsWithIndex { (idx, _) =>
+        (1 to scale).map { x => idx * scale + x }.toIterator
+      }
 
     val expectedReducedResult = rdd.sum()
 
     val f = (u1: Int, u2: Int) => u1 + u2
 
-    (1 to maxDepth).foreach {
-      depth => assert(TreeReduce(rdd)(f, depth) == expectedReducedResult)
+    (1 to maxDepth).foreach { depth =>
+      assert(TreeReduce(rdd)(f, depth) == expectedReducedResult)
     }
   }
 

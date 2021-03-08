@@ -17,7 +17,7 @@
 package com.twosigma.flint.util.collection
 
 import org.scalatest.FlatSpec
-import java.util.{ LinkedList => JLinkedList }
+import java.util.{LinkedList => JLinkedList}
 import scala.collection.JavaConverters._
 
 class LinkedListHolderSpec extends FlatSpec {

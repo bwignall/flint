@@ -24,19 +24,12 @@ import org.apache.spark.sql.functions.col
 sealed trait SummarizerProperty {
 
   def test(
-    timeSeriesRdd: TimeSeriesRDD,
-    summarizerFactory: SummarizerFactory
+      timeSeriesRdd: TimeSeriesRDD,
+      summarizerFactory: SummarizerFactory
   ): Unit
 }
 
 class SummarizerSuite extends TimeSeriesSuite {
-
-  // Use the smallest prime number that is larger than 32 as default parallelism.
-  override val defaultPartitionParallelism: Int = primes.Primes.nextPrime(32)
-
-  private val cycles = 10000L
-
-  private val frequency = 100000L
 
   lazy val AllData = Seq(
     new TimeSeriesGenerator(
@@ -71,7 +64,6 @@ class SummarizerSuite extends TimeSeriesSuite {
       numSlices = defaultPartitionParallelism,
       seed = 31415926L
     ).generate(),
-
     new TimeSeriesGenerator(
       sc,
       begin = 0L,
@@ -105,12 +97,48 @@ class SummarizerSuite extends TimeSeriesSuite {
       seed = 19811112L
     ).generate()
   )
+  // A.k.a properties that are required by Flippable
+  lazy val AllProperties = Seq(
+    new AssociativeLawProperty,
+    new RightIdentityProperty,
+    new LeftIdentityProperty,
+    new IdentityProperty,
+    new ImmutableRightMergeProperty
+  )
+  lazy val AllPropertiesAndSubtractable: Seq[SummarizerProperty] =
+    AllProperties ++ Seq(
+      new LeftSubtractableProperty,
+      new WindowProperty,
+      new SubtractIdentityProperty
+    )
+  // Use the smallest prime number that is larger than 32 as default parallelism.
+  override val defaultPartitionParallelism: Int = primes.Primes.nextPrime(32)
+  private val cycles = 10000L
+  private val frequency = 100000L
+
+  def summarizerPropertyTest(properties: Seq[SummarizerProperty])(
+      summarizer: SummarizerFactory
+  ): Unit = {
+    // Ensure data persists for all tests.
+    AllData.foreach { data =>
+      data.cache()
+      data.count()
+    }
+    properties.foreach { property =>
+      AllData.zipWithIndex.foreach {
+        case (data, i) =>
+          info(s"Satisfy property ${property.toString} with $i-th dataset")
+          property.test(data, summarizer)
+      }
+    }
+    AllData.foreach(_.unpersist())
+  }
 
   // Check if (a + b) + c = a + (b + c)
   class AssociativeLawProperty extends SummarizerProperty {
     override def test(
-      timeSeriesRdd: TimeSeriesRDD,
-      summarizerFactory: SummarizerFactory
+        timeSeriesRdd: TimeSeriesRDD,
+        summarizerFactory: SummarizerFactory
     ): Unit = {
       val p = timeSeriesRdd.rdd.partitions.length
       val maxDepth = Math.ceil(Math.log(p.toDouble) / Math.log(2.0)).toInt
@@ -130,8 +158,8 @@ class SummarizerSuite extends TimeSeriesSuite {
   // Check if 0 + 0 = 0
   class IdentityProperty extends SummarizerProperty {
     override def test(
-      timeSeriesRdd: TimeSeriesRDD,
-      summarizerFactory: SummarizerFactory
+        timeSeriesRdd: TimeSeriesRDD,
+        summarizerFactory: SummarizerFactory
     ): Unit = {
       val summarizer = summarizerFactory.apply(timeSeriesRdd.schema)
       val mergedZero = summarizer
@@ -152,8 +180,8 @@ class SummarizerSuite extends TimeSeriesSuite {
   // Check if 0 + a = a
   class RightIdentityProperty extends SummarizerProperty {
     override def test(
-      timeSeriesRdd: TimeSeriesRDD,
-      summarizerFactory: SummarizerFactory
+        timeSeriesRdd: TimeSeriesRDD,
+        summarizerFactory: SummarizerFactory
     ): Unit = {
       val summarizer = summarizerFactory.apply(timeSeriesRdd.schema)
       val rows = timeSeriesRdd.toDF.queryExecution.toRdd.take(100)
@@ -178,8 +206,8 @@ class SummarizerSuite extends TimeSeriesSuite {
   // Check if a + 0 = a
   class LeftIdentityProperty extends SummarizerProperty {
     override def test(
-      timeSeriesRdd: TimeSeriesRDD,
-      summarizerFactory: SummarizerFactory
+        timeSeriesRdd: TimeSeriesRDD,
+        summarizerFactory: SummarizerFactory
     ): Unit = {
       val summarizer = summarizerFactory.apply(timeSeriesRdd.schema)
       val rows = timeSeriesRdd.toDF.queryExecution.toRdd.map(_.copy).take(100)
@@ -205,8 +233,8 @@ class SummarizerSuite extends TimeSeriesSuite {
   // This invariant is necessary for Flipper
   class ImmutableRightMergeProperty extends SummarizerProperty {
     override def test(
-      timeSeriesRdd: TimeSeriesRDD,
-      summarizerFactory: SummarizerFactory
+        timeSeriesRdd: TimeSeriesRDD,
+        summarizerFactory: SummarizerFactory
     ): Unit = {
       val summarizer = summarizerFactory.apply(timeSeriesRdd.schema)
       val rows = timeSeriesRdd.toDF.queryExecution.toRdd.map(_.copy).take(100)
@@ -245,13 +273,13 @@ class SummarizerSuite extends TimeSeriesSuite {
   // Check if (a + b) + c - a = b + c
   class LeftSubtractableProperty extends SummarizerProperty {
     override def test(
-      timeSeriesRdd: TimeSeriesRDD,
-      summarizerFactory: SummarizerFactory
+        timeSeriesRdd: TimeSeriesRDD,
+        summarizerFactory: SummarizerFactory
     ): Unit = {
       require(
         summarizerFactory
-        .apply(timeSeriesRdd.schema)
-        .isInstanceOf[LeftSubtractableSummarizer]
+          .apply(timeSeriesRdd.schema)
+          .isInstanceOf[LeftSubtractableSummarizer]
       )
       val summarizer = summarizerFactory
         .apply(timeSeriesRdd.schema)
@@ -303,13 +331,13 @@ class SummarizerSuite extends TimeSeriesSuite {
 
   class WindowProperty extends SummarizerProperty {
     override def test(
-      timeSeriesRdd: TimeSeriesRDD,
-      summarizerFactory: SummarizerFactory
+        timeSeriesRdd: TimeSeriesRDD,
+        summarizerFactory: SummarizerFactory
     ): Unit = {
       require(
         summarizerFactory
-        .apply(timeSeriesRdd.schema)
-        .isInstanceOf[LeftSubtractableSummarizer]
+          .apply(timeSeriesRdd.schema)
+          .isInstanceOf[LeftSubtractableSummarizer]
       )
 
       val windowSize = 100L * frequency
@@ -327,12 +355,13 @@ class SummarizerSuite extends TimeSeriesSuite {
 
       val lastWindowSummarized = lastWindow.summarize(summarizerFactory)
       // We need to escape the column name to ensure that columns with names like "a.b" are handled well.
-      val nonTimeColumnNames = lastWindowSummarized.schema.fieldNames.filterNot(_ == TimeSeriesRDD.timeColumnName).map {
-        columnName => col(s"`$columnName`")
-      }
+      val nonTimeColumnNames = lastWindowSummarized.schema.fieldNames
+        .filterNot(_ == TimeSeriesRDD.timeColumnName)
+        .map { columnName =>
+          col(s"`$columnName`")
+        }
 
-      val expectedResults = lastWindowSummarized
-        .toDF
+      val expectedResults = lastWindowSummarized.toDF
         .select(nonTimeColumnNames: _*)
         .head
 
@@ -356,13 +385,13 @@ class SummarizerSuite extends TimeSeriesSuite {
   // Check if a - a = 0
   class SubtractIdentityProperty extends SummarizerProperty {
     override def test(
-      timeSeriesRdd: TimeSeriesRDD,
-      summarizerFactory: SummarizerFactory
+        timeSeriesRdd: TimeSeriesRDD,
+        summarizerFactory: SummarizerFactory
     ): Unit = {
       require(
         summarizerFactory
-        .apply(timeSeriesRdd.schema)
-        .isInstanceOf[LeftSubtractableSummarizer]
+          .apply(timeSeriesRdd.schema)
+          .isInstanceOf[LeftSubtractableSummarizer]
       )
       val summarizer = summarizerFactory
         .apply(timeSeriesRdd.schema)
@@ -388,39 +417,6 @@ class SummarizerSuite extends TimeSeriesSuite {
     }
 
     override def toString: String = "SubtractIdentityProperty"
-  }
-
-  // A.k.a properties that are required by Flippable
-  lazy val AllProperties = Seq(
-    new AssociativeLawProperty,
-    new RightIdentityProperty,
-    new LeftIdentityProperty,
-    new IdentityProperty,
-    new ImmutableRightMergeProperty
-  )
-
-  lazy val AllPropertiesAndSubtractable: Seq[SummarizerProperty] = AllProperties ++ Seq(
-    new LeftSubtractableProperty,
-    new WindowProperty,
-    new SubtractIdentityProperty
-  )
-
-  def summarizerPropertyTest(properties: Seq[SummarizerProperty])(
-    summarizer: SummarizerFactory
-  ): Unit = {
-    // Ensure data persists for all tests.
-    AllData.foreach { data =>
-      data.cache()
-      data.count()
-    }
-    properties.foreach { property =>
-      AllData.zipWithIndex.foreach {
-        case (data, i) =>
-          info(s"Satisfy property ${property.toString} with $i-th dataset")
-          property.test(data, summarizer)
-      }
-    }
-    AllData.foreach(_.unpersist())
   }
 
 }

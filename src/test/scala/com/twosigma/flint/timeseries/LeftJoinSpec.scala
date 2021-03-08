@@ -16,44 +16,60 @@
 
 package com.twosigma.flint.timeseries
 
-import com.twosigma.flint.timeseries.PartitionStrategy.{ MultiTimestampNormalized, MultiTimestampUnnormailzed }
+import com.twosigma.flint.timeseries.PartitionStrategy.{
+  MultiTimestampNormalized,
+  MultiTimestampUnnormailzed
+}
 import com.twosigma.flint.timeseries.row.Schema
-import org.apache.spark.sql.types.{ DoubleType, IntegerType, LongType }
+import org.apache.spark.sql.types.{DoubleType, IntegerType, LongType}
 
-class LeftJoinSpec extends MultiPartitionSuite with TimeSeriesTestData with TimeTypeSuite {
+class LeftJoinSpec
+    extends MultiPartitionSuite
+    with TimeSeriesTestData
+    with TimeTypeSuite {
   override val defaultResourceDir: String = "/timeseries/leftjoin"
 
   "LeftJoin" should "pass `JoinOnTime` test." in {
     withAllTimeType {
-      val volumeTSRdd = fromCSV("Volume.csv", Schema("id" -> IntegerType, "volume" -> LongType))
+      val volumeTSRdd =
+        fromCSV("Volume.csv", Schema("id" -> IntegerType, "volume" -> LongType))
       val resultsTSRdd = fromCSV(
-        "JoinOnTime.results", Schema("id" -> IntegerType, "price" -> DoubleType, "volume" -> LongType)
+        "JoinOnTime.results",
+        Schema("id" -> IntegerType, "price" -> DoubleType, "volume" -> LongType)
       )
 
       def test(rdd1: TimeSeriesRDD, rdd2: TimeSeriesRDD): Unit = {
         assertEquals(rdd1.leftJoin(volumeTSRdd, "0ns", Seq("id")), resultsTSRdd)
       }
 
-      val priceTSRdd = fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
+      val priceTSRdd =
+        fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
       withPartitionStrategy(priceTSRdd, volumeTSRdd)(DEFAULT)(test)
     }
   }
 
   it should "pass `JoinOnTime` with tolerance test" in {
     withAllTimeType {
-      val volumeTSRdd = fromCSV("Volume.csv", Schema("id" -> IntegerType, "volume" -> LongType))
+      val volumeTSRdd =
+        fromCSV("Volume.csv", Schema("id" -> IntegerType, "volume" -> LongType))
       val resultsTSRdd = fromCSV(
-        "JoinOnTimeWithTolerance.results", Schema("id" -> IntegerType, "price" -> DoubleType, "volume" -> LongType)
+        "JoinOnTimeWithTolerance.results",
+        Schema("id" -> IntegerType, "price" -> DoubleType, "volume" -> LongType)
       )
 
       def test(rdd1: TimeSeriesRDD, rdd2: TimeSeriesRDD): Unit = {
         assertEquals(
-          rdd1.leftJoin(volumeTSRdd.shift(Windows.futureAbsoluteTime("1 micro")), "1000 s", Seq("id")),
+          rdd1.leftJoin(
+            volumeTSRdd.shift(Windows.futureAbsoluteTime("1 micro")),
+            "1000 s",
+            Seq("id")
+          ),
           resultsTSRdd
         )
       }
 
-      val priceTSRdd = fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
+      val priceTSRdd =
+        fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
       withPartitionStrategy(priceTSRdd, volumeTSRdd)(DEFAULT)(test)
     }
   }
@@ -70,8 +86,12 @@ class LeftJoinSpec extends MultiPartitionSuite with TimeSeriesTestData with Time
         assertEquals(joinedTSRdd, resultsTSRdd)
       }
 
-      val priceTSRdd = fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
-      val volumeTSRdd = fromCSV("VolumeWithMissingMatching.csv", Schema("id" -> IntegerType, "volume" -> LongType))
+      val priceTSRdd =
+        fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
+      val volumeTSRdd = fromCSV(
+        "VolumeWithMissingMatching.csv",
+        Schema("id" -> IntegerType, "volume" -> LongType)
+      )
       withPartitionStrategy(priceTSRdd, volumeTSRdd)(DEFAULT)(test)
     }
   }
@@ -80,7 +100,12 @@ class LeftJoinSpec extends MultiPartitionSuite with TimeSeriesTestData with Time
     withAllTimeType {
       val resultsTSRdd = fromCSV(
         "JoinOnTimeAndMultipleKeys.results",
-        Schema("id" -> IntegerType, "group" -> IntegerType, "price" -> DoubleType, "volume" -> LongType)
+        Schema(
+          "id" -> IntegerType,
+          "group" -> IntegerType,
+          "price" -> DoubleType,
+          "volume" -> LongType
+        )
       )
 
       def test(rdd1: TimeSeriesRDD, rdd2: TimeSeriesRDD): Unit = {
@@ -91,11 +116,19 @@ class LeftJoinSpec extends MultiPartitionSuite with TimeSeriesTestData with Time
       {
         val priceTSRdd = fromCSV(
           "PriceWithIndustryGroup.csv",
-          Schema("id" -> IntegerType, "group" -> IntegerType, "price" -> DoubleType)
+          Schema(
+            "id" -> IntegerType,
+            "group" -> IntegerType,
+            "price" -> DoubleType
+          )
         )
         val volumeTSRdd = fromCSV(
           "VolumeWithIndustryGroup.csv",
-          Schema("id" -> IntegerType, "group" -> IntegerType, "volume" -> LongType)
+          Schema(
+            "id" -> IntegerType,
+            "group" -> IntegerType,
+            "volume" -> LongType
+          )
         )
         withPartitionStrategy(priceTSRdd, volumeTSRdd)(DEFAULT)(test)
       }
@@ -109,9 +142,9 @@ class LeftJoinSpec extends MultiPartitionSuite with TimeSeriesTestData with Time
     val intervalWidth = cycleMetaData1.intervalWidth
 
     def leftJoin(
-      tolerance: Long,
-      key: Seq[String],
-      rightShift: String
+        tolerance: Long,
+        key: Seq[String],
+        rightShift: String
     )(rdd1: TimeSeriesRDD, rdd2: TimeSeriesRDD): TimeSeriesRDD = {
       rdd1.leftJoin(
         rdd2.shift(Windows.futureAbsoluteTime(rightShift)),
@@ -128,12 +161,13 @@ class LeftJoinSpec extends MultiPartitionSuite with TimeSeriesTestData with Time
     ) {
       // Ideally we want to run DEFAULT partition strategies, but it's too freaking slow!
       withPartitionStrategyCompare(
-        testData1, testData2
+        testData1,
+        testData2
       )(
         NONE :+ MultiTimestampUnnormailzed
       )(
-          leftJoin(tolerance, key, rightShift)
-        )
+        leftJoin(tolerance, key, rightShift)
+      )
     }
   }
 }

@@ -21,7 +21,8 @@ import com.twosigma.flint.timeseries.PartitionStrategy._
 
 class PartitionStrategySpec extends TimeSeriesSuite with TimeSeriesTestData {
 
-  private def getRanges(rdd: TimeSeriesRDD): List[CloseOpen[Long]] = rdd.partInfo.get.splits.map(_.range).toList
+  private def getRanges(rdd: TimeSeriesRDD): List[CloseOpen[Long]] =
+    rdd.partInfo.get.splits.map(_.range).toList
 
   it should "OnePartition correctly" in {
     val rdd = OnePartition.repartitionEnsureValid(testData)
@@ -34,7 +35,8 @@ class PartitionStrategySpec extends TimeSeriesSuite with TimeSeriesTestData {
 
   it should "OneTimestampTightBound" in {
     val rdd = OneTimestampTightBound.repartitionEnsureValid(testData)
-    val timestamps = testData.rdd.map(_.getAs[Long]("time")).distinct().collect().sorted
+    val timestamps =
+      testData.rdd.map(_.getAs[Long]("time")).distinct().collect().sorted
     val ranges = getRanges(rdd)
     val expectedRanges = timestamps.map(t => CloseOpen(t, Some(t + 1))).toList
     assert(ranges == expectedRanges)
@@ -65,7 +67,8 @@ class PartitionStrategySpec extends TimeSeriesSuite with TimeSeriesTestData {
   }
 
   it should "MultiTimestampNormalized :: ExtendBegin" in {
-    val rdd = (MultiTimestampNormalized :: ExtendBegin).repartitionEnsureValid(testData)
+    val rdd =
+      (MultiTimestampNormalized :: ExtendBegin).repartitionEnsureValid(testData)
     val ranges = getRanges(rdd)
     val expectedRanges =
       CloseOpen(Long.MinValue, Some(2001L)) ::
@@ -76,7 +79,8 @@ class PartitionStrategySpec extends TimeSeriesSuite with TimeSeriesTestData {
   }
 
   it should "MultiTimestampNormalized :: ExtendEnd" in {
-    val rdd = (MultiTimestampNormalized :: ExtendEnd).repartitionEnsureValid(testData)
+    val rdd =
+      (MultiTimestampNormalized :: ExtendEnd).repartitionEnsureValid(testData)
     val ranges = getRanges(rdd)
     val expectedRanges =
       CloseOpen(1000L, Some(3000L)) ::
@@ -87,7 +91,8 @@ class PartitionStrategySpec extends TimeSeriesSuite with TimeSeriesTestData {
   }
 
   it should "MultiTimestampNormalized :: ExtendHalfBeginHalfEnd" in {
-    val rdd = (MultiTimestampNormalized :: ExtendHalfBeginHalfEnd).repartitionEnsureValid(testData)
+    val rdd = (MultiTimestampNormalized :: ExtendHalfBeginHalfEnd)
+      .repartitionEnsureValid(testData)
     val ranges = getRanges(rdd)
     val expectedRanges =
       CloseOpen(Long.MinValue, Some(2500L)) ::
@@ -98,7 +103,8 @@ class PartitionStrategySpec extends TimeSeriesSuite with TimeSeriesTestData {
   }
 
   it should "MultiTimestampNormalized :: FillWithEmptyPartition" in {
-    val rdd = (MultiTimestampNormalized :: FillWithEmptyPartition).repartitionEnsureValid(testData)
+    val rdd = (MultiTimestampNormalized :: FillWithEmptyPartition)
+      .repartitionEnsureValid(testData)
     val ranges = getRanges(rdd)
     val expectedRanges =
       CloseOpen(Long.MinValue, Some(1000L)) ::

@@ -17,13 +17,16 @@
 package com.twosigma.flint.timeseries
 
 import com.twosigma.flint.timeseries.row.Schema
-import org.apache.spark.sql.types.{ DoubleType, IntegerType }
+import org.apache.spark.sql.types.{DoubleType, IntegerType}
 
 class MergeSpec extends MultiPartitionSuite with TimeSeriesTestData {
   override val defaultResourceDir: String = "/timeseries/merge"
 
   "Merge" should "pass `Merge` test." in {
-    val resultsTSRdd = fromCSV("Merge.results", Schema("id" -> IntegerType, "price" -> DoubleType))
+    val resultsTSRdd = fromCSV(
+      "Merge.results",
+      Schema("id" -> IntegerType, "price" -> DoubleType)
+    )
 
     def test(rdd1: TimeSeriesRDD, rdd2: TimeSeriesRDD): Unit = {
       val mergedTSRdd = rdd1.merge(rdd2)
@@ -32,8 +35,14 @@ class MergeSpec extends MultiPartitionSuite with TimeSeriesTestData {
     }
 
     {
-      val priceTSRdd1 = fromCSV("Price1.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
-      val priceTSRdd2 = fromCSV("Price2.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
+      val priceTSRdd1 = fromCSV(
+        "Price1.csv",
+        Schema("id" -> IntegerType, "price" -> DoubleType)
+      )
+      val priceTSRdd2 = fromCSV(
+        "Price2.csv",
+        Schema("id" -> IntegerType, "price" -> DoubleType)
+      )
       withPartitionStrategy(priceTSRdd1, priceTSRdd2)(DEFAULT)(test)
     }
   }

@@ -18,30 +18,42 @@ package org.apache.spark.sql
 
 import com.twosigma.flint.FlintSuite
 import org.apache.spark.sql.PartitionPreservingOperation.isPartitionPreserving
-import org.apache.spark.sql.{ functions => F }
+import org.apache.spark.sql.{functions => F}
 
 class OrderPreservingOperationSpec extends FlintSuite with FlintTestData {
 
-  val inputTransformations = Set(withTime2Column, withTime3ColumnUdf, filterV, orderByV, repartition)
-  val allInputTransformations = inputTransformations.subsets().filter(_.nonEmpty).flatMap{ transformations =>
-    transformations.toList.permutations
-  }.map { transformations =>
-    transformations.reduce((x, y) => x.andThen(y))
-  }.toList
+  val inputTransformations =
+    Set(withTime2Column, withTime3ColumnUdf, filterV, orderByV, repartition)
+  val allInputTransformations = inputTransformations
+    .subsets()
+    .filter(_.nonEmpty)
+    .flatMap { transformations =>
+      transformations.toList.permutations
+    }
+    .map { transformations =>
+      transformations.reduce((x, y) => x.andThen(y))
+    }
+    .toList
+
+  def assertOrderPreserving(
+      op: (DataFrame) => DataFrame,
+      isOrderPreserving: Boolean
+  ): Unit = {
+    def test(df: DataFrame): Unit = {
+      assert(
+        OrderPreservingOperation
+          .isOrderPreserving(df, op(df)) == isOrderPreserving
+      )
+    }
+    withInputTransform(allInputTransformations)(testData)(test)
+  }
 
   def withInputTransform(
-    transformations: Seq[(DataFrame) => DataFrame]
+      transformations: Seq[(DataFrame) => DataFrame]
   )(df: DataFrame)(test: (DataFrame) => Unit): Unit = {
     for (ts <- transformations) {
       test(ts(df))
     }
-  }
-
-  def assertOrderPreserving(op: (DataFrame) => DataFrame, isOrderPreserving: Boolean): Unit = {
-    def test(df: DataFrame): Unit = {
-      assert(OrderPreservingOperation.isOrderPreserving(df, op(df)) == isOrderPreserving)
-    }
-    withInputTransform(allInputTransformations)(testData)(test)
   }
 
   it should "test select('col')" in {
@@ -114,9 +126,12 @@ class OrderPreservingOperationSpec extends FlintSuite with FlintTestData {
   }
 
   it should "test when not derived" in {
-    assert(!OrderPreservingOperation.isOrderPreserving(
-      testData.select("time", "v"), testData2.select("time", "v")
-    ))
+    assert(
+      !OrderPreservingOperation.isOrderPreserving(
+        testData.select("time", "v"),
+        testData2.select("time", "v")
+      )
+    )
   }
 
 }

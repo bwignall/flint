@@ -51,27 +51,21 @@ trait TimeSeriesSuite extends FlintSuite {
   implicit val doubleEquality: Equality[Double] =
     TolerantNumerics.tolerantDoubleEquality(defaultAdditivePrecision)
 
-  /**
-    * Assert if two arrays of doubles are equal within additive precision `defaultAdditivePrecision`.
-    */
-  def assertAlmostEquals(
-      thisArray: Array[Double],
-      thatArray: Array[Double]
-  ): Unit =
-    (thisArray zip thatArray).foreach {
-      case (x, y) => assertAlmostEquals(x, y)
-    }
-
-  /**
-    * Assert if two doubles are equal within additive precision `defaultAdditivePrecision`.
-    */
-  def assertAlmostEquals(x: Double, y: Double): Unit =
-    assert(x.isNaN && y.isNaN || x === y)
-
   def assertEquals(thisRow: Row, thatRow: Row): Unit = {
     assert(thisRow.schema == thatRow.schema)
     assert(thisRow == thatRow)
   }
+
+  /**
+    * Assert two [[TimeSeriesRDD]] are equal row by row in order.
+    */
+  def assertAlmostEquals(
+      thisTSRdd: TimeSeriesRDD,
+      otherTSRdd: TimeSeriesRDD
+  ): Unit =
+    (thisTSRdd.collect() zip otherTSRdd.collect()).foreach {
+      case (thisRow, thatRow) => assertAlmostEquals(thisRow, thatRow)
+    }
 
   /**
     * Assert if two rows have the same values within additive precision `defaultAdditivePrecision`.
@@ -151,15 +145,21 @@ trait TimeSeriesSuite extends FlintSuite {
   }
 
   /**
-    * Assert two [[TimeSeriesRDD]] are equal row by row in order.
+    * Assert if two arrays of doubles are equal within additive precision `defaultAdditivePrecision`.
     */
   def assertAlmostEquals(
-      thisTSRdd: TimeSeriesRDD,
-      otherTSRdd: TimeSeriesRDD
+      thisArray: Array[Double],
+      thatArray: Array[Double]
   ): Unit =
-    (thisTSRdd.collect() zip otherTSRdd.collect()).foreach {
-      case (thisRow, thatRow) => assertAlmostEquals(thisRow, thatRow)
+    (thisArray zip thatArray).foreach {
+      case (x, y) => assertAlmostEquals(x, y)
     }
+
+  /**
+    * Assert if two doubles are equal within additive precision `defaultAdditivePrecision`.
+    */
+  def assertAlmostEquals(x: Double, y: Double): Unit =
+    assert(x.isNaN && y.isNaN || x === y)
 
   /**
     * Read a data set of time series from a CSV file in resource as a [[TimeSeriesRDD]]

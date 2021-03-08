@@ -17,22 +17,22 @@
 package com.twosigma.flint.rdd
 
 import org.apache.spark.rdd.RDD
-import org.apache.spark.{ Partition, SparkContext, TaskContext }
+import org.apache.spark.{Partition, SparkContext, TaskContext}
 
 import scala.reflect.ClassTag
 
 /**
- * Similar to Spark's ParallelCollectionRDD, but takes Array[Array[T]] instead of Seq[T]
- */
+  * Similar to Spark's ParallelCollectionRDD, but takes Array[Array[T]] instead of Seq[T]
+  */
 
 case class ParallelCollectionRDDPartition[T: ClassTag](
-  override val index: Int,
-  values: Seq[T]
+    override val index: Int,
+    values: Seq[T]
 ) extends Partition
 
 class ParallelCollectionRDD[T: ClassTag](
-  sc: SparkContext,
-  @transient data: Seq[Seq[T]]
+    sc: SparkContext,
+    @transient data: Seq[Seq[T]]
 ) extends RDD[T](sc, Nil) {
   override def compute(split: Partition, context: TaskContext): Iterator[T] =
     split.asInstanceOf[ParallelCollectionRDDPartition[T]].values.iterator

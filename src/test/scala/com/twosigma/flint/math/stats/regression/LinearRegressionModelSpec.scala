@@ -23,35 +23,42 @@ import org.apache.commons.math3.stat.regression.{
 import org.apache.spark.rdd.RDD
 import org.scalactic.TolerantNumerics
 
-import breeze.linalg.{ DenseMatrix, DenseVector }
+import breeze.linalg.{DenseMatrix, DenseVector}
 
 class LinearRegressionModelSpec extends FlintSuite {
-  var modelWithIntercept: LinearRegressionModel = _
-  var modelWithoutIntercept: LinearRegressionModel = _
-  var data: RDD[WeightedLabeledPoint] = _
-
   val betaWithoutIntercept: DenseVector[Double] = DenseVector(1.0, 2.0)
   val intercept: Double = 3.0
-  val beta: DenseVector[Double] = DenseVector.vertcat(DenseVector(intercept), betaWithoutIntercept)
+  val beta: DenseVector[Double] =
+    DenseVector.vertcat(DenseVector(intercept), betaWithoutIntercept)
   val n: Long = 100
   val additivePrecision: Double = 1.0e-6
   val errorScalar = 5.0
   val seed = 31415926L
-  val benchmarkModelWithIntercept: OLSMultipleLinearRegressionModel = new OLSMultipleLinearRegressionModel()
-  val benchmarkModelWithoutIntercept: OLSMultipleLinearRegressionModel = new OLSMultipleLinearRegressionModel()
+  val benchmarkModelWithIntercept: OLSMultipleLinearRegressionModel =
+    new OLSMultipleLinearRegressionModel()
+  val benchmarkModelWithoutIntercept: OLSMultipleLinearRegressionModel =
+    new OLSMultipleLinearRegressionModel()
+  var modelWithIntercept: LinearRegressionModel = _
+  var modelWithoutIntercept: LinearRegressionModel = _
+  var data: RDD[WeightedLabeledPoint] = _
 
-  implicit val doubleEquality = TolerantNumerics.tolerantDoubleEquality(additivePrecision)
+  implicit val doubleEquality =
+    TolerantNumerics.tolerantDoubleEquality(additivePrecision)
 
   override def beforeAll() {
     super.beforeAll()
 
     withResource("/stat/regression/linear_regression_data.csv") { source =>
       val dataFile = scala.io.Source.fromFile(source)
-      data = sc.parallelize(dataFile.getLines().map(WeightedLabeledPoint.parse(_)).toSeq, 4)
+      data = sc.parallelize(
+        dataFile.getLines().map(WeightedLabeledPoint.parse(_)).toSeq,
+        4
+      )
 
       // Build the model expected to test.
       modelWithIntercept = OLSMultipleLinearRegression.regression(data)
-      modelWithoutIntercept = OLSMultipleLinearRegression.regression(data, false)
+      modelWithoutIntercept =
+        OLSMultipleLinearRegression.regression(data, false)
 
       // Build the models expected to serve as benchmarks.
       val (x1, y1) = WeightedLabeledPoint.toArrays(data, true)
@@ -81,7 +88,8 @@ class LinearRegressionModelSpec extends FlintSuite {
   it should "predict for a single data correctly by using parameter" in {
     val point = data.first()
     var parameters = modelWithIntercept.estimateRegressionParameters()
-    var benchmark = DenseVector.vertcat(DenseVector(1.0), point.features) dot parameters
+    var benchmark =
+      DenseVector.vertcat(DenseVector(1.0), point.features) dot parameters
     assert(modelWithIntercept.predict(point) === benchmark)
 
     parameters = modelWithoutIntercept.estimateRegressionParameters()
@@ -100,45 +108,68 @@ class LinearRegressionModelSpec extends FlintSuite {
   }
 
   it should "estimate the variance of regression parameters correctly" in {
-    var benchmarkVariance = benchmarkModelWithIntercept.estimateRegressionParametersVariance()
-    var estimateVariance = modelWithIntercept.estimateRegressionParametersVariance()
+    var benchmarkVariance =
+      benchmarkModelWithIntercept.estimateRegressionParametersVariance()
+    var estimateVariance =
+      modelWithIntercept.estimateRegressionParametersVariance()
     for (i <- 0 until beta.length; j <- 0 until beta.length) {
       assert(benchmarkVariance(i)(j) === estimateVariance(i, j))
     }
 
-    benchmarkVariance = benchmarkModelWithoutIntercept.estimateRegressionParametersVariance()
-    estimateVariance = modelWithoutIntercept.estimateRegressionParametersVariance()
-    for (i <- 0 until betaWithoutIntercept.length; j <- 0 until betaWithoutIntercept.length) {
+    benchmarkVariance =
+      benchmarkModelWithoutIntercept.estimateRegressionParametersVariance()
+    estimateVariance =
+      modelWithoutIntercept.estimateRegressionParametersVariance()
+    for (
+      i <- 0 until betaWithoutIntercept.length;
+      j <- 0 until betaWithoutIntercept.length
+    ) {
       assert(benchmarkVariance(i)(j) === estimateVariance(i, j))
     }
   }
 
   it should "estimate the variance of regressand correctly" in {
-    assert(benchmarkModelWithIntercept.estimateRegressandVariance() ===
-      modelWithIntercept.estimateRegressandVariance())
-    assert(benchmarkModelWithoutIntercept.estimateRegressandVariance() ===
-      modelWithoutIntercept.estimateRegressandVariance())
+    assert(
+      benchmarkModelWithIntercept.estimateRegressandVariance() ===
+        modelWithIntercept.estimateRegressandVariance()
+    )
+    assert(
+      benchmarkModelWithoutIntercept.estimateRegressandVariance() ===
+        modelWithoutIntercept.estimateRegressandVariance()
+    )
   }
 
   it should "estimate the variance of error correctly" in {
-    assert(benchmarkModelWithIntercept.estimateErrorVariance() ===
-      modelWithIntercept.estimateErrorVariance())
-    assert(benchmarkModelWithoutIntercept.estimateErrorVariance() ===
-      modelWithoutIntercept.estimateErrorVariance())
+    assert(
+      benchmarkModelWithIntercept.estimateErrorVariance() ===
+        modelWithIntercept.estimateErrorVariance()
+    )
+    assert(
+      benchmarkModelWithoutIntercept.estimateErrorVariance() ===
+        modelWithoutIntercept.estimateErrorVariance()
+    )
   }
 
   it should "estimate the standard error correctly" in {
-    assert(benchmarkModelWithIntercept.estimateRegressionStandardError() ===
-      modelWithIntercept.estimateRegressionStandardError())
-    assert(benchmarkModelWithoutIntercept.estimateRegressionStandardError() ===
-      modelWithoutIntercept.estimateRegressionStandardError())
+    assert(
+      benchmarkModelWithIntercept.estimateRegressionStandardError() ===
+        modelWithIntercept.estimateRegressionStandardError()
+    )
+    assert(
+      benchmarkModelWithoutIntercept.estimateRegressionStandardError() ===
+        modelWithoutIntercept.estimateRegressionStandardError()
+    )
   }
 
   it should "estimate the error variance correctly" in {
-    assert(benchmarkModelWithIntercept.estimateErrorVariance() ===
-      modelWithIntercept.estimateErrorVariance())
-    assert(benchmarkModelWithoutIntercept.estimateErrorVariance() ===
-      modelWithoutIntercept.estimateErrorVariance())
+    assert(
+      benchmarkModelWithIntercept.estimateErrorVariance() ===
+        modelWithIntercept.estimateErrorVariance()
+    )
+    assert(
+      benchmarkModelWithoutIntercept.estimateErrorVariance() ===
+        modelWithoutIntercept.estimateErrorVariance()
+    )
   }
 
   it should "estimate the standard error of regression parameters correctly" in {
@@ -147,7 +178,9 @@ class LinearRegressionModelSpec extends FlintSuite {
       benchmarkModelWithIntercept.estimateRegressionParametersStandardErrors
     )
     assertEquals(
-      modelWithoutIntercept.estimateRegressionParametersStandardErrors().toArray,
+      modelWithoutIntercept
+        .estimateRegressionParametersStandardErrors()
+        .toArray,
       benchmarkModelWithoutIntercept.estimateRegressionParametersStandardErrors
     )
   }
@@ -172,7 +205,7 @@ class LinearRegressionModelSpec extends FlintSuite {
     // results.pvalues
     assertEquals(
       modelWithIntercept.calculateRegressionParametersPValue().toArray,
-      Array(7.424409376177721E-8, 0.6343981017797162, 0.020398884794682992)
+      Array(7.424409376177721e-8, 0.6343981017797162, 0.020398884794682992)
     )
     assertEquals(
       modelWithoutIntercept.calculateRegressionParametersPValue().toArray,
@@ -210,7 +243,9 @@ class LinearRegressionModelSpec extends FlintSuite {
   it should "calculate the sum of squared residues correctly" in {
     // results.ssr
     assert(modelWithIntercept.calculateSumOfSquaredResidue() === 3168.65770075)
-    assert(modelWithoutIntercept.calculateSumOfSquaredResidue() === 4277.08816816)
+    assert(
+      modelWithoutIntercept.calculateSumOfSquaredResidue() === 4277.08816816
+    )
   }
 
   it should "calculate the eigenvalues of Gramian matrix correctly" in {
@@ -237,7 +272,10 @@ class LinearRegressionModelSpec extends FlintSuite {
       (0.6279273, -0.10545145),
       (-0.10545145, 0.65404582)
     )
-    assertEquals(modelWithoutIntercept.calculateHC0().toArray, benchmark.toArray)
+    assertEquals(
+      modelWithoutIntercept.calculateHC0().toArray,
+      benchmark.toArray
+    )
   }
 
   it should "calculate the White's (1980) heteroskedasticity robust standard errors correctly" in {
@@ -264,7 +302,10 @@ class LinearRegressionModelSpec extends FlintSuite {
       (0.64074214, -0.10760352),
       (-0.10760352, 0.66739369)
     )
-    assertEquals(modelWithoutIntercept.calculateHC1().toArray, benchmark.toArray)
+    assertEquals(
+      modelWithoutIntercept.calculateHC1().toArray,
+      benchmark.toArray
+    )
 
   }
 
@@ -286,12 +327,24 @@ class LinearRegressionModelSpec extends FlintSuite {
   }
 
   it should "calculate the BIC correctly" in {
-    assert(modelWithIntercept.estimateBayesianInformationCriterion() === 638.04135101067732)
-    assert(modelWithoutIntercept.estimateBayesianInformationCriterion() === 663.4326191799502)
+    assert(
+      modelWithIntercept
+        .estimateBayesianInformationCriterion() === 638.04135101067732
+    )
+    assert(
+      modelWithoutIntercept
+        .estimateBayesianInformationCriterion() === 663.4326191799502
+    )
   }
 
   it should "calculate the AIC correctly" in {
-    assert(modelWithIntercept.estimateAkaikeInformationCriterion() === 630.22584045271299)
-    assert(modelWithoutIntercept.estimateAkaikeInformationCriterion() === 658.222278807974)
+    assert(
+      modelWithIntercept
+        .estimateAkaikeInformationCriterion() === 630.22584045271299
+    )
+    assert(
+      modelWithoutIntercept
+        .estimateAkaikeInformationCriterion() === 658.222278807974
+    )
   }
 }

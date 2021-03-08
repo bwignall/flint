@@ -50,7 +50,8 @@ class RangeDependencySpec extends FlatSpec {
   }
 
   it should "normalize a sequence of single header with at least two different keys correctly " in {
-    val headers = Seq(OrderedPartitionHeader(OrderedRDDPartition(0), 1, Some(2)))
+    val headers =
+      Seq(OrderedPartitionHeader(OrderedRDDPartition(0), 1, Some(2)))
     val dep = RangeDependency.normalize(headers)
     assert(dep.size == 1)
     assert(dep.head.parents.size == 1)
@@ -68,7 +69,9 @@ class RangeDependencySpec extends FlatSpec {
 
   it should "correctly normalize one partition" in {
     val intervals =
-      HeavyKeysNormalizationStrategy.normalize(Seq(OrderedPartitionHeader(OrderedRDDPartition(0), 5, None)))
+      HeavyKeysNormalizationStrategy.normalize(
+        Seq(OrderedPartitionHeader(OrderedRDDPartition(0), 5, None))
+      )
 
     val expectedIntervals = Seq(CloseOpen(5, None))
 
@@ -84,7 +87,8 @@ class RangeDependencySpec extends FlatSpec {
 
     val intervals = HeavyKeysNormalizationStrategy.normalize(headers)
 
-    val expectedIntervals = Seq(CloseOpen(1, Some(5)), CloseOpen(5, Some(8)), CloseOpen(8, None))
+    val expectedIntervals =
+      Seq(CloseOpen(1, Some(5)), CloseOpen(5, Some(8)), CloseOpen(8, None))
 
     assert(intervals === expectedIntervals)
   }
@@ -106,8 +110,13 @@ class RangeDependencySpec extends FlatSpec {
   it should "normalize headers correctly " in {
     val intervals = HeavyKeysNormalizationStrategy.normalize(headers)
 
-    val expectedIntervals = Seq(CloseOpen(1, Some(4)), CloseOpen(4, Some(5)),
-      CloseOpen(5, Some(8)), CloseOpen(8, Some(14)), CloseOpen(14, None))
+    val expectedIntervals = Seq(
+      CloseOpen(1, Some(4)),
+      CloseOpen(4, Some(5)),
+      CloseOpen(5, Some(8)),
+      CloseOpen(8, Some(14)),
+      CloseOpen(14, None)
+    )
 
     assert(intervals === expectedIntervals)
   }
@@ -121,9 +130,27 @@ class RangeDependencySpec extends FlatSpec {
     val dep = RangeDependency.normalize(headers).toVector
     assert(dep.size == 5)
     assert(RangeDependency(0, CloseOpen(1, Some(4)), List(Split(0))) == dep(0))
-    assert(RangeDependency(1, CloseOpen(4, Some(5)), List(Split(0), Split(1), Split(2))) == dep(1))
-    assert(RangeDependency(2, CloseOpen(5, Some(8)), List(Split(2), Split(3))) == dep(2))
-    assert(RangeDependency(3, CloseOpen(8, Some(14)), List(Split(3), Split(4))) == dep(3))
+    assert(
+      RangeDependency(
+        1,
+        CloseOpen(4, Some(5)),
+        List(Split(0), Split(1), Split(2))
+      ) == dep(1)
+    )
+    assert(
+      RangeDependency(
+        2,
+        CloseOpen(5, Some(8)),
+        List(Split(2), Split(3))
+      ) == dep(2)
+    )
+    assert(
+      RangeDependency(
+        3,
+        CloseOpen(8, Some(14)),
+        List(Split(3), Split(4))
+      ) == dep(3)
+    )
     assert(RangeDependency(4, CloseOpen(14, None), List(Split(4))) == dep(4))
 
   }
@@ -133,18 +160,44 @@ class RangeDependencySpec extends FlatSpec {
     // [5, 8) depends on partitions 2, 3
     // [8, 14) depends on partitions 3, 4
     // [14, +infinity) depends on partitions 4
-    val dep = RangeDependency.normalize(headers, BasicNormalizationStrategy).toVector
+    val dep =
+      RangeDependency.normalize(headers, BasicNormalizationStrategy).toVector
 
     assert(dep.size == 4)
-    assert(RangeDependency(0, CloseOpen(1, Some(5)), List(Split(0), Split(1), Split(2))) == dep(0))
-    assert(RangeDependency(1, CloseOpen(5, Some(8)), List(Split(2), Split(3))) == dep(1))
-    assert(RangeDependency(2, CloseOpen(8, Some(14)), List(Split(3), Split(4))) == dep(2))
+    assert(
+      RangeDependency(
+        0,
+        CloseOpen(1, Some(5)),
+        List(Split(0), Split(1), Split(2))
+      ) == dep(0)
+    )
+    assert(
+      RangeDependency(
+        1,
+        CloseOpen(5, Some(8)),
+        List(Split(2), Split(3))
+      ) == dep(1)
+    )
+    assert(
+      RangeDependency(
+        2,
+        CloseOpen(8, Some(14)),
+        List(Split(3), Split(4))
+      ) == dep(2)
+    )
     assert(RangeDependency(3, CloseOpen(14, None), List(Split(4))) == dep(3))
   }
 
   it should "normalize empty headers" in {
-    val emptyHeader: Seq[OrderedPartitionHeader[Int, OrderedRDDPartition]] = Seq.empty
-    assert(RangeDependency.normalize(emptyHeader, BasicNormalizationStrategy).isEmpty)
-    assert(RangeDependency.normalize(emptyHeader, HeavyKeysNormalizationStrategy).isEmpty)
+    val emptyHeader: Seq[OrderedPartitionHeader[Int, OrderedRDDPartition]] =
+      Seq.empty
+    assert(
+      RangeDependency.normalize(emptyHeader, BasicNormalizationStrategy).isEmpty
+    )
+    assert(
+      RangeDependency
+        .normalize(emptyHeader, HeavyKeysNormalizationStrategy)
+        .isEmpty
+    )
   }
 }

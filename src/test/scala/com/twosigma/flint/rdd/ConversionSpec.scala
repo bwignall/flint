@@ -30,9 +30,6 @@ import scala.concurrent.Future
 
 class ConversionSpec extends FlatSpec with SharedSparkContext with Timeouts {
 
-  var sortedRDDWithEmptyPartitions: RDD[(Long, (Int, Double))] = _
-  var sortedNonNormalizedRDD: RDD[(Long, (Int, Double))] = _
-
   val sortedData = Array(
     (1000L, (3, 8.90)),
     (1001L, (9, 8.91)),
@@ -43,13 +40,14 @@ class ConversionSpec extends FlatSpec with SharedSparkContext with Timeouts {
     (1105L, (3, 8.96)),
     (1430L, (3, 8.97))
   )
-
   val nonNormalizedData = Array(
     (1000L, (3, 8.90)),
     (1000L, (9, 8.91)),
     (1001L, (3, 8.90)),
     (1002L, (9, 8.91))
   )
+  var sortedRDDWithEmptyPartitions: RDD[(Long, (Int, Double))] = _
+  var sortedNonNormalizedRDD: RDD[(Long, (Int, Double))] = _
 
   def genRandomSortedRdd(
       numRows: Int,

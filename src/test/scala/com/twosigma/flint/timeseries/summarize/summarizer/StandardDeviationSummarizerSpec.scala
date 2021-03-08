@@ -20,14 +20,18 @@ import com.twosigma.flint.timeseries.row.Schema
 import com.twosigma.flint.timeseries.summarize.SummarizerSuite
 import com.twosigma.flint.timeseries.Summarizers
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.types.{ DoubleType, IntegerType }
+import org.apache.spark.sql.types.{DoubleType, IntegerType}
 
 class StandardDeviationSummarizerSpec extends SummarizerSuite {
   // It is by intention to reuse the files
-  override val defaultResourceDir: String = "/timeseries/summarize/summarizer/meansummarizer"
+  override val defaultResourceDir: String =
+    "/timeseries/summarize/summarizer/meansummarizer"
 
   "StandardDeviationSummarizer" should "compute `stddev` correctly" in {
-    val priceTSRdd = fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType)).addColumns(
+    val priceTSRdd = fromCSV(
+      "Price.csv",
+      Schema("id" -> IntegerType, "price" -> DoubleType)
+    ).addColumns(
       "price2" -> DoubleType -> { r: Row => r.getAs[Double]("price") },
       "price3" -> DoubleType -> { r: Row => -r.getAs[Double]("price") },
       "price4" -> DoubleType -> { r: Row => r.getAs[Double]("price") * 2 },
@@ -39,7 +43,8 @@ class StandardDeviationSummarizerSpec extends SummarizerSuite {
   }
 
   it should "ignore null values" in {
-    val priceTSRdd = fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
+    val priceTSRdd =
+      fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
     assertEquals(
       priceTSRdd.summarize(Summarizers.stddev("price")),
       insertNullRows(priceTSRdd, "price").summarize(Summarizers.stddev("price"))

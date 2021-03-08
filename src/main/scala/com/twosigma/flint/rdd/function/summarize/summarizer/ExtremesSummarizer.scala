@@ -23,7 +23,7 @@ import scala.reflect.ClassTag
  * Get the k largest elements defined by order
  */
 case class ExtremesSummarizer[T](
-  val k: Int,
+  k: Int,
   implicit val tag: ClassTag[T],
   ordering: Ordering[T]
 ) extends FlippableSummarizer[T, PriorityQueue[T], Array[T]] {

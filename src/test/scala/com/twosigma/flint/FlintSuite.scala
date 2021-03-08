@@ -16,29 +16,33 @@
 
 package com.twosigma.flint
 
-import java.io.{ File, InputStream }
-import java.nio.file.{ Files, Path, StandardCopyOption }
+import java.io.{File, InputStream}
+import java.nio.file.{Files, Path, StandardCopyOption}
 
 import org.apache.commons.io.FilenameUtils
-import org.scalatest.{ FlatSpec, PropSpec }
-import play.api.libs.json.{ JsValue, Json }
+import org.scalatest.{FlatSpec, PropSpec}
+import play.api.libs.json.{JsValue, Json}
 
 import scala.io.Source
 
 object FlintSuite {
 
   /**
-   * Access resources from either resource files or packaged resources from .jar
-   *
-   * @note This potentially copies the resource outside of a .jar, duplicating uncompressed data
-   * Although the copies are cleaned up afterwards, it could potentially use a lot of resources.
-   * @param resource The relative path of resource, e.g. foo/bar/data.csv.
-   * @param prefix   The prefix of temporary filename that the resource will be copied to. Default "".
-   * @param suffix   The suffix of temporary filename that the resource will be copied to. Default "".
-   * @param codeBlock A function that takes a resource file path as input.
-   * @return the return value of `codeBlock`.
-   */
-  def withResource[T](resource: String, prefix: String = "", suffix: String = "")(codeBlock: String => T): T = {
+    * Access resources from either resource files or packaged resources from .jar
+    *
+    * @note This potentially copies the resource outside of a .jar, duplicating uncompressed data
+    * Although the copies are cleaned up afterwards, it could potentially use a lot of resources.
+    * @param resource The relative path of resource, e.g. foo/bar/data.csv.
+    * @param prefix   The prefix of temporary filename that the resource will be copied to. Default "".
+    * @param suffix   The suffix of temporary filename that the resource will be copied to. Default "".
+    * @param codeBlock A function that takes a resource file path as input.
+    * @return the return value of `codeBlock`.
+    */
+  def withResource[T](
+      resource: String,
+      prefix: String = "",
+      suffix: String = ""
+  )(codeBlock: String => T): T = {
     var source: String = getClass.getResource(resource).getPath
     var sourcePath: Path = null
     val sourceExists = new File(source).exists
@@ -64,14 +68,14 @@ object FlintSuite {
 trait FlintSuite extends FlatSpec with SharedSparkContext {
 
   /**
-   * Access resources from either resource files or packaged resources from .jar
-   *
-   * @note This potentially copies the resource outside of a .jar, duplicating uncompressed data
-   * Although the copies are cleaned up afterwards, it could potentially use a lot of resources.
-   * @param resource The relative path of resource, e.g. foo/bar/data.csv.
-   * @param codeBlock A function that takes a resource file path as input.
-   * @return the return value of `codeBlock`.
-   */
+    * Access resources from either resource files or packaged resources from .jar
+    *
+    * @note This potentially copies the resource outside of a .jar, duplicating uncompressed data
+    * Although the copies are cleaned up afterwards, it could potentially use a lot of resources.
+    * @param resource The relative path of resource, e.g. foo/bar/data.csv.
+    * @param codeBlock A function that takes a resource file path as input.
+    * @return the return value of `codeBlock`.
+    */
   def withResource[T](resource: String)(codeBlock: String => T): T = {
     val suffix = "." + FilenameUtils.getExtension(resource)
     FlintSuite.withResource(resource, "", suffix)(codeBlock)

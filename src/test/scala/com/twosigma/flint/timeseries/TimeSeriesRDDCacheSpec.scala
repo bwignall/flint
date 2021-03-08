@@ -18,23 +18,28 @@ package com.twosigma.flint.timeseries
 
 import com.twosigma.flint.timeseries.row.Schema
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.types.{ DoubleType, IntegerType }
+import org.apache.spark.sql.types.{DoubleType, IntegerType}
 import org.scalatest.concurrent.Timeouts
 import org.scalatest.tagobjects.Slow
-import org.scalatest.time.{ Second, Span }
+import org.scalatest.time.{Second, Span}
 
 class TimeSeriesRDDCacheSpec extends TimeSeriesSuite with Timeouts {
 
   "TimeSeriesRDD" should "correctly cache data" taggedAs Slow in {
     withResource("/timeseries/csv/Price.csv") { source =>
       val priceSchema = Schema("id" -> IntegerType, "price" -> DoubleType)
-      val timeSeriesRdd = CSV.from(sqlContext, "file://" + source, sorted = true, schema = priceSchema)
+      val timeSeriesRdd = CSV.from(
+        sqlContext,
+        "file://" + source,
+        sorted = true,
+        schema = priceSchema
+      )
 
-      val slowTimeSeriesRdd = timeSeriesRdd.addColumns("new_column" -> DoubleType -> {
-        row: Row =>
+      val slowTimeSeriesRdd =
+        timeSeriesRdd.addColumns("new_column" -> DoubleType -> { row: Row =>
           Thread.sleep(500L)
           row.getAs[Double]("price") + 1.0
-      })
+        })
 
       // run a dummy addColumns() to initialize TSRDD's internal state
       slowTimeSeriesRdd.addColumns("foo_column" -> DoubleType -> { _ => 1.0 })
@@ -46,7 +51,12 @@ class TimeSeriesRDDCacheSpec extends TimeSeriesSuite with Timeouts {
       failAfter(Span(1, Second)) {
         assert(slowTimeSeriesRdd.toDF.collect().length == 12)
         assert(slowTimeSeriesRdd.orderedRdd.count() == 12)
-        assert(slowTimeSeriesRdd.asInstanceOf[TimeSeriesRDDImpl].unsafeOrderedRdd.count == 12)
+        assert(
+          slowTimeSeriesRdd
+            .asInstanceOf[TimeSeriesRDDImpl]
+            .unsafeOrderedRdd
+            .count == 12
+        )
       }
     }
   }

@@ -19,7 +19,7 @@ package com.twosigma.flint.timeseries
 import com.twosigma.flint.timeseries.CycleColumnSpec._
 import com.twosigma.flint.timeseries.row.Schema
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.types.{ DataType, DoubleType, IntegerType, LongType }
+import org.apache.spark.sql.types.{DataType, DoubleType, IntegerType, LongType}
 
 import scala.concurrent.duration.NANOSECONDS
 
@@ -30,7 +30,9 @@ class CycleColumnSpec extends MultiPartitionSuite with TimeSeriesTestData {
   it should "allow inline tuple Seq[Row] => Map[Row, T] syntax" in {
     val df = testData.addColumns("test1" -> DoubleType -> { _: Row => 1.0 })
     val actualDf = df.addColumnsForCycle(
-      "test2" -> DoubleType -> { rows: Seq[Row] => rows.map(row => row -> (row.getAs[Double]("test1") + 1)).toMap }
+      "test2" -> DoubleType -> { rows: Seq[Row] =>
+        rows.map(row => row -> (row.getAs[Double]("test1") + 1)).toMap
+      }
     )
     val actualValues = actualDf.collect().map(_.getAs[Double]("test2"))
     assert(actualValues.forall(_ === 2.0))
@@ -39,7 +41,9 @@ class CycleColumnSpec extends MultiPartitionSuite with TimeSeriesTestData {
   it should "allow inline tuple Seq[Row] => Seq[T] syntax" in {
     val df = testData.addColumns("test1" -> DoubleType -> { _: Row => 1.0 })
     val actualDf = df.addColumnsForCycle(
-      "test2" -> DoubleType -> { rows: Seq[Row] => rows.map(_.getAs[Double]("test1") + 1) }
+      "test2" -> DoubleType -> { rows: Seq[Row] =>
+        rows.map(_.getAs[Double]("test1") + 1)
+      }
     )
     val actualValues = actualDf.collect().map(_.getAs[Double]("test2"))
     assert(actualValues.forall(_ === 2.0))
@@ -62,46 +66,61 @@ class CycleColumnSpec extends MultiPartitionSuite with TimeSeriesTestData {
 
   it should "return null for any missing rows in a map-form CycleColumn" in {
     val df = TimeSeriesRDD.fromDF(
-      sqlContext.createDataFrame(sc.parallelize(Seq(
-        Row(1L, 1.0),
-        Row(2L, 2.0),
-        Row(2L, 3.0),
-        Row(3L, 4.0),
-        Row(3L, 5.0),
-        Row(3L, 6.0)
-      )), Schema.of("time" -> LongType, "value" -> DoubleType))
+      sqlContext.createDataFrame(
+        sc.parallelize(
+          Seq(
+            Row(1L, 1.0),
+            Row(2L, 2.0),
+            Row(2L, 3.0),
+            Row(3L, 4.0),
+            Row(3L, 5.0),
+            Row(3L, 6.0)
+          )
+        ),
+        Schema.of("time" -> LongType, "value" -> DoubleType)
+      )
     )(isSorted = true, NANOSECONDS)
 
     // A cycle function that returns a value for every other row.
     // mapFormToSeqForm should fill in the undefined rows in the map with null.
-    val udf = CycleColumn.unnamed(DoubleType, CycleColumn.mapFormToSeqForm({ rows: Seq[Row] =>
-      rows.zipWithIndex
-        .filter { case (_, i) => i % 2 == 0 }
-        .map { case (row, _) => row -> 100.0 }
-        .toMap
-    }))
+    val udf = CycleColumn.unnamed(
+      DoubleType,
+      CycleColumn.mapFormToSeqForm({ rows: Seq[Row] =>
+        rows.zipWithIndex
+          .filter { case (_, i) => i % 2 == 0 }
+          .map { case (row, _) => row -> 100.0 }
+          .toMap
+      })
+    )
 
     val actualDf = df.addColumnsForCycle("newColumn" -> udf)
-    val actualValues = actualDf.collect().map(_.getAs[java.lang.Double]("newColumn"))
+    val actualValues =
+      actualDf.collect().map(_.getAs[java.lang.Double]("newColumn"))
     assert(actualValues === Seq(100.0, 100.0, null, 100.0, null, 100.0))
   }
 
   it should "return null for any missing rows in a seq-form CycleColumn" in {
     val df = TimeSeriesRDD.fromDF(
-      sqlContext.createDataFrame(sc.parallelize(Seq(
-        Row(1L, 1.0),
-        Row(2L, 2.0),
-        Row(2L, 3.0),
-        Row(3L, 4.0),
-        Row(3L, 5.0),
-        Row(3L, 6.0)
-      )), Schema.of("time" -> LongType, "value" -> DoubleType))
+      sqlContext.createDataFrame(
+        sc.parallelize(
+          Seq(
+            Row(1L, 1.0),
+            Row(2L, 2.0),
+            Row(2L, 3.0),
+            Row(3L, 4.0),
+            Row(3L, 5.0),
+            Row(3L, 6.0)
+          )
+        ),
+        Schema.of("time" -> LongType, "value" -> DoubleType)
+      )
     )(isSorted = true, NANOSECONDS)
 
     // A cycle function that returns only a single row
     val udf = CycleColumn.unnamed(DoubleType, { rows: Seq[Row] => Seq(1.0) })
     val actualDf = df.addColumnsForCycle("newColumn" -> udf)
-    val actualValues = actualDf.collect().map(_.getAs[java.lang.Double]("newColumn"))
+    val actualValues =
+      actualDf.collect().map(_.getAs[java.lang.Double]("newColumn"))
     assert(actualValues === Seq(1.0, 1.0, null, 1.0, null, null))
   }
 
@@ -110,19 +129,22 @@ class CycleColumnSpec extends MultiPartitionSuite with TimeSeriesTestData {
 object CycleColumnSpec {
 
   /**
-   * An example of an [[CycleColumn.UnnamedCycleColumn]].
-   */
+    * An example of an [[CycleColumn.UnnamedCycleColumn]].
+    */
   def addOne(sourceColumn: String): CycleColumn.UnnamedCycleColumn =
-    CycleColumn.unnamed(DoubleType, { rows: Seq[Row] =>
-      rows.map { row =>
-        val idx = row.fieldIndex(sourceColumn)
-        row.getAs[Double](idx) + 1
+    CycleColumn.unnamed(
+      DoubleType,
+      { rows: Seq[Row] =>
+        rows.map { row =>
+          val idx = row.fieldIndex(sourceColumn)
+          row.getAs[Double](idx) + 1
+        }
       }
-    })
+    )
 
   /**
-   * An example of a built-in column that returns integers as its result.
-   */
+    * An example of a built-in column that returns integers as its result.
+    */
   case object FoobarCycleColumn extends CycleColumn {
     val name: String = "test"
     val dataType: DataType = IntegerType

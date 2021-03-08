@@ -19,45 +19,63 @@ package com.twosigma.flint.timeseries.summarize.summarizer.subtractable
 import com.twosigma.flint.timeseries.row.Schema
 import com.twosigma.flint.timeseries.summarize.SummarizerSuite
 import com.twosigma.flint.timeseries.Summarizers
-import org.apache.spark.sql.types.{ DoubleType, IntegerType }
+import org.apache.spark.sql.types.{DoubleType, IntegerType}
 
 class StandardizedMomentSummarizerSpec extends SummarizerSuite {
 
-  override val defaultResourceDir: String = "/timeseries/summarize/summarizer/standardizedmomentsummarizer"
+  override val defaultResourceDir: String =
+    "/timeseries/summarize/summarizer/standardizedmomentsummarizer"
 
   "SkewnessSummarizer" should "compute skewness correctly" in {
-    val priceTSRdd = fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
+    val priceTSRdd =
+      fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
     val results = priceTSRdd.summarize(Summarizers.skewness("price"))
     assert(results.collect().head.getAs[Double]("price_skewness") === 0.0)
   }
 
   it should "ignore null values" in {
-    val priceTSRdd = fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
+    val priceTSRdd =
+      fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
     assertEquals(
       priceTSRdd.summarize(Summarizers.skewness("price")),
-      insertNullRows(priceTSRdd, "price").summarize(Summarizers.skewness("price"))
+      insertNullRows(priceTSRdd, "price").summarize(
+        Summarizers.skewness("price")
+      )
     )
   }
 
   it should "pass summarizer property test" in {
-    summarizerPropertyTest(AllPropertiesAndSubtractable)(Summarizers.skewness("x1"))
+    summarizerPropertyTest(AllPropertiesAndSubtractable)(
+      Summarizers.skewness("x1")
+    )
   }
 
   "KurtosisSummarizer" should "compute kurtosis correctly" in {
-    val priceTSRdd = fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
+    val priceTSRdd =
+      fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
     val results = priceTSRdd.summarize(Summarizers.kurtosis("price"))
-    assert(results.collect().head.getAs[Double]("price_kurtosis") === -1.2167832167832167)
+    assert(
+      results
+        .collect()
+        .head
+        .getAs[Double]("price_kurtosis") === -1.2167832167832167
+    )
   }
 
   it should "ignore null values" in {
-    val priceTSRdd = fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
+    val priceTSRdd =
+      fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
     assertEquals(
       priceTSRdd.summarize(Summarizers.kurtosis("price")),
-      insertNullRows(priceTSRdd, "price").summarize(Summarizers.kurtosis("price"))
+      insertNullRows(priceTSRdd, "price").summarize(
+        Summarizers.kurtosis("price")
+      )
     )
   }
 
   it should "pass summarizer property test" in {
-    summarizerPropertyTest(AllPropertiesAndSubtractable)(Summarizers.kurtosis("x1"))
+    summarizerPropertyTest(AllPropertiesAndSubtractable)(
+      Summarizers.kurtosis("x1")
+    )
   }
 }

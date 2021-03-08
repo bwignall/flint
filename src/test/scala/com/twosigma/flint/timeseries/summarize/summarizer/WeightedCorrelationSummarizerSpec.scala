@@ -17,19 +17,12 @@
 package com.twosigma.flint.timeseries.summarize.summarizer
 
 import com.twosigma.flint.timeseries.row.Schema
-import com.twosigma.flint.timeseries.{ Summarizers, TimeSeriesGenerator }
+import com.twosigma.flint.timeseries.{Summarizers, TimeSeriesGenerator}
 import com.twosigma.flint.timeseries.summarize.SummarizerSuite
 import org.apache.spark.mllib.stat.Statistics
 import org.apache.spark.sql.types.DoubleType
 
 class WeightedCorrelationSummarizerSpec extends SummarizerSuite {
-
-  override val defaultResourceDir: String =
-    "/timeseries/summarize/summarizer/weightedcorrelationsummarizer"
-
-  private[this] val cycles = 10000L
-
-  private[this] val frequency = 1000L
 
   private[this] lazy val data = {
     val _data = new TimeSeriesGenerator(
@@ -63,6 +56,10 @@ class WeightedCorrelationSummarizerSpec extends SummarizerSuite {
     _data.count()
     _data
   }
+  override val defaultResourceDir: String =
+    "/timeseries/summarize/summarizer/weightedcorrelationsummarizer"
+  private[this] val cycles = 10000L
+  private[this] val frequency = 1000L
 
   override def afterAll(): Unit = {
     data.unpersist()
@@ -110,7 +107,7 @@ class WeightedCorrelationSummarizerSpec extends SummarizerSuite {
     def corr(x, y, w):
         """Weighted Correlation"""
         return cov(x, y, w) / np.sqrt(cov(x, x, w) * cov(y, y, w))
-    */
+     */
 
     assert(
       data

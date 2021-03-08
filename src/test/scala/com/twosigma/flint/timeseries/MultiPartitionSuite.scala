@@ -30,22 +30,25 @@ private[flint] sealed trait PartitionStrategy {
 
   def repartition(rdd: TimeSeriesRDD): TimeSeriesRDD
 
+  def repartitionEnsureValid(rdd: TimeSeriesRDD): TimeSeriesRDD =
+    ensureValid(repartition(rdd))
+
   /**
-   * Ensure a TimeSeriesRDD is valid. This checks:
-   * (1) data within each partition is within partition range
-   * (2) data is ordered within each partition
-   * (3) ranges are ordered and non-overlapping
-   */
+    * Ensure a TimeSeriesRDD is valid. This checks:
+    * (1) data within each partition is within partition range
+    * (2) data is ordered within each partition
+    * (3) ranges are ordered and non-overlapping
+    */
   private def ensureValid(rdd: TimeSeriesRDD): TimeSeriesRDD = {
     rdd.validate()
     rdd
   }
 
-  def repartitionEnsureValid(rdd: TimeSeriesRDD): TimeSeriesRDD = ensureValid(repartition(rdd))
   def ::(other: PartitionStrategy): PartitionStrategy = {
     val self = this
     new PartitionStrategy {
-      override def repartition(rdd: TimeSeriesRDD): TimeSeriesRDD = self.repartition(other.repartition(rdd))
+      override def repartition(rdd: TimeSeriesRDD): TimeSeriesRDD =
+        self.repartition(other.repartition(rdd))
 
       override def toString() = {
         s"${other.toString} :: ${self.toString}"
@@ -55,14 +58,45 @@ private[flint] sealed trait PartitionStrategy {
 }
 
 private[flint] object PartitionStrategy {
+  type NeighbourRange = Seq[CloseOpen[Long]]
+
+  def withRangeChange(partInfo: Option[PartitionInfo])(
+      fn: (Int, CloseOpen[Long]) => CloseOpen[Long]
+  ): Option[PartitionInfo] = {
+    partInfo.map {
+      case PartitionInfo(splits, deps) =>
+        val newSplits = splits.map {
+          case RangeSplit(partition, range) =>
+            RangeSplit(
+              OrderedRDDPartition(partition.index),
+              fn(partition.index, range)
+            )
+        }
+        PartitionInfo(newSplits, deps)
+    }
+  }
+
+  def getIndexToNeighbourRanges(
+      rdd: TimeSeriesRDD
+  ): SortedMap[Int, NeighbourRange] = {
+    val inputORdd = rdd.orderedRdd
+    val inputRanges = inputORdd.rangeSplits.map(_.range).toSeq
+    val inputRangesWithNeighourRange =
+      (null +: inputRanges :+ null).sliding(3, 1).toList
+    SortedMap[Int, NeighbourRange]() ++
+      (inputORdd.rangeSplits.map(
+        _.partition.index
+      ) zip inputRangesWithNeighourRange).toMap
+  }
+
   case object Origin extends PartitionStrategy {
     override def repartition(rdd: TimeSeriesRDD): TimeSeriesRDD = rdd
   }
 
   /**
-   * Partition a TimeSeriesRDD into one partition with range CloseOpen(firstT, None)
-   * where firstT is the first timestamp of the data
-   */
+    * Partition a TimeSeriesRDD into one partition with range CloseOpen(firstT, None)
+    * where firstT is the first timestamp of the data
+    */
   case object OnePartition extends PartitionStrategy {
     override def repartition(rdd: TimeSeriesRDD): TimeSeriesRDD = {
       rdd.repartition(1)
@@ -70,33 +104,44 @@ private[flint] object PartitionStrategy {
   }
 
   /**
-   * One timestamp per partition with the range [t, t + 1000) (if timestamp type) or [t, t + 1) (if long type)
-   * for each partition (t is the timestamp of the rows in the partition)
-   */
+    * One timestamp per partition with the range [t, t + 1000) (if timestamp type) or [t, t + 1) (if long type)
+    * for each partition (t is the timestamp of the rows in the partition)
+    */
   case object OneTimestampTightBound extends PartitionStrategy {
     override def repartition(rdd: TimeSeriesRDD): TimeSeriesRDD = {
 
       val timeType = TimeType.get(rdd.sparkSession)
 
       val expandEnd = timeType match {
-        case TimeType.LongType => (t: Long) => t + 1
+        case TimeType.LongType      => (t: Long) => t + 1
         case TimeType.TimestampType => (t: Long) => t + 1000
       }
 
       val timeIndex = rdd.schema.fieldIndex("time")
-      val rowGroupMap = TreeMap(rdd.toDF.queryExecution.executedPlan.executeCollect().groupBy{
-        r => timeType.internalToNanos(r.getLong(timeIndex))
-      }.toArray: _*)
+      val rowGroupMap = TreeMap(
+        rdd.toDF.queryExecution.executedPlan
+          .executeCollect()
+          .groupBy { r =>
+            timeType.internalToNanos(r.getLong(timeIndex))
+          }
+          .toArray: _*
+      )
       val rowGroupArray = rowGroupMap.values.toArray
 
       val rangeSplits = rowGroupMap.zipWithIndex.map {
-        case ((time: Long, rows), index) => RangeSplit(
-          OrderedRDDPartition(index), CloseOpen(time, Some(expandEnd(time)))
-        )
+        case ((time: Long, rows), index) =>
+          RangeSplit(
+            OrderedRDDPartition(index),
+            CloseOpen(time, Some(expandEnd(time)))
+          )
       }.toSeq
 
-      val orderedRdd = new OrderedRDD[Long, InternalRow](rdd.orderedRdd.sparkContext, rangeSplits, Nil)(
-        (part, context) => rowGroupArray(part.index).map{ row =>
+      val orderedRdd = new OrderedRDD[Long, InternalRow](
+        rdd.orderedRdd.sparkContext,
+        rangeSplits,
+        Nil
+      )((part, context) =>
+        rowGroupArray(part.index).map { row =>
           (timeType.internalToNanos(row.getLong(timeIndex)), row)
         }.toIterator
       )
@@ -105,35 +150,13 @@ private[flint] object PartitionStrategy {
     }
   }
 
-  def withRangeChange(partInfo: Option[PartitionInfo])(
-    fn: (Int, CloseOpen[Long]) => CloseOpen[Long]
-  ): Option[PartitionInfo] = {
-    partInfo.map {
-      case PartitionInfo(splits, deps) =>
-        val newSplits = splits.map{
-          case RangeSplit(partition, range) =>
-            RangeSplit(OrderedRDDPartition(partition.index), fn(partition.index, range))
-        }
-        PartitionInfo(newSplits, deps)
-    }
-  }
-
-  type NeighbourRange = Seq[CloseOpen[Long]]
-  def getIndexToNeighbourRanges(rdd: TimeSeriesRDD): SortedMap[Int, NeighbourRange] = {
-    val inputORdd = rdd.orderedRdd
-    val inputRanges = inputORdd.rangeSplits.map(_.range).toSeq
-    val inputRangesWithNeighourRange = (null +: inputRanges :+ null).sliding(3, 1).toList
-    SortedMap[Int, NeighbourRange]() ++
-      (inputORdd.rangeSplits.map(_.partition.index) zip inputRangesWithNeighourRange).toMap
-  }
-
   /**
-   * Extend the start of each partition range to the end of the previous range. For example:
-   * Before:
-   * [0, 1000) [2000, 3000) [3000, 4000)
-   * After:
-   * [Long.MinValue, 1000) [1000, 3000) [3000, 4000)
-   */
+    * Extend the start of each partition range to the end of the previous range. For example:
+    * Before:
+    * [0, 1000) [2000, 3000) [3000, 4000)
+    * After:
+    * [Long.MinValue, 1000) [1000, 3000) [3000, 4000)
+    */
   case object ExtendBegin extends PartitionStrategy {
     override def repartition(rdd: TimeSeriesRDD): TimeSeriesRDD = {
       val indexToNeighbourRanges = getIndexToNeighbourRanges(rdd)
@@ -154,12 +177,12 @@ private[flint] object PartitionStrategy {
   }
 
   /**
-   * Extend the end of each partition range to the begin of the next range. For example:
-   * Before:
-   * [0, 1000) [2000, 3000) [3000, 4000)
-   * After:
-   * [0, 2000) [2000, 3000) [3000, None)
-   */
+    * Extend the end of each partition range to the begin of the next range. For example:
+    * Before:
+    * [0, 1000) [2000, 3000) [3000, 4000)
+    * After:
+    * [0, 2000) [2000, 3000) [3000, None)
+    */
   case object ExtendEnd extends PartitionStrategy {
     override def repartition(rdd: TimeSeriesRDD): TimeSeriesRDD = {
       val indexToNeighbourRanges = getIndexToNeighbourRanges(rdd)
@@ -180,12 +203,12 @@ private[flint] object PartitionStrategy {
   }
 
   /**
-   * Extend the begin, end of each partition by half the distance to the neighbor range. For example:
-   * Before:
-   * [0, 1000) [2000, 3000) [3000, 4000)
-   * After:
-   * [Long.MinValue, 1500) [1500, 3000) [3000, None)
-   */
+    * Extend the begin, end of each partition by half the distance to the neighbor range. For example:
+    * Before:
+    * [0, 1000) [2000, 3000) [3000, 4000)
+    * After:
+    * [Long.MinValue, 1500) [1500, 3000) [3000, None)
+    */
   case object ExtendHalfBeginHalfEnd extends PartitionStrategy {
     override def repartition(rdd: TimeSeriesRDD): TimeSeriesRDD = {
       val indexToNeighbourRanges = getIndexToNeighbourRanges(rdd)
@@ -215,14 +238,14 @@ private[flint] object PartitionStrategy {
   }
 
   /**
-   * Repartition into n partitions where each partition has roughly the same amount of cycles.
-   */
+    * Repartition into n partitions where each partition has roughly the same amount of cycles.
+    */
   case object MultiTimestampNormalized extends PartitionStrategy {
     override def repartition(rdd: TimeSeriesRDD): TimeSeriesRDD = {
 
       val timeType = TimeType.get(rdd.sparkSession)
       val expandEnd = timeType match {
-        case TimeType.LongType => (t: Long) => t + 1
+        case TimeType.LongType      => (t: Long) => t + 1
         case TimeType.TimestampType => (t: Long) => t + 1000
       }
 
@@ -236,9 +259,10 @@ private[flint] object PartitionStrategy {
       val targetPartitionNumber = math.sqrt(count).toLong
       val timestampsPerPartition = count / targetPartitionNumber
 
-      val partitionedRows = groupedRows.grouped(timestampsPerPartition.toInt).toArray
+      val partitionedRows =
+        groupedRows.grouped(timestampsPerPartition.toInt).toArray
 
-      val rangeSplits = partitionedRows.zipWithIndex.map{
+      val rangeSplits = partitionedRows.zipWithIndex.map {
         case (timestampToRows, index) =>
           val begin = timestampToRows.keys.min
           val end = expandEnd(timestampToRows.keys.max)
@@ -248,8 +272,12 @@ private[flint] object PartitionStrategy {
           )
       }.toSeq
 
-      val orderedRdd = new OrderedRDD[Long, InternalRow](rdd.orderedRdd.sparkContext, rangeSplits, Nil)(
-        (part, context) => partitionedRows(part.index).toArray.flatMap{
+      val orderedRdd = new OrderedRDD[Long, InternalRow](
+        rdd.orderedRdd.sparkContext,
+        rangeSplits,
+        Nil
+      )((part, context) =>
+        partitionedRows(part.index).toArray.flatMap {
           case (time, rs) =>
             rs.map((time, _))
         }.toIterator
@@ -260,8 +288,8 @@ private[flint] object PartitionStrategy {
   }
 
   /**
-   * Repartition into n partitions where each partition has roughly the same amount of rows, then run a normalization.
-   */
+    * Repartition into n partitions where each partition has roughly the same amount of rows, then run a normalization.
+    */
   case object MultiTimestampUnnormailzed extends PartitionStrategy {
     override def repartition(rdd: TimeSeriesRDD): TimeSeriesRDD = {
       val rows = rdd.collect()
@@ -274,46 +302,25 @@ private[flint] object PartitionStrategy {
 
       val sc = rdd.rdd.sparkContext
 
-      val newRdd = sc.parallelize(partitionedRows, partitionedRows.length).flatMap(_.toIterator)
+      val newRdd = sc
+        .parallelize(partitionedRows, partitionedRows.length)
+        .flatMap(_.toIterator)
       require(newRdd.getNumPartitions == partitionedRows.length)
-      TimeSeriesRDD.fromRDD(newRdd, rdd.schema)(isSorted = true, timeUnit = NANOSECONDS)
+      TimeSeriesRDD.fromRDD(newRdd, rdd.schema)(
+        isSorted = true,
+        timeUnit = NANOSECONDS
+      )
     }
   }
 
   /**
-   * Fill gaps in current partition with empty ranges. For example:
-   * Before:
-   * [0, 1000) [2000, 3000) [3000, 4000)
-   * After:
-   * [Long.MinValue, 0) [0, 1000) [1000, 2000) [2000, 3000) [3000, 4000)
-   */
+    * Fill gaps in current partition with empty ranges. For example:
+    * Before:
+    * [0, 1000) [2000, 3000) [3000, 4000)
+    * After:
+    * [Long.MinValue, 0) [0, 1000) [1000, 2000) [2000, 3000) [3000, 4000)
+    */
   case object FillWithEmptyPartition extends PartitionStrategy {
-    private def fillRangeGap(ranges: Array[RangeSplit[Long]]): Array[(CloseOpen[Long], Option[Int])] = {
-      ((null +: ranges) zip (ranges :+ null)).flatMap {
-        case (null, RangeSplit(OrderedRDDPartition(_), right)) =>
-          if (right.begin == Long.MinValue) {
-            Iterator.empty
-          } else {
-            Iterator((CloseOpen(Long.MinValue, Some(right.begin)), None))
-          }
-        case (RangeSplit(OrderedRDDPartition(index), left), null) =>
-          if (left.end.isEmpty) {
-            Iterator((left, Some(index)))
-          } else {
-            Iterator((left, Some(index)), (CloseOpen(left.end.get, None), None))
-          }
-        case (RangeSplit(OrderedRDDPartition(leftIndex), left), RangeSplit(_, right)) =>
-          val leftEnd = left.end.get
-          val rightBegin = right.begin
-
-          if (leftEnd == rightBegin) {
-            Iterator((left, Some(leftIndex)))
-          } else {
-            Iterator((left, Some(leftIndex)), (CloseOpen(leftEnd, Some(right.begin)), None))
-          }
-      }
-    }
-
     override def repartition(rdd: TimeSeriesRDD): TimeSeriesRDD = {
       val parentRdd = rdd.orderedRdd
 
@@ -333,15 +340,53 @@ private[flint] object PartitionStrategy {
       }
       val parentPartitions = parentRdd.partitions
 
-      val orderedRdd = new OrderedRDD[Long, InternalRow](parentRdd.sparkContext, rangeSplits, Seq(deps))({
-        (part, context) =>
-          deps.getParents(part.index) match {
-            case Seq() => Iterator.empty
-            case Seq(parentIndex) => parentRdd.iterator(parentPartitions(parentIndex), context)
-          }
+      val orderedRdd = new OrderedRDD[Long, InternalRow](
+        parentRdd.sparkContext,
+        rangeSplits,
+        Seq(deps)
+      )({ (part, context) =>
+        deps.getParents(part.index) match {
+          case Seq() => Iterator.empty
+          case Seq(parentIndex) =>
+            parentRdd.iterator(parentPartitions(parentIndex), context)
+        }
       })
 
       new TimeSeriesRDDImpl(TimeSeriesStore(orderedRdd, rdd.schema))
+    }
+
+    private def fillRangeGap(
+        ranges: Array[RangeSplit[Long]]
+    ): Array[(CloseOpen[Long], Option[Int])] = {
+      ((null +: ranges) zip (ranges :+ null)).flatMap {
+        case (null, RangeSplit(OrderedRDDPartition(_), right)) =>
+          if (right.begin == Long.MinValue) {
+            Iterator.empty
+          } else {
+            Iterator((CloseOpen(Long.MinValue, Some(right.begin)), None))
+          }
+        case (RangeSplit(OrderedRDDPartition(index), left), null) =>
+          if (left.end.isEmpty) {
+            Iterator((left, Some(index)))
+          } else {
+            Iterator((left, Some(index)), (CloseOpen(left.end.get, None), None))
+          }
+        case (
+              RangeSplit(OrderedRDDPartition(leftIndex), left),
+              RangeSplit(_, right)
+            ) =>
+          val leftEnd = left.end.get
+          val rightBegin = right.begin
+
+          if (leftEnd == rightBegin) {
+            Iterator((left, Some(leftIndex)))
+          } else {
+            Iterator(
+              (left, Some(leftIndex)),
+              (CloseOpen(leftEnd, Some(right.begin)), None)
+            )
+          }
+      }
     }
   }
 }
@@ -371,8 +416,10 @@ class MultiPartitionSuite extends TimeSeriesSuite with PropertyChecks {
 
   val DEFAULT = ALL
 
-  def withPartitionStrategy(rdd: TimeSeriesRDD)(strategies: Seq[PartitionStrategy])(
-    test: TimeSeriesRDD => Unit
+  def withPartitionStrategy(rdd: TimeSeriesRDD)(
+      strategies: Seq[PartitionStrategy]
+  )(
+      test: TimeSeriesRDD => Unit
   ): Unit = {
     for (s <- strategies) {
       // println(s"PartitionStrategy: ${s}")
@@ -381,8 +428,10 @@ class MultiPartitionSuite extends TimeSeriesSuite with PropertyChecks {
     }
   }
 
-  def withPartitionStrategy(rdd1: TimeSeriesRDD, rdd2: TimeSeriesRDD)(strategies: Seq[PartitionStrategy])(
-    test: (TimeSeriesRDD, TimeSeriesRDD) => Unit
+  def withPartitionStrategy(rdd1: TimeSeriesRDD, rdd2: TimeSeriesRDD)(
+      strategies: Seq[PartitionStrategy]
+  )(
+      test: (TimeSeriesRDD, TimeSeriesRDD) => Unit
   ): Unit = {
     for (s1 <- strategies; s2 <- strategies) {
       // info(s"PartitionStrategy: ${s1} ${s2}")
@@ -392,8 +441,10 @@ class MultiPartitionSuite extends TimeSeriesSuite with PropertyChecks {
     }
   }
 
-  def withPartitionStrategyCompare(rdd: TimeSeriesRDD)(strategies: Seq[PartitionStrategy])(
-    fn: (TimeSeriesRDD) => TimeSeriesRDD
+  def withPartitionStrategyCompare(rdd: TimeSeriesRDD)(
+      strategies: Seq[PartitionStrategy]
+  )(
+      fn: (TimeSeriesRDD) => TimeSeriesRDD
   ): Unit = {
     val baseline = fn(OnePartition.repartition(rdd))
     val strategiesWithoutOnePartition = strategies.filter(_ != OnePartition)
@@ -404,20 +455,20 @@ class MultiPartitionSuite extends TimeSeriesSuite with PropertyChecks {
   }
 
   /**
-   * Run tests with different params and partition strategies. Compare the result to OnePartition strategy.
-   * This creates one test for each param/partition combo, so it's easier to find which param/partition fails the test.
-   * However, this removes type information in the test function.
-   */
+    * Run tests with different params and partition strategies. Compare the result to OnePartition strategy.
+    * This creates one test for each param/partition combo, so it's easier to find which param/partition fails the test.
+    * However, this removes type information in the test function.
+    */
   def withPartitionStrategyAndParams(
-    input: () => TimeSeriesRDD
+      input: () => TimeSeriesRDD
   )(
-    name: String
+      name: String
   )(
-    strategies: Seq[PartitionStrategy]
+      strategies: Seq[PartitionStrategy]
   )(
-    params: Seq[Seq[Any]]
+      params: Seq[Seq[Any]]
   )(
-    fn: (TimeSeriesRDD, Seq[Any]) => TimeSeriesRDD
+      fn: (TimeSeriesRDD, Seq[Any]) => TimeSeriesRDD
   ): Unit = {
     val strategiesWithoutOnePartition = strategies.filter(_ != OnePartition)
     val strategiesTable = Table("strategies", strategiesWithoutOnePartition: _*)
@@ -435,17 +486,17 @@ class MultiPartitionSuite extends TimeSeriesSuite with PropertyChecks {
   }
 
   def withPartitionStrategyAndParams(
-    input1: () => TimeSeriesRDD,
-    input2: () => TimeSeriesRDD
+      input1: () => TimeSeriesRDD,
+      input2: () => TimeSeriesRDD
   )(
-    name: String
+      name: String
   )(
-    strategies1: Seq[PartitionStrategy],
-    strategies2: Seq[PartitionStrategy]
+      strategies1: Seq[PartitionStrategy],
+      strategies2: Seq[PartitionStrategy]
   )(
-    params: Seq[Seq[Any]]
+      params: Seq[Seq[Any]]
   )(
-    test: (TimeSeriesRDD, TimeSeriesRDD, Seq[Any]) => Unit
+      test: (TimeSeriesRDD, TimeSeriesRDD, Seq[Any]) => Unit
   ): Unit = {
     val strategies1Table = Table("strategies", strategies1: _*)
     val strategies2Table = Table("strategies", strategies2: _*)
@@ -456,20 +507,30 @@ class MultiPartitionSuite extends TimeSeriesSuite with PropertyChecks {
           it should s"pass $name with strategy1 = $strategy1 and strategy2 = $strategy2 and param = $params" in {
             val rdd1 = input1()
             val rdd2 = input2()
-            test(strategy1.repartition(rdd1), strategy2.repartition(rdd2), params)
+            test(
+              strategy1.repartition(rdd1),
+              strategy2.repartition(rdd2),
+              params
+            )
           }
         }
       }
     }
   }
 
-  def withPartitionStrategyCompare(rdd1: TimeSeriesRDD, rdd2: TimeSeriesRDD)(strategies: Seq[PartitionStrategy])(
-    fn: (TimeSeriesRDD, TimeSeriesRDD) => TimeSeriesRDD
+  def withPartitionStrategyCompare(rdd1: TimeSeriesRDD, rdd2: TimeSeriesRDD)(
+      strategies: Seq[PartitionStrategy]
+  )(
+      fn: (TimeSeriesRDD, TimeSeriesRDD) => TimeSeriesRDD
   ): Unit = {
-    val baseline = fn(OnePartition.repartition(rdd1), OnePartition.repartition(rdd2))
+    val baseline =
+      fn(OnePartition.repartition(rdd1), OnePartition.repartition(rdd2))
     val strategiesWithoutOnePartition = strategies.filter(_ != OnePartition)
-    for (s1 <- strategiesWithoutOnePartition; s2 <- strategiesWithoutOnePartition) {
-      val result = fn(s1.repartitionEnsureValid(rdd1), s2.repartitionEnsureValid(rdd2))
+    for (
+      s1 <- strategiesWithoutOnePartition; s2 <- strategiesWithoutOnePartition
+    ) {
+      val result =
+        fn(s1.repartitionEnsureValid(rdd1), s2.repartitionEnsureValid(rdd2))
       assertEquals(result, baseline)
     }
   }
