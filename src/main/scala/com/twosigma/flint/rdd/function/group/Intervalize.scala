@@ -30,46 +30,63 @@ object Intervalize {
 
   private val logger = Logger()
 
-  private def broadcastClock[K: ClassTag](sparkContext: SparkContext, clock: Array[K]): Broadcast[Array[K]] = {
+  private def broadcastClock[K: ClassTag](
+    sparkContext: SparkContext,
+    clock: Array[K]
+  ): Broadcast[Array[K]] = {
     val INTERVALS_PER_YEAR = 365 * 24 * 12
     val NUMBER_OF_YEAR = 20
     val BYTES_PER_INTERVAL = 8
     // 20 years of 5 min interval is about 16M
     val maxClocksize = NUMBER_OF_YEAR * INTERVALS_PER_YEAR * BYTES_PER_INTERVAL
     if (clock.length > maxClocksize) {
-      logger.warn(s"Broadcast clock is bigger than ${maxClocksize / 1024 / 1024} M. " +
-        s"Please provide a smaller time range.")
+      logger.warn(
+        s"Broadcast clock is bigger than ${maxClocksize / 1024 / 1024} M. " +
+          s"Please provide a smaller time range."
+      )
     }
     sparkContext.broadcast(clock)
   }
 
-  def roundFn[K: Ordering](inclusion: String, rounding: String): (K, Array[K]) => Option[K] =
+  def roundFn[K: Ordering](
+    inclusion: String,
+    rounding: String
+  ): (K, Array[K]) => Option[K] =
     (inclusion, rounding) match {
       case ("begin", "begin") =>
         (k: K, clock: Array[K]) =>
           clock.search(k) match {
-            case Found(idx) => if (idx < clock.length - 1) Some(clock(idx)) else None
-            case InsertionPoint(idx) => if (idx > 0 && idx < clock.length) Some(clock(idx - 1)) else None
+            case Found(idx) =>
+              if (idx < clock.length - 1) Some(clock(idx)) else None
+            case InsertionPoint(idx) =>
+              if (idx > 0 && idx < clock.length) Some(clock(idx - 1)) else None
           }
       case ("begin", "end") =>
         (k: K, clock: Array[K]) =>
           clock.search(k) match {
-            case Found(idx) => if (idx < clock.length - 1) Some(clock(idx + 1)) else None
-            case InsertionPoint(idx) => if (idx > 0 && idx < clock.length) Some(clock(idx)) else None
+            case Found(idx) =>
+              if (idx < clock.length - 1) Some(clock(idx + 1)) else None
+            case InsertionPoint(idx) =>
+              if (idx > 0 && idx < clock.length) Some(clock(idx)) else None
           }
       case ("end", "begin") =>
         (k: K, clock: Array[K]) =>
           clock.search(k) match {
             case Found(idx) => if (idx > 0) Some(clock(idx - 1)) else None
-            case InsertionPoint(idx) => if (idx > 0 && idx < clock.length) Some(clock(idx - 1)) else None
+            case InsertionPoint(idx) =>
+              if (idx > 0 && idx < clock.length) Some(clock(idx - 1)) else None
           }
       case ("end", "end") =>
         (k: K, clock: Array[K]) =>
           clock.search(k) match {
             case Found(idx) => if (idx > 0) Some(clock(idx)) else None
-            case InsertionPoint(idx) => if (idx > 0 && idx < clock.length) Some(clock(idx)) else None
+            case InsertionPoint(idx) =>
+              if (idx > 0 && idx < clock.length) Some(clock(idx)) else None
           }
-      case _ => sys.error(s"Unrecognized args. Inclusion: $inclusion rounding: $rounding")
+      case _ =>
+        sys.error(
+          s"Unrecognized args. Inclusion: $inclusion rounding: $rounding"
+        )
     }
 
   /**
@@ -89,12 +106,18 @@ object Intervalize {
     inclusion: String,
     rounding: String
   )(implicit ord: Ordering[K]): OrderedRDD[K, (K, V)] = {
-    require(Seq("begin", "end").contains(inclusion), "inclusion must be \"begin\" or \"end\"")
-    require(Seq("begin", "end").contains(rounding), "rounding must be \"begin\" or \"end\"")
+    require(
+      Seq("begin", "end").contains(inclusion),
+      "inclusion must be \"begin\" or \"end\""
+    )
+    require(
+      Seq("begin", "end").contains(rounding),
+      "rounding must be \"begin\" or \"end\""
+    )
 
     // ensure ordering
     var i = 0
-    while (i < clock.size - 1) {
+    while (i < clock.length - 1) {
       require(
         ord.lt(clock(i), clock(i + 1)),
         s"Invalid interval. clock[n] must < clock[n + 1] for all n. " +
@@ -112,8 +135,10 @@ object Intervalize {
 
       // Optimization: Reduce the size of the broadcast clock if possible
       val from = clock.search(rddBegin) match {
-        case Found(idx) => Math.max(0, idx - 1) // -1 because beginInclusive can be false
-        case InsertionPoint(idx) => Math.max(0, idx - 1) // between idx - 1 and idx
+        case Found(idx) =>
+          Math.max(0, idx - 1) // -1 because beginInclusive can be false
+        case InsertionPoint(idx) =>
+          Math.max(0, idx - 1) // between idx - 1 and idx
       }
 
       val until = rddEnd.fold(clock.length) { end =>
@@ -131,11 +156,14 @@ object Intervalize {
       val round = roundFn[K](inclusion, rounding)
 
       // TODO: This should be rewritten to be an O(n) algorithms instead of O(nlog(n))
-      val intervalized = rdd.map {
-        case (k, v) => (round(k, broadcast.value), (k, v))
-      }.filter(_._1.isDefined).map {
-        case (k, v) => (k.get, v)
-      }
+      val intervalized = rdd
+        .map {
+          case (k, v) => (round(k, broadcast.value), (k, v))
+        }
+        .filter(_._1.isDefined)
+        .map {
+          case (k, v) => (k.get, v)
+        }
 
       // Normalize the above rdd such that rows with the same keys won't spread across multiple partitions.
       Conversion.fromSortedRDD(intervalized)

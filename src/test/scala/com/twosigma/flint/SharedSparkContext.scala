@@ -47,7 +47,7 @@ trait SharedSparkContext extends BeforeAndAfterAll {
     configTestLog4j("WARN")
   }
 
-  var conf = new SparkConf(false)
+  val conf = new SparkConf(false)
 
   override def beforeAll() {
     conf.set("spark.ui.enabled", "false")
@@ -56,12 +56,15 @@ trait SharedSparkContext extends BeforeAndAfterAll {
     conf.set("spark.flint.timetype", "long")
 
     // Set the console progress if the system property is set
-    sys.props.get("spark.ui.showConsoleProgress").foreach(
-      conf.set("spark.ui.showConsoleProgress", _)
-    )
+    sys.props
+      .get("spark.ui.showConsoleProgress")
+      .foreach(
+        conf.set("spark.ui.showConsoleProgress", _)
+      )
 
     // we want to detect memory leaks as soon as possible
-    conf.set("spark.unsafe.exceptionOnMemoryLeak", "true")
+    conf
+      .set("spark.unsafe.exceptionOnMemoryLeak", "true")
       // The codec used to compress internal data such as RDD partitions, broadcast variables and shuffle outputs.
       // By default, Spark provides three codecs: lz4, lzf, and snappy. Here, using lzf is to reduce the dependency
       // of snappy codec for compiling issue with other codebase(s).
@@ -71,7 +74,12 @@ trait SharedSparkContext extends BeforeAndAfterAll {
       Math.ceil(sys.runtime.availableProcessors() * 0.75).toInt
     )
 
-    _spark = SparkSession.builder().master(s"local[$cores]").appName("test").config(conf).getOrCreate()
+    _spark = SparkSession
+      .builder()
+      .master(s"local[$cores]")
+      .appName("test")
+      .config(conf)
+      .getOrCreate()
     _sqlContext = _spark.sqlContext
     _sc = _spark.sparkContext
 
@@ -93,7 +101,10 @@ trait SharedSparkContext extends BeforeAndAfterAll {
     pro.put("log4j.appender.console", "org.apache.log4j.ConsoleAppender")
     pro.put("log4j.appender.console.target", "System.err")
     pro.put("log4j.appender.console.layout", "org.apache.log4j.PatternLayout")
-    pro.put("log4j.appender.console.layout.ConversionPattern", "%d{yy/MM/dd HH:mm:ss} %p %c{1}: %m%n")
+    pro.put(
+      "log4j.appender.console.layout.ConversionPattern",
+      "%d{yy/MM/dd HH:mm:ss} %p %c{1}: %m%n"
+    )
     PropertyConfigurator.configure(pro)
   }
 
