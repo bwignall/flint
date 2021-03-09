@@ -31,10 +31,11 @@ private[read] class Parameters private (
   def this(defaultOptions: Map[String, String]) =
     this(mutable.HashMap[String, String](defaultOptions.toSeq: _*))
 
-  def option(key: String, valueOpt: Option[String]): Unit = valueOpt match {
-    case Some(v) => extraOptions += key -> v
-    case None => extraOptions -= key
-  }
+  def option(key: String, valueOpt: Option[String]): Unit =
+    valueOpt match {
+      case Some(v) => extraOptions += key -> v
+      case None => extraOptions -= key
+    }
 
   /**
    * Convenience method for the Python API that provides a Java Map compatible with py4j.
@@ -55,13 +56,15 @@ private[read] case class BeginEndRange(
   expandEndNanosOpt: Option[Long] = None
 ) {
 
-  def beginNanos: Long = beginNanosOpt.getOrElse(
-    throw new IllegalArgumentException("'begin' range must be set")
-  )
+  def beginNanos: Long =
+    beginNanosOpt.getOrElse(
+      throw new IllegalArgumentException("'begin' range must be set")
+    )
 
-  def endNanos: Long = endNanosOpt.getOrElse(
-    throw new IllegalArgumentException("'end' range must be set")
-  )
+  def endNanos: Long =
+    endNanosOpt.getOrElse(
+      throw new IllegalArgumentException("'end' range must be set")
+    )
 
   def beginNanosOpt: Option[Long] = {
     rawBeginNanosOpt.map(_ - expandBeginNanosOpt.getOrElse(0L))
@@ -72,8 +75,10 @@ private[read] case class BeginEndRange(
   }
 
   @PythonApi
-  private[read] def beginNanosOrNull: java.lang.Long = beginNanosOpt.map(Long.box).orNull
+  private[read] def beginNanosOrNull: java.lang.Long =
+    beginNanosOpt.map(Long.box).orNull
 
   @PythonApi
-  private[read] def endNanosOrNull: java.lang.Long = endNanosOpt.map(Long.box).orNull
+  private[read] def endNanosOrNull: java.lang.Long =
+    endNanosOpt.map(Long.box).orNull
 }

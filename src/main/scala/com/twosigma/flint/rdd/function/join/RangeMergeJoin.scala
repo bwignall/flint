@@ -25,23 +25,30 @@ protected[flint] object RangeMergeJoin {
    * For each unique [[Range]] begin, return intersecting [[RangeSplit]]s from both thisSplits and thatSplits.
    * Can optionally use the toleranceFn to extend the time range in searching for intersections.
    */
-  def mergeSplits[K](thisSplits: IndexedSeq[RangeSplit[K]], thatSplits: IndexedSeq[RangeSplit[K]],
-    toleranceFn: K => K = { x: K => x })(
-    implicit
-    ord: Ordering[K]
-  ): Seq[RangeMergeJoin[K]] = {
+  def mergeSplits[K](
+    thisSplits: IndexedSeq[RangeSplit[K]],
+    thatSplits: IndexedSeq[RangeSplit[K]],
+    toleranceFn: K => K = { x: K => x }
+  )(implicit ord: Ordering[K]): Seq[RangeMergeJoin[K]] = {
     require(RangeSplit.isSortedByRange(thisSplits))
     require(RangeSplit.isSortedByRange(thatSplits))
 
     if (thatSplits.isEmpty) {
-      thisSplits.map {
-        split => RangeMergeJoin(split.range, Seq(split), Seq())
+      thisSplits.map { split =>
+        RangeMergeJoin(split.range, Seq(split), Seq())
       }
     } else if (thisSplits.isEmpty) {
       thatSplits.map { split => RangeMergeJoin(split.range, Seq(), Seq(split)) }
     } else {
       val begins = (thisSplits ++ thatSplits).map(_.range.begin).sorted
-      mergeSplits(toleranceFn, begins.headOption, thisSplits, thatSplits, begins, Seq()).reverse
+      mergeSplits(
+        toleranceFn,
+        begins.headOption,
+        thisSplits,
+        thatSplits,
+        begins,
+        Seq()
+      ).reverse
     }
   }
 
@@ -53,27 +60,35 @@ protected[flint] object RangeMergeJoin {
     thatSplits: IndexedSeq[RangeSplit[K]],
     begins: IndexedSeq[K],
     mergedSplits: Seq[RangeMergeJoin[K]]
-  ): Seq[RangeMergeJoin[K]] = begin match {
-    // The algorithm works as follows.
-    // It splits the ordering space into disjoint ranges [a_1, a_2), [a_2, a_3), [a_3, a_4) ...
-    // where a_i < a_{i+1}. For a specific range [a_i, a_{i+1}), it finds all splits from both side
-    // that intersect with it and then assembles them together as a `RangeMergeJoin`.
-    // That is, given a begin b0, it scans thisSplits and thatSplits split-by-split until
-    // it finds a split whose begin b1 is different from the given one. The interval [b0, b1)
-    // defines a range and it will be used to find splits (from both `thisSplits` and `thatSplits`)
-    // that intersect with.
-    case Some(b) =>
-      // The end could be None which implies that the merge process will be completed.
-      val end = RangeSplit.getNextBegin(b, begins)
-      val searchRange = CloseOpen(toleranceFn(b), end)
-      val mergedJoin = RangeMergeJoin(
-        CloseOpen(b, end),
-        RangeSplit.getIntersectingSplits(searchRange, thisSplits),
-        RangeSplit.getIntersectingSplits(searchRange, thatSplits)
-      )
-      mergeSplits(toleranceFn, end, thisSplits, thatSplits, begins, mergedJoin +: mergedSplits)
-    case None => mergedSplits
-  }
+  ): Seq[RangeMergeJoin[K]] =
+    begin match {
+      // The algorithm works as follows.
+      // It splits the ordering space into disjoint ranges [a_1, a_2), [a_2, a_3), [a_3, a_4) ...
+      // where a_i < a_{i+1}. For a specific range [a_i, a_{i+1}), it finds all splits from both side
+      // that intersect with it and then assembles them together as a `RangeMergeJoin`.
+      // That is, given a begin b0, it scans thisSplits and thatSplits split-by-split until
+      // it finds a split whose begin b1 is different from the given one. The interval [b0, b1)
+      // defines a range and it will be used to find splits (from both `thisSplits` and `thatSplits`)
+      // that intersect with.
+      case Some(b) =>
+        // The end could be None which implies that the merge process will be completed.
+        val end = RangeSplit.getNextBegin(b, begins)
+        val searchRange = CloseOpen(toleranceFn(b), end)
+        val mergedJoin = RangeMergeJoin(
+          CloseOpen(b, end),
+          RangeSplit.getIntersectingSplits(searchRange, thisSplits),
+          RangeSplit.getIntersectingSplits(searchRange, thatSplits)
+        )
+        mergeSplits(
+          toleranceFn,
+          end,
+          thisSplits,
+          thatSplits,
+          begins,
+          mergedJoin +: mergedSplits
+        )
+      case None => mergedSplits
+    }
 
   /**
    * Similar to [[leftJoinSplits]], but takes window function instead
@@ -89,7 +104,12 @@ protected[flint] object RangeMergeJoin {
     require(RangeSplit.isSortedByRange(rightSplits))
 
     leftSplits.map { left =>
-      (left, RangeSplit.getIntersectingSplits(left.range.expand(windowFn), rightSplits).map(_.partition))
+      (
+        left,
+        RangeSplit
+        .getIntersectingSplits(left.range.expand(windowFn), rightSplits)
+        .map(_.partition)
+      )
     }
   }
 
@@ -110,10 +130,19 @@ protected[flint] object RangeMergeJoin {
 
     leftSplits.map { left =>
       val toleranceBegin = toleranceFn(left.range.begin)
-      require(ord.gteq(left.range.begin, toleranceBegin), s"It should be a look-back tolerance. ${left.range.begin}, ${toleranceBegin}")
-      (left, RangeSplit.getIntersectingSplits(
-        CloseOpen(toleranceBegin, left.range.end), rightSplits
-      ).map(_.partition))
+      require(
+        ord.gteq(left.range.begin, toleranceBegin),
+        s"It should be a look-back tolerance. ${left.range.begin}, ${toleranceBegin}"
+      )
+      (
+        left,
+        RangeSplit
+        .getIntersectingSplits(
+          CloseOpen(toleranceBegin, left.range.end),
+          rightSplits
+        )
+        .map(_.partition)
+      )
     }
   }
 
@@ -132,10 +161,16 @@ protected[flint] object RangeMergeJoin {
           require(ord.lteq(e, te), "It should be a look-forward tolerance.")
         }
       }
-      (left, RangeSplit.getIntersectingSplits(
-        // This excludes the end as it is close-open range.
-        CloseOpen(left.range.begin, toleranceEnd), rightSplits
-      ).map(_.partition))
+      (
+        left,
+        RangeSplit
+        .getIntersectingSplits(
+          // This excludes the end as it is close-open range.
+          CloseOpen(left.range.begin, toleranceEnd),
+          rightSplits
+        )
+        .map(_.partition)
+      )
     }
   }
 }

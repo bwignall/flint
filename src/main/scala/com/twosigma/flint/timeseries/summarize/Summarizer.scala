@@ -19,9 +19,17 @@ package com.twosigma.flint.timeseries.summarize
 import com.google.common.base.Preconditions
 
 import scala.reflect.runtime.universe.{ TypeTag, typeTag }
-import com.twosigma.flint.rdd.function.summarize.summarizer.overlappable.{ OverlappableSummarizer => OOverlappableSummarizer }
-import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.{ LeftSubtractableOverlappableSummarizer => OLeftSubtractableOverlappableSummarizer, LeftSubtractableSummarizer => OLeftSubtractableSummarizer }
-import com.twosigma.flint.rdd.function.summarize.summarizer.{ FlippableSummarizer => OFlippableSummarizer, Summarizer => OSummarizer }
+import com.twosigma.flint.rdd.function.summarize.summarizer.overlappable.{
+  OverlappableSummarizer => OOverlappableSummarizer
+}
+import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.{
+  LeftSubtractableOverlappableSummarizer => OLeftSubtractableOverlappableSummarizer,
+  LeftSubtractableSummarizer => OLeftSubtractableSummarizer
+}
+import com.twosigma.flint.rdd.function.summarize.summarizer.{
+  FlippableSummarizer => OFlippableSummarizer,
+  Summarizer => OSummarizer
+}
 import com.twosigma.flint.timeseries.TimeSeriesRDD
 import com.twosigma.flint.timeseries.row.Schema
 import com.twosigma.flint.timeseries.summarize.summarizer.PredicateSummarizerFactory
@@ -34,6 +42,7 @@ import org.apache.spark.sql.types.{ LongType, StructType, TimestampType }
 import scala.util.Try
 
 trait InputOutputSchema {
+
   /**
    * The schema of input rows.
    */
@@ -58,12 +67,12 @@ trait InputOutputSchema {
   /**
    * The schema of output rows.
    */
-  final def outputSchema: StructType = prefixOpt.fold(schema) {
-    prefix =>
-      Schema.of(schema.map {
-        field => s"${prefix}_${field.name}" -> field.dataType
+  final def outputSchema: StructType =
+    prefixOpt.fold(schema) { prefix =>
+      Schema.of(schema.map { field =>
+        s"${prefix}_${field.name}" -> field.dataType
       }: _*)
-  }
+    }
 }
 
 // The purpose of using factory pattern here is to assemble the schema(s) of rows in runtime. When a user wants to
@@ -107,9 +116,12 @@ trait SummarizerFactory {
    * @param columns A list of columns that will be used as input values for the predicate.
    * @return a new [[SummarizerFactory]] that will be applied only to filtered rows.
    */
-  def where[A1: TypeTag](f: (A1) => Boolean)(columns: String*): SummarizerFactory = {
+  def where[A1: TypeTag](
+    f: (A1) => Boolean
+  )(columns: String*): SummarizerFactory = {
     require(columns.size == 1)
-    val inputTypes = Try(ScalaReflection.schemaFor(typeTag[A1]).dataType :: Nil).getOrElse(Nil)
+    val inputTypes =
+      Try(ScalaReflection.schemaFor(typeTag[A1]).dataType :: Nil).getOrElse(Nil)
     new PredicateSummarizerFactory(this, f, columns.zip(inputTypes))
   }
 
@@ -117,8 +129,10 @@ trait SummarizerFactory {
     f: (A1, A2) => Boolean
   )(columns: String*): SummarizerFactory = {
     require(columns.size == 2)
-    val inputTypes = Try(ScalaReflection.schemaFor(typeTag[A1]).dataType
-      :: ScalaReflection.schemaFor(typeTag[A2]).dataType :: Nil).getOrElse(Nil)
+    val inputTypes = Try(
+      ScalaReflection.schemaFor(typeTag[A1]).dataType
+        :: ScalaReflection.schemaFor(typeTag[A2]).dataType :: Nil
+    ).getOrElse(Nil)
     new PredicateSummarizerFactory(this, f, columns.zip(inputTypes))
   }
 
@@ -126,9 +140,11 @@ trait SummarizerFactory {
     f: (A1, A2, A3) => Boolean
   )(columns: String*): SummarizerFactory = {
     require(columns.size == 3)
-    val inputTypes = Try(ScalaReflection.schemaFor(typeTag[A1]).dataType
-      :: ScalaReflection.schemaFor(typeTag[A2]).dataType
-      :: ScalaReflection.schemaFor(typeTag[A3]).dataType :: Nil).getOrElse(Nil)
+    val inputTypes = Try(
+      ScalaReflection.schemaFor(typeTag[A1]).dataType
+        :: ScalaReflection.schemaFor(typeTag[A2]).dataType
+        :: ScalaReflection.schemaFor(typeTag[A3]).dataType :: Nil
+    ).getOrElse(Nil)
     new PredicateSummarizerFactory(this, f, columns.zip(inputTypes))
   }
 
@@ -136,10 +152,12 @@ trait SummarizerFactory {
     f: (A1, A2, A3, A4) => Boolean
   )(columns: String*): SummarizerFactory = {
     require(columns.size == 4)
-    val inputTypes = Try(ScalaReflection.schemaFor(typeTag[A1]).dataType
-      :: ScalaReflection.schemaFor(typeTag[A2]).dataType
-      :: ScalaReflection.schemaFor(typeTag[A3]).dataType
-      :: ScalaReflection.schemaFor(typeTag[A4]).dataType :: Nil).getOrElse(Nil)
+    val inputTypes = Try(
+      ScalaReflection.schemaFor(typeTag[A1]).dataType
+        :: ScalaReflection.schemaFor(typeTag[A2]).dataType
+        :: ScalaReflection.schemaFor(typeTag[A3]).dataType
+        :: ScalaReflection.schemaFor(typeTag[A4]).dataType :: Nil
+    ).getOrElse(Nil)
     new PredicateSummarizerFactory(this, f, columns.zip(inputTypes))
   }
 }
@@ -170,7 +188,8 @@ trait FilterNullInput extends InputOutputSchema with InputValidation {
   final lazy val requiredInputIndices: Array[Int] = requiredColumns match {
     // If ColumnList.All, it means we are adding the entire row, so we don't want to do any null filtering.
     case ColumnList.All => Array.empty
-    case ColumnList.Sequence(columns) => columns.map(inputSchema.fieldIndex).toArray
+    case ColumnList.Sequence(columns) =>
+      columns.map(inputSchema.fieldIndex).toArray
   }
 
   @inline
@@ -192,7 +211,10 @@ trait InputAlwaysValid extends InputValidation {
   def isValid(r: InternalRow): Boolean = true
 }
 
-trait Summarizer extends OSummarizer[InternalRow, Any, InternalRow] with InputValidation with InputOutputSchema {
+trait Summarizer
+  extends OSummarizer[InternalRow, Any, InternalRow]
+  with InputValidation
+  with InputOutputSchema {
   // The type of each row expected to
   type T
 
@@ -214,11 +236,14 @@ trait Summarizer extends OSummarizer[InternalRow, Any, InternalRow] with InputVa
 
   final override def zero(): Any = summarizer.zero()
 
-  final override def add(u: Any, r: InternalRow): Any = if (isValid(r)) summarizer.add(toU(u), toT(r)) else u
+  final override def add(u: Any, r: InternalRow): Any =
+    if (isValid(r)) summarizer.add(toU(u), toT(r)) else u
 
-  final override def merge(u1: Any, u2: Any): Any = summarizer.merge(toU(u1), toU(u2))
+  final override def merge(u1: Any, u2: Any): Any =
+    summarizer.merge(toU(u1), toU(u2))
 
-  final override def render(u: Any): InternalRow = fromV(summarizer.render(toU(u)))
+  final override def render(u: Any): InternalRow =
+    fromV(summarizer.render(toU(u)))
 
   final override def close(u: Any): Unit = summarizer.close(toU(u))
 }
@@ -235,16 +260,21 @@ trait TimeAwareSummarizer extends Summarizer {
     val timeField = inputSchema.head
     require(timeField.name == TimeSeriesRDD.timeColumnName)
     val timeType = TimeType(timeField.dataType)
-    (r: InternalRow, columnIndex: Int) => timeType.internalToNanos(r.getLong(columnIndex))
+    (r: InternalRow, columnIndex: Int) =>
+      timeType.internalToNanos(r.getLong(columnIndex))
   }
 }
 
-trait FlippableSummarizer extends Summarizer with OFlippableSummarizer[InternalRow, Any, InternalRow] {
+trait FlippableSummarizer
+  extends Summarizer
+  with OFlippableSummarizer[InternalRow, Any, InternalRow] {
 
   override val summarizer: OFlippableSummarizer[T, U, V]
 }
 
-trait LeftSubtractableSummarizer extends Summarizer with OLeftSubtractableSummarizer[InternalRow, Any, InternalRow] {
+trait LeftSubtractableSummarizer
+  extends Summarizer
+  with OLeftSubtractableSummarizer[InternalRow, Any, InternalRow] {
 
   override val summarizer: OLeftSubtractableSummarizer[T, U, V]
 
@@ -258,7 +288,8 @@ trait OverlappableSummarizerFactory extends SummarizerFactory {
   val window: TimeWindow
 }
 
-trait OverlappableSummarizer extends Summarizer
+trait OverlappableSummarizer
+  extends Summarizer
   with OOverlappableSummarizer[InternalRow, Any, InternalRow]
   with InputOutputSchema {
   type T
@@ -267,10 +298,12 @@ trait OverlappableSummarizer extends Summarizer
   val summarizer: OOverlappableSummarizer[T, U, V]
 
   final override def addOverlapped(u: Any, r: (InternalRow, Boolean)): Any =
-    if (isValid(r._1)) summarizer.addOverlapped(toU(u), (toT(r._1), r._2)) else u
+    if (isValid(r._1)) summarizer.addOverlapped(toU(u), (toT(r._1), r._2))
+    else u
 }
 
-trait LeftSubtractableOverlappableSummarizer extends OverlappableSummarizer
+trait LeftSubtractableOverlappableSummarizer
+  extends OverlappableSummarizer
   with OLeftSubtractableOverlappableSummarizer[InternalRow, Any, InternalRow]
   with InputOutputSchema {
   type T
@@ -278,12 +311,19 @@ trait LeftSubtractableOverlappableSummarizer extends OverlappableSummarizer
   type V
   val summarizer: OLeftSubtractableOverlappableSummarizer[T, U, V]
 
-  final override def subtractOverlapped(u: Any, r: (InternalRow, Boolean)): Any =
-    if (isValid(r._1)) summarizer.subtractOverlapped(toU(u), (toT(r._1), r._2)) else u
+  final override def subtractOverlapped(
+    u: Any,
+    r: (InternalRow, Boolean)
+  ): Any =
+    if (isValid(r._1)) summarizer.subtractOverlapped(toU(u), (toT(r._1), r._2))
+    else u
 }
 
-trait LeftSubtractableOverlappableSummarizerFactory extends OverlappableSummarizerFactory {
-  override def apply(inputSchema: StructType): LeftSubtractableOverlappableSummarizer
+trait LeftSubtractableOverlappableSummarizerFactory
+  extends OverlappableSummarizerFactory {
+  override def apply(
+    inputSchema: StructType
+  ): LeftSubtractableOverlappableSummarizer
 
   val window: TimeWindow
 }

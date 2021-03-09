@@ -28,6 +28,7 @@ package com.twosigma.flint.rdd.function.window.summarizer
  *
  */
 trait WindowBatchSummarizer[K, SK, V, U, V2] extends Serializable {
+
   /**
    * Returns an empty state.
    */

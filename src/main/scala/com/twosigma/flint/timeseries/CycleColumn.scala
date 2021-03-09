@@ -90,11 +90,16 @@ object CycleColumn extends CycleColumnImplicits {
    *
    * @param f any values referenced in the closure `f` must be serializable.
    */
-  def apply(columnName: String, dt: DataType, f: Seq[Row] => Seq[Any]): CycleColumn = new CycleColumn {
-    val name: String = columnName
-    val dataType: DataType = dt
-    def applyCycle(input: Seq[Row]): Seq[Any] = f(input)
-  }
+  def apply(
+    columnName: String,
+    dt: DataType,
+    f: Seq[Row] => Seq[Any]
+  ): CycleColumn =
+    new CycleColumn {
+      val name: String = columnName
+      val dataType: DataType = dt
+      def applyCycle(input: Seq[Row]): Seq[Any] = f(input)
+    }
 
   /**
    * Factory method for creating a predefined [[UnnamedCycleColumn]].
@@ -104,16 +109,17 @@ object CycleColumn extends CycleColumnImplicits {
    *
    * @param f any values referenced in the closure `f` must be serializable.
    */
-  def unnamed(dt: DataType, f: Seq[Row] => Seq[Any]): UnnamedCycleColumn = { name: String =>
-    apply(name, dt, f)
+  def unnamed(dt: DataType, f: Seq[Row] => Seq[Any]): UnnamedCycleColumn = {
+    name: String =>
+      apply(name, dt, f)
   }
 
   /**
    * Converts a cycle function that returns a `Map[Row, _]` to one that returns `Seq[Any]`.
    */
-  def mapFormToSeqForm(f: Seq[Row] => Map[Row, _]): Seq[Row] => Seq[Any] = { input: Seq[Row] =>
-    val rowValueMap: Map[Row, _] = f(input)
-    input.map(row => rowValueMap.getOrElse(row, null))
+  def mapFormToSeqForm(f: Seq[Row] => Map[Row, _]): Seq[Row] => Seq[Any] = {
+    input: Seq[Row] =>
+      val rowValueMap: Map[Row, _] = f(input)
+      input.map(row => rowValueMap.getOrElse(row, null))
   }
 }
-

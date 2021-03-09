@@ -39,11 +39,13 @@ protected[flint] class OrderedIterator[T, K: Ordering: ClassTag](
    * @return an [[OrderedIterator]] preserving the ordering.
    */
   def filterByRange(range: Range[K]): OrderedIterator[T, K] = {
-    val filtered = iterator.dropWhile {
-      t => !range.contains(key(t))
-    }.takeWhile {
-      t => range.contains(key(t))
-    }
+    val filtered = iterator
+      .dropWhile { t =>
+        !range.contains(key(t))
+      }
+      .takeWhile { t =>
+        range.contains(key(t))
+      }
     new OrderedIterator(filtered, key)
   }
 }
@@ -54,9 +56,14 @@ protected[flint] class OrderedKeyValueIterator[K: Ordering: ClassTag, V](
 
 protected[flint] object OrderedIterator {
 
-  def apply[K: Ordering: ClassTag, V](iterator: Iterator[(K, V)]): OrderedKeyValueIterator[K, V] =
+  def apply[K: Ordering: ClassTag, V](
+    iterator: Iterator[(K, V)]
+  ): OrderedKeyValueIterator[K, V] =
     new OrderedKeyValueIterator(iterator)
 
-  def apply[T, K: Ordering: ClassTag](iterator: Iterator[T], key: (T) => K): OrderedIterator[T, K] =
+  def apply[T, K: Ordering: ClassTag](
+    iterator: Iterator[T],
+    key: (T) => K
+  ): OrderedIterator[T, K] =
     new OrderedIterator(iterator, key)
 }

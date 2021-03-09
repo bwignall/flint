@@ -84,7 +84,10 @@ abstract class Clock(
    * This implies that if offset = 0 then the firstTick = begin.
    */
   val firstTick: Long = {
-    require(end >= begin, s"end $end should be larger or equal to begin $begin.")
+    require(
+      end >= begin,
+      s"end $end should be larger or equal to begin $begin."
+    )
     require(frequency > 0, s"frequency $frequency should be larger that 0.")
     val first = begin + offset % frequency
     require(first < end, s"The first tick $first is larger than the end $end.")
@@ -96,13 +99,14 @@ abstract class Clock(
    *
    * @return a sequence of ticks.
    */
-  protected[flint] def asStream(): Stream[Long] = Clock(
-    begin = firstTick,
-    end = end,
-    frequency = frequency,
-    nextTick,
-    endInclusive
-  )
+  protected[flint] def asStream(): Stream[Long] =
+    Clock(
+      begin = firstTick,
+      end = end,
+      frequency = frequency,
+      nextTick,
+      endInclusive
+    )
 
   /**
    * Generate a sequence of ticks as an [[OrderedRDD]] whose key and value for each row are the same.
@@ -112,10 +116,13 @@ abstract class Clock(
    *                  has at least one tick.
    * @return a sequence of ticks as an [[OrderedRDD]].
    */
-  protected[flint] def asOrderedRDD(numSlices: Int = sc.defaultParallelism): OrderedRDD[Long, Long] = {
+  protected[flint] def asOrderedRDD(
+    numSlices: Int = sc.defaultParallelism
+  ): OrderedRDD[Long, Long] = {
     // Make sure the number of ticks per slice is always larger than one.
     val ticksPerSlice = (end - firstTick) / frequency / numSlices + 1L
-    val begins = for (b <- firstTick to end by (ticksPerSlice * frequency)) yield b
+    val begins =
+      for (b <- firstTick to end by (ticksPerSlice * frequency)) yield b
     val rdd = sc.parallelize(begins, begins.length).mapPartitionsWithIndex {
       case (index, _) =>
         val b = begins(index)
@@ -123,11 +130,12 @@ abstract class Clock(
         Clock(b, e, frequency, nextTick, endInclusive).toIterator
     }
     val splits = begins.zipWithIndex.map {
-      case (b, index) => if (index < begins.length - 1) {
-        CloseOpen(b, Some(begins(index + 1)))
-      } else {
-        CloseOpen(b, None)
-      }
+      case (b, index) =>
+        if (index < begins.length - 1) {
+          CloseOpen(b, Some(begins(index + 1)))
+        } else {
+          CloseOpen(b, None)
+        }
     }
     OrderedRDD.fromRDD(rdd.map { t => (t, t) }, splits)
   }
@@ -140,12 +148,17 @@ abstract class Clock(
    *                  has at least one tick.
    * @return a sequence of ticks as a [[TimeSeriesRDD]].
    */
-  protected[flint] def asTimeSeriesRDD(numSlices: Int = sc.defaultParallelism): TimeSeriesRDD = {
+  protected[flint] def asTimeSeriesRDD(
+    numSlices: Int = sc.defaultParallelism
+  ): TimeSeriesRDD = {
     val rdd = asOrderedRDD(numSlices)
     val rowRdd = rdd.map(kv => InternalRow(kv._2))
     val ranges = rdd.rangeSplits.map(_.range)
     val schema = Schema()
-    val df = TimeSeriesRDD.canonizeTime(DFConverter.toDataFrame(rowRdd, schema), TimeUnit.NANOSECONDS)
+    val df = TimeSeriesRDD.canonizeTime(
+      DFConverter.toDataFrame(rowRdd, schema),
+      TimeUnit.NANOSECONDS
+    )
     TimeSeriesRDD.fromDFWithRanges(df, ranges)
   }
 }
@@ -171,14 +184,15 @@ class UniformClock(
     offset: String,
     timeZone: String,
     endInclusive: Boolean
-  ) = this(
-    sc,
-    TimeFormat.parseNano(beginDateTime, DateTimeZone.forID(timeZone)),
-    TimeFormat.parseNano(endDateTime, DateTimeZone.forID(timeZone)),
-    Duration(frequency).toNanos,
-    Duration(offset).toNanos,
-    endInclusive
-  )
+  ) =
+    this(
+      sc,
+      TimeFormat.parseNano(beginDateTime, DateTimeZone.forID(timeZone)),
+      TimeFormat.parseNano(endDateTime, DateTimeZone.forID(timeZone)),
+      Duration(frequency).toNanos,
+      Duration(offset).toNanos,
+      endInclusive
+    )
 }
 
 /**
@@ -212,13 +226,14 @@ class RandomClock(
     timeZone: String,
     seed: Long,
     endInclusive: Boolean
-  ) = this(
-    sc,
-    TimeFormat.parseNano(beginDateTime, DateTimeZone.forID(timeZone)),
-    TimeFormat.parseNano(endDateTime, DateTimeZone.forID(timeZone)),
-    Duration(frequency).toNanos,
-    Duration(offset).toNanos,
-    endInclusive,
-    seed
-  )
+  ) =
+    this(
+      sc,
+      TimeFormat.parseNano(beginDateTime, DateTimeZone.forID(timeZone)),
+      TimeFormat.parseNano(endDateTime, DateTimeZone.forID(timeZone)),
+      Duration(frequency).toNanos,
+      Duration(offset).toNanos,
+      endInclusive,
+      seed
+    )
 }

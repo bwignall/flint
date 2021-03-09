@@ -19,8 +19,7 @@ package com.twosigma.flint.rdd.function.summarize.summarizer
 case class CompositeSummarizer[T1, U1, V1, T2, U2, V2](
   summarizer1: Summarizer[T1, U1, V1],
   summarizer2: Summarizer[T2, U2, V2]
-)
-  extends Summarizer[(T1, T2), (U1, U2), (V1, V2)] {
+) extends Summarizer[(T1, T2), (U1, U2), (V1, V2)] {
 
   override def zero(): (U1, U2) = (summarizer1.zero(), summarizer2.zero())
 

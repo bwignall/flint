@@ -37,18 +37,22 @@ protected[flint] object OverlappedOrderedRDD {
    * @return an [[OverlappedOrderedRDD]].
    */
   def apply[K: ClassTag, V: ClassTag](
-    rdd: OrderedRDD[K, V], window: K => (K, K)
+    rdd: OrderedRDD[K, V],
+    window: K => (K, K)
   )(implicit ord: Ordering[K]): OverlappedOrderedRDD[K, V] = {
     // TODO: should use an O(n) algorithm to find the dependencies instead.
-    val windowDependencies = TreeMap(rdd.rangeSplits.map {
-      split =>
-        // Note that the split.range is an open-close range.
-        val expandedRange = split.range.expand(window)
-        (split.partition.index, rdd.rangeSplits.filter(_.range.intersects(expandedRange)))
+    val windowDependencies = TreeMap(rdd.rangeSplits.map { split =>
+      // Note that the split.range is an open-close range.
+      val expandedRange = split.range.expand(window)
+      (
+        split.partition.index,
+        rdd.rangeSplits.filter(_.range.intersects(expandedRange))
+      )
     }: _*)
 
     val dependency = new NarrowDependency(rdd) {
-      override def getParents(partitionId: Int) = windowDependencies(partitionId).map(_.partition.index)
+      override def getParents(partitionId: Int) =
+        windowDependencies(partitionId).map(_.partition.index)
     }
 
     val expandedRanges = rdd.rangeSplits.map(_.range.expand(window))
@@ -58,7 +62,8 @@ protected[flint] object OverlappedOrderedRDD {
         val parents = windowDependencies(part.index).map(_.partition)
         // Only return rows within the expanded partition by window.
         val expandedRange = expandedRanges(part.index)
-        OrderedIterator(PartitionsIterator(rdd, parents, context)).filterByRange(expandedRange)
+        OrderedIterator(PartitionsIterator(rdd, parents, context))
+          .filterByRange(expandedRange)
       }
     )
   }
@@ -79,15 +84,25 @@ protected[flint] object OverlappedOrderedRDD {
    *   result range is [0, 150) [100, 250) [200, 350)
    */
   def apply[K: ClassTag, V: ClassTag](
-    left: OrderedRDD[K, V], right: OrderedRDD[K, V], window: K => (K, K)
+    left: OrderedRDD[K, V],
+    right: OrderedRDD[K, V],
+    window: K => (K, K)
   )(implicit ord: Ordering[K]): OverlappedOrderedRDD[K, V] = {
-    val leftIndexToRightParts = TreeMap(RangeMergeJoin.windowJoinSplits(
-      window, left.rangeSplits, right.rangeSplits
-    ).map {
-      case (leftRangeSplit, rightPartitions) => (leftRangeSplit.partition.index, rightPartitions)
-    }: _*)
+    val leftIndexToRightParts = TreeMap(
+      RangeMergeJoin
+        .windowJoinSplits(
+          window,
+          left.rangeSplits,
+          right.rangeSplits
+        )
+        .map {
+          case (leftRangeSplit, rightPartitions) =>
+            (leftRangeSplit.partition.index, rightPartitions)
+        }: _*
+    )
     val deps = new NarrowDependency(right) {
-      override def getParents(partitionId: Int) = leftIndexToRightParts(partitionId).map(_.index)
+      override def getParents(partitionId: Int) =
+        leftIndexToRightParts(partitionId).map(_.index)
     }
 
     val expandedRanges = left.rangeSplits.map(_.range.expand(window))
@@ -114,8 +129,7 @@ protected[flint] class OverlappedOrderedRDD[K: ClassTag, V: ClassTag](
   @transient val sc: SparkContext,
   private val splits: Seq[RangeSplit[K]],
   private val deps: Seq[Dependency[_]] = Nil
-)(create: (Partition, TaskContext) => Iterator[(K, V)])(implicit ord: Ordering[K])
-  extends RDD[(K, V)](sc, deps) {
+)(create: (Partition, TaskContext) => Iterator[(K, V)])(implicit ord: Ordering[K]) extends RDD[(K, V)](sc, deps) {
 
   val self = this
 
@@ -128,21 +142,31 @@ protected[flint] class OverlappedOrderedRDD[K: ClassTag, V: ClassTag](
   /**
    * Remove the overlapped rows and convert it back to an [[OrderedRDD]].
    */
-  def nonOverlapped(): OrderedRDD[K, V] = new OrderedRDD[K, V](sc, splits, Seq(new OneToOneDependency(self)))(
-    (p, tc) => OrderedIterator(iterator(p, tc)).filterByRange(splits(p.index).range)
-  )
+  def nonOverlapped(): OrderedRDD[K, V] =
+    new OrderedRDD[K, V](sc, splits, Seq(new OneToOneDependency(self)))(
+      (p, tc) =>
+        OrderedIterator(iterator(p, tc)).filterByRange(splits(p.index).range)
+    )
 
   @DeveloperApi
-  override def compute(split: Partition, context: TaskContext): Iterator[(K, V)] = create(split, context)
+  override def compute(
+    split: Partition,
+    context: TaskContext
+  ): Iterator[(K, V)] = create(split, context)
 
-  override protected def getPartitions: Array[Partition] = rangeSplits.map(_.partition)
+  override protected def getPartitions: Array[Partition] =
+    rangeSplits.map(_.partition)
 
   @DeveloperApi
   def mapPartitionsWithIndexOverlapped[V2: ClassTag](
     f: (Int, Iterator[(K, V)]) => Iterator[(K, V2)]
-  ): OverlappedOrderedRDD[K, V2] = new OverlappedOrderedRDD(sc, rangeSplits, Seq(new OneToOneDependency(self)))(
-    (partition, taskContext) => f(partition.index, self.iterator(partition, taskContext))
-  )
+  ): OverlappedOrderedRDD[K, V2] =
+    new OverlappedOrderedRDD(
+      sc,
+      rangeSplits,
+      Seq(new OneToOneDependency(self))
+    )((partition, taskContext) =>
+      f(partition.index, self.iterator(partition, taskContext)))
 
   /**
    * Associate each row a flag to indicator whether it is overlapped. This transforms elements from (K, V) to
@@ -151,12 +175,14 @@ protected[flint] class OverlappedOrderedRDD[K: ClassTag, V: ClassTag](
    */
   @DeveloperApi
   def zipOverlapped(): OverlappedOrderedRDD[K, (V, Boolean)] =
-    new OverlappedOrderedRDD(sc, rangeSplits, Seq(new OneToOneDependency(self)))(
-      (partition, taskContext) => {
-        val range = rangeSplits(partition.index).range
-        self.iterator(partition, taskContext).map {
-          case (k, v) => (k, (v, !range.contains(k)))
-        }
+    new OverlappedOrderedRDD(
+      sc,
+      rangeSplits,
+      Seq(new OneToOneDependency(self))
+    )((partition, taskContext) => {
+      val range = rangeSplits(partition.index).range
+      self.iterator(partition, taskContext).map {
+        case (k, v) => (k, (v, !range.contains(k)))
       }
-    )
+    })
 }

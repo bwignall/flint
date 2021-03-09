@@ -16,7 +16,11 @@
 
 package com.twosigma.flint.timeseries.summarize.summarizer
 
-import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.{ CorrelationOutput, CorrelationState, CorrelationSummarizer => CorrelationSum }
+import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.{
+  CorrelationOutput,
+  CorrelationState,
+  CorrelationSummarizer => CorrelationSum
+}
 import com.twosigma.flint.timeseries.row.Schema
 import com.twosigma.flint.timeseries.summarize.ColumnList.Sequence
 import com.twosigma.flint.timeseries.summarize._
@@ -33,25 +37,33 @@ abstract class AbstractCorrelationSummarizer(
   override val inputSchema: StructType,
   override val prefixOpt: Option[String],
   override val requiredColumns: ColumnList
-) extends LeftSubtractableSummarizer with FilterNullInput {
+) extends LeftSubtractableSummarizer
+  with FilterNullInput {
   protected final val Sequence(Seq(columnX, columnY)) = requiredColumns
   protected final val columnXIndex = inputSchema.fieldIndex(columnX)
   protected final val columnYIndex = inputSchema.fieldIndex(columnY)
-  protected final val xExtractor = asDoubleExtractor(inputSchema(columnXIndex).dataType, columnXIndex)
-  protected final val yExtractor = asDoubleExtractor(inputSchema(columnYIndex).dataType, columnYIndex)
+  protected final val xExtractor =
+    asDoubleExtractor(inputSchema(columnXIndex).dataType, columnXIndex)
+  protected final val yExtractor =
+    asDoubleExtractor(inputSchema(columnYIndex).dataType, columnYIndex)
   protected val columnPrefix = s"${columnX}_${columnY}"
   override final type T = (Double, Double)
   override final type U = CorrelationState
   override final type V = CorrelationOutput
   override final val summarizer = CorrelationSum()
-  override final def toT(r: InternalRow): (Double, Double) = (xExtractor(r), yExtractor(r))
+  override final def toT(r: InternalRow): (Double, Double) =
+    (xExtractor(r), yExtractor(r))
 }
 
 class CorrelationSummarizer(
   override val inputSchema: StructType,
   override val prefixOpt: Option[String],
   override val requiredColumns: ColumnList
-) extends AbstractCorrelationSummarizer(inputSchema, prefixOpt, requiredColumns) {
+) extends AbstractCorrelationSummarizer(
+  inputSchema,
+  prefixOpt,
+  requiredColumns
+) {
   override val schema = Schema.of(
     s"${columnPrefix}_correlation" -> DoubleType,
     s"${columnPrefix}_correlationTStat" -> DoubleType

@@ -30,7 +30,9 @@ object Hadoop {
     sc: SparkContext,
     file: String,
     ifConf: InputFormatConf[K1, V1] // TODO consider just straight up making this (K, K) as we CAN get it, it's just a pain.
-  )(parseKey: (ifConf.KExtract#Extracted, ifConf.VExtract#Extracted) => K): Map[Int, (Range[K], WriSer[ifConf.Split])] = {
+  )(
+    parseKey: (ifConf.KExtract#Extracted, ifConf.VExtract#Extracted) => K
+  ): Map[Int, (Range[K], WriSer[ifConf.Split])] = {
     val splits = ifConf.makeSplits(new Configuration())
     logger.info(s"Total number of splits: ${splits.size}")
     splits.foreach { s => logger.debug(s.get.toString) }
@@ -51,12 +53,14 @@ object Hadoop {
     parseKey: (ifConf.KExtract#Extracted, ifConf.VExtract#Extracted) => K,
     splits: Seq[WriSer[ifConf.Split]]
   ): Vector[(Int, K)] =
-    sc.parallelize(splits.zipWithIndex).map {
-      case (serSplit, num) =>
-        val (a, b) = readRecords(ifConf)(serSplit).next
-        val time = parseKey(a, b)
-        Vector((num, time))
-    }.reduce(_ ++ _)
+    sc.parallelize(splits.zipWithIndex)
+      .map {
+        case (serSplit, num) =>
+          val (a, b) = readRecords(ifConf)(serSplit).next
+          val time = parseKey(a, b)
+          Vector((num, time))
+      }
+      .reduce(_ ++ _)
 
   def readRecords[K, V](ifConf: InputFormatConf[K, V])(
     serSplit: WriSer[ifConf.Split]

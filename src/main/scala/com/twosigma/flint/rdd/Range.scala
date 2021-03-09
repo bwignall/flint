@@ -24,6 +24,7 @@ import scala.reflect.ClassTag
 //       or twitter.algebird.Interval.scala,
 //       or spire.math.Interval.scala instead.
 object Range {
+
   /**
    * @return a close-open range if begin is not equal to end or a close range if the begin equals
    *         to the end.
@@ -35,10 +36,13 @@ object Range {
    * @return a close-open range if the begin is not equal to the end or a close range if the
    *         begin equals to the end.
    */
-  def closeOpen[K](begin: K, end: Option[K])(implicit ord: Ordering[K]): Range[K] = end match {
-    case None => CloseOpen(begin, None)
-    case Some(e) => if (ord.equiv(begin, e)) CloseSingleton(begin) else CloseOpen(begin, end)
-  }
+  def closeOpen[K](begin: K, end: Option[K])(implicit ord: Ordering[K]): Range[K] =
+    end match {
+      case None => CloseOpen(begin, None)
+      case Some(e) =>
+        if (ord.equiv(begin, e)) CloseSingleton(begin)
+        else CloseOpen(begin, end)
+    }
 
   /**
    * @return a close-close range.
@@ -48,11 +52,12 @@ object Range {
   /**
    * @return a close-close range.
    */
-  def closeClose[K](begin: K, end: K)(implicit ord: Ordering[K]): Range[K] = if (ord.equiv(begin, end)) {
-    CloseSingleton(begin)
-  } else {
-    CloseClose(begin, Some(end))
-  }
+  def closeClose[K](begin: K, end: K)(implicit ord: Ordering[K]): Range[K] =
+    if (ord.equiv(begin, end)) {
+      CloseSingleton(begin)
+    } else {
+      CloseClose(begin, Some(end))
+    }
 
   /**
    * Test if a sequence of ranges are sorted.
@@ -115,37 +120,39 @@ object Range {
     items: IndexedSeq[U],
     range: U => Range[K],
     isSorted: Boolean
-  ): Seq[Int] = if (isSorted) {
-    val result: SearchResult = items.search(item)(Ordering.by[U, K](range(_).begin))
-    // Need to search both sides from the insertion point.
-    val left = mutable.ListBuffer[Int]()
-    val right = mutable.ListBuffer[Int]()
-    val r = range(item)
+  ): Seq[Int] =
+    if (isSorted) {
+      val result: SearchResult =
+        items.search(item)(Ordering.by[U, K](range(_).begin))
+      // Need to search both sides from the insertion point.
+      val left = mutable.ListBuffer[Int]()
+      val right = mutable.ListBuffer[Int]()
+      val r = range(item)
 
-    var i = result.insertionPoint - 1
-    while (i >= 0 && range(items(i)).intersects(r)) {
-      left += i
-      i = i - 1
-    }
-
-    i = result.insertionPoint
-    while (i < items.length && range(items(i)).intersects(range(item))) {
-      right += i
-      i = i + 1
-    }
-    left.reverse ++ right
-  } else {
-    val r = range(item)
-    val indices = mutable.ListBuffer[Int]()
-    var i = 0
-    while (i < items.length) {
-      if (range(items(i)).intersects(r)) {
-        indices += i
+      var i = result.insertionPoint - 1
+      while (i >= 0 && range(items(i)).intersects(r)) {
+        left += i
+        i = i - 1
       }
-      i = i + 1
+
+      i = result.insertionPoint
+      while (i < items.length && range(items(i)).intersects(range(item))) {
+        right += i
+        i = i + 1
+      }
+      left.reverse ++ right
+    } else {
+      val r = range(item)
+      val indices = mutable.ListBuffer[Int]()
+      var i = 0
+      while (i < items.length) {
+        if (range(items(i)).intersects(r)) {
+          indices += i
+        }
+        i = i + 1
+      }
+      indices
     }
-    indices
-  }
 }
 
 sealed trait Range[K] {
@@ -170,7 +177,10 @@ sealed trait Range[K] {
    *                 for more information.
    * @return a sequence of indices of ranges that intersect with this range. The order is preserved.
    */
-  def intersectsWith(ranges: IndexedSeq[Range[K]], isSorted: Boolean): Seq[Int] =
+  def intersectsWith(
+    ranges: IndexedSeq[Range[K]],
+    isSorted: Boolean
+  ): Seq[Int] =
     Range.intersect(this, ranges, { r: Range[K] => r }, isSorted)
 
   /**
@@ -196,9 +206,10 @@ sealed trait Range[K] {
   /**
    * @return true if and only if its end equals to the other in the ordering.
    */
-  def endEquals(other: Option[K]): Boolean = end.fold(other.isEmpty) {
-    e => other.fold(false)(ord.equiv(e, _))
-  }
+  def endEquals(other: Option[K]): Boolean =
+    end.fold(other.isEmpty) { e =>
+      other.fold(false)(ord.equiv(e, _))
+    }
 
   /**
    * @return true if and only if the end of other range is the same.
@@ -213,9 +224,10 @@ sealed trait Range[K] {
   /**
    * @return true if and only if the end is greater or equal to the `other` in the ordering.
    */
-  def endGteq(other: Option[K]): Boolean = end.fold(true) {
-    thisEnd => other.fold(false)(ord.gteq(thisEnd, _))
-  }
+  def endGteq(other: Option[K]): Boolean =
+    end.fold(true) { thisEnd =>
+      other.fold(false)(ord.gteq(thisEnd, _))
+    }
 
   /**
    * @return true if and only if the end is greater or equal to the end of the `other` range.
@@ -250,7 +262,8 @@ sealed trait Range[K] {
 /**
  * Represents a close-close range of [k, k].
  */
-case class CloseSingleton[K](begin: K)(implicit val ord: Ordering[K]) extends Range[K] {
+case class CloseSingleton[K](begin: K)(implicit val ord: Ordering[K])
+  extends Range[K] {
   def end: Some[K] = Some(begin)
   def intersects(other: Range[K]): Boolean = other.contains(begin)
   def contains(k: K): Boolean = ord.equiv(begin, k)
@@ -261,14 +274,21 @@ case class CloseSingleton[K](begin: K)(implicit val ord: Ordering[K]) extends Ra
 /**
  * Represents a close-close range of [begin, end] where begin is not equal to end.
  */
-case class CloseClose[K](begin: K, end: Some[K])(implicit val ord: Ordering[K]) extends Range[K] {
-  require(end.forall(ord.gt(_, begin)), s"end $end is not strictly greater than begin $begin")
+case class CloseClose[K](begin: K, end: Some[K])(implicit val ord: Ordering[K])
+  extends Range[K] {
+  require(
+    end.forall(ord.gt(_, begin)),
+    s"end $end is not strictly greater than begin $begin"
+  )
 
-  def intersects(other: Range[K]): Boolean = other match {
-    case CloseSingleton(k) => contains(k)
-    case CloseClose(b, e) => e.forall(ord.gteq(_, begin)) && end.forall(ord.gteq(_, b))
-    case CloseOpen(b, e) => e.forall(ord.gt(_, begin)) && end.forall(ord.gteq(_, b))
-  }
+  def intersects(other: Range[K]): Boolean =
+    other match {
+      case CloseSingleton(k) => contains(k)
+      case CloseClose(b, e) =>
+        e.forall(ord.gteq(_, begin)) && end.forall(ord.gteq(_, b))
+      case CloseOpen(b, e) =>
+        e.forall(ord.gt(_, begin)) && end.forall(ord.gteq(_, b))
+    }
 
   def contains(k: K): Boolean = ord.gteq(k, begin) && ord.gteq(end.get, k)
 
@@ -284,25 +304,29 @@ case class CloseClose[K](begin: K, end: Some[K])(implicit val ord: Ordering[K]) 
  * @param end   The end of the range. If it is None, it will be treated as the greatest possible
  *              value of type K.
  */
-case class CloseOpen[K](begin: K, end: Option[K])(
-  implicit
-  val ord: Ordering[K]
-) extends Range[K] {
-  require(end.forall(ord.gt(_, begin)), s"end $end is not strictly greater than begin $begin")
+case class CloseOpen[K](begin: K, end: Option[K])(implicit val ord: Ordering[K]) extends Range[K] {
+  require(
+    end.forall(ord.gt(_, begin)),
+    s"end $end is not strictly greater than begin $begin"
+  )
 
-  override def intersects(other: Range[K]): Boolean = other match {
-    case CloseOpen(b, e) => e.forall(ord.gt(_, begin)) && end.forall(ord.gt(_, b))
-    case CloseSingleton(k) => contains(k)
-    case CloseClose(b, e) => e.forall(ord.gteq(_, begin)) && end.forall(ord.gt(_, b))
-  }
+  override def intersects(other: Range[K]): Boolean =
+    other match {
+      case CloseOpen(b, e) =>
+        e.forall(ord.gt(_, begin)) && end.forall(ord.gt(_, b))
+      case CloseSingleton(k) => contains(k)
+      case CloseClose(b, e) =>
+        e.forall(ord.gteq(_, begin)) && end.forall(ord.gt(_, b))
+    }
 
-  override def contains(k: K): Boolean = ord.gteq(k, begin) && end.forall(ord.lt(k, _))
+  override def contains(k: K): Boolean =
+    ord.gteq(k, begin) && end.forall(ord.lt(k, _))
 
   override def ==(other: Range[K]): Boolean =
     other.isInstanceOf[CloseOpen[K]] && beginEquals(other) && endEquals(other)
 
   override def expand(f: K => (K, K)): CloseOpen[K] =
-    CloseOpen(f(begin)._1, end.map{ e => f(e)._2 })
+    CloseOpen(f(begin)._1, end.map { e => f(e)._2 })
 
   override def shift(f: K => K): CloseOpen[K] =
     CloseOpen(f(begin), end.map(f(_)))

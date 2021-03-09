@@ -63,17 +63,26 @@ case class InternalRowsSummarizer()
 
   override def zero(): ArrayDeque[InternalRow] = new ArrayDeque[InternalRow]()
 
-  override def add(u: ArrayDeque[InternalRow], t: InternalRow): ArrayDeque[InternalRow] = {
+  override def add(
+    u: ArrayDeque[InternalRow],
+    t: InternalRow
+  ): ArrayDeque[InternalRow] = {
     u.addLast(t)
     u
   }
 
-  override def subtract(u: ArrayDeque[InternalRow], t: InternalRow): ArrayDeque[InternalRow] = {
+  override def subtract(
+    u: ArrayDeque[InternalRow],
+    t: InternalRow
+  ): ArrayDeque[InternalRow] = {
     u.removeFirst()
     u
   }
 
-  override def merge(u1: ArrayDeque[InternalRow], u2: ArrayDeque[InternalRow]): ArrayDeque[InternalRow] = {
+  override def merge(
+    u1: ArrayDeque[InternalRow],
+    u2: ArrayDeque[InternalRow]
+  ): ArrayDeque[InternalRow] = {
     u1.addAll(u2)
     u1
   }

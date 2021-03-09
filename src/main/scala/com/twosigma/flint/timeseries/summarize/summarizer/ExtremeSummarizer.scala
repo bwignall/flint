@@ -43,7 +43,14 @@ case class ExtremeSummarizerFactory(column: String, extremeType: ExtremeType)
     if (extremeType == ExtremeSummarizerType.Min) {
       order = order.reverse
     }
-    ExtremeSummarizer(inputSchema, prefixOpt, requiredColumns, ctag, order, extremeType.toString)
+    ExtremeSummarizer(
+      inputSchema,
+      prefixOpt,
+      requiredColumns,
+      ctag,
+      order,
+      extremeType.toString
+    )
   }
 }
 
@@ -54,7 +61,8 @@ case class ExtremeSummarizer[E](
   tag: ClassTag[E],
   order: Ordering[_],
   outputColumnName: String
-) extends FlippableSummarizer with FilterNullInput {
+) extends FlippableSummarizer
+  with FilterNullInput {
   private val Sequence(Seq(column)) = requiredColumns
   private val columnIndex = inputSchema.fieldIndex(column)
 
@@ -62,10 +70,13 @@ case class ExtremeSummarizer[E](
   override type U = mutable.PriorityQueue[E]
   override type V = Array[E]
 
-  override val summarizer: ExtremesSummarizer[E] = ExtremesSummarizer[E](1, tag, order.asInstanceOf[Ordering[E]])
-  override val schema: StructType = Schema.of(s"${column}_$outputColumnName" -> inputSchema(column).dataType)
+  override val summarizer: ExtremesSummarizer[E] =
+    ExtremesSummarizer[E](1, tag, order.asInstanceOf[Ordering[E]])
+  override val schema: StructType =
+    Schema.of(s"${column}_$outputColumnName" -> inputSchema(column).dataType)
 
-  override def toT(r: InternalRow): T = r.get(columnIndex, inputSchema(columnIndex).dataType).asInstanceOf[E]
+  override def toT(r: InternalRow): T =
+    r.get(columnIndex, inputSchema(columnIndex).dataType).asInstanceOf[E]
 
   override def fromV(v: V): InternalRow = {
     if (v.isEmpty) {

@@ -34,7 +34,8 @@ trait LeftSubtractableSummarizer[V, U, V2] extends Summarizer[V, U, V2] {
   def subtract(u: U, v: V): U
 }
 
-trait LeftSubtractableOverlappableSummarizer[V, U, V2] extends OverlappableSummarizer[V, U, V2] {
+trait LeftSubtractableOverlappableSummarizer[V, U, V2]
+  extends OverlappableSummarizer[V, U, V2] {
   def addOverlapped(u: U, t: (V, Boolean)): U
   def subtractOverlapped(u: U, t: (V, Boolean)): U
 }

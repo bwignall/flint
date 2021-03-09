@@ -115,7 +115,10 @@ class PartitionPreservingOperationSpec extends FlintSuite with FlintTestData {
     orderedData.cache()
     orderedData.count()
     // first node is WholeStageCodegen
-    assert(executedPlan(orderedData).children.head.isInstanceOf[InMemoryTableScanExec])
+    assert(
+      executedPlan(orderedData).children.head
+      .isInstanceOf[InMemoryTableScanExec]
+    )
     assert(leafExecutedPlan(orderedData).isInstanceOf[InMemoryTableScanExec])
     orderedData.unpersist()
   }

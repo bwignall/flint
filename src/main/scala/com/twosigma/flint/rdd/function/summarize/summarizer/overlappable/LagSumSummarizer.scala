@@ -30,7 +30,10 @@ class LagSumSummarizer
     LagSumSummarizerState(u.lagSum, u.sum + t)
   }
 
-  def addOverlapped(u: LagSumSummarizerState, t: (Double, Boolean)): LagSumSummarizerState = {
+  def addOverlapped(
+    u: LagSumSummarizerState,
+    t: (Double, Boolean)
+  ): LagSumSummarizerState = {
     val (value, isOverlapped) = t
     if (isOverlapped) {
       LagSumSummarizerState(u.lagSum + value, u.sum)
@@ -39,7 +42,10 @@ class LagSumSummarizer
     }
   }
 
-  def merge(u1: LagSumSummarizerState, u2: LagSumSummarizerState): LagSumSummarizerState =
+  def merge(
+    u1: LagSumSummarizerState,
+    u2: LagSumSummarizerState
+  ): LagSumSummarizerState =
     LagSumSummarizerState(u1.lagSum + u2.lagSum, u1.sum + u2.sum)
 
   def render(u: LagSumSummarizerState): LagSumSummarizerState = u

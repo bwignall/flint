@@ -22,26 +22,36 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.GenericInternalRow
 import org.apache.spark.sql.types.StructType
 
-case class CompositeSummarizerFactory(factory1: SummarizerFactory, factory2: SummarizerFactory)
-  extends SummarizerFactory {
+case class CompositeSummarizerFactory(
+  factory1: SummarizerFactory,
+  factory2: SummarizerFactory
+) extends SummarizerFactory {
 
   Seq(factory1, factory2).foreach {
-    case factory => require(
-      !factory.isInstanceOf[OverlappableSummarizerFactory],
-      "Composition of overlappable summarizers are not supported"
-    )
+    case factory =>
+      require(
+        !factory.isInstanceOf[OverlappableSummarizerFactory],
+        "Composition of overlappable summarizers are not supported"
+      )
   }
 
   /**
    * This doesn't affect input validation because [[CompositeSummarizer]] extends [[InputAlwaysValid]]
    */
-  override val requiredColumns = factory1.requiredColumns ++ factory2.requiredColumns
+  override val requiredColumns =
+    factory1.requiredColumns ++ factory2.requiredColumns
 
   def apply(inputSchema: StructType): Summarizer = {
     val summarizer1 = factory1.apply(inputSchema)
     val summarizer2 = factory2.apply(inputSchema)
 
-    new CompositeSummarizer(inputSchema, prefixOpt, requiredColumns, summarizer1, summarizer2)
+    new CompositeSummarizer(
+      inputSchema,
+      prefixOpt,
+      requiredColumns,
+      summarizer1,
+      summarizer2
+    )
   }
 }
 
@@ -51,22 +61,29 @@ class CompositeSummarizer(
   override val requiredColumns: ColumnList,
   val summarizer1: Summarizer,
   val summarizer2: Summarizer
-) extends Summarizer with InputAlwaysValid {
+) extends Summarizer
+  with InputAlwaysValid {
 
   override type T = (InternalRow, InternalRow)
   override type U = (Any, Any)
   override type V = (InternalRow, InternalRow)
 
-  override val schema: StructType = StructType(summarizer1.outputSchema.fields ++ summarizer2.outputSchema.fields)
+  override val schema: StructType = StructType(
+    summarizer1.outputSchema.fields ++ summarizer2.outputSchema.fields
+  )
   override val summarizer =
-    com.twosigma.flint.rdd.function.summarize.summarizer.CompositeSummarizer(summarizer1, summarizer2)
+    com.twosigma.flint.rdd.function.summarize.summarizer
+      .CompositeSummarizer(summarizer1, summarizer2)
 
   requireNoDuplicateColumns(outputSchema)
 
   // Convert the output of `summarizer` to the InternalRow.
   override def fromV(v: V): InternalRow = {
     val (r1, r2) = v
-    new GenericInternalRow((r1.toSeq(summarizer1.outputSchema) ++ r2.toSeq(summarizer2.outputSchema)).toArray)
+    new GenericInternalRow(
+      (r1.toSeq(summarizer1.outputSchema) ++ r2
+      .toSeq(summarizer2.outputSchema)).toArray
+    )
   }
 
   // Convert the InternalRow to the type of row expected by the `summarizer`.

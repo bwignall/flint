@@ -92,29 +92,43 @@ class TimeSeriesGenerator(
 
   def generate(): TimeSeriesRDD = {
     val cycles = if (uniform) {
-      new UniformClock(sc, begin = begin, end = end, frequency = frequency, offset = 0L, endInclusive = true)
+      new UniformClock(
+        sc,
+        begin = begin,
+        end = end,
+        frequency = frequency,
+        offset = 0L,
+        endInclusive = true
+      )
     } else {
-      new RandomClock(sc, begin = begin, end = end, frequency = frequency, offset = 0L,
-        seed = seed, endInclusive = true)
+      new RandomClock(
+        sc,
+        begin = begin,
+        end = end,
+        frequency = frequency,
+        offset = 0L,
+        seed = seed,
+        endInclusive = true
+      )
     }
     val cycleSize = math.max(math.ceil(ids.size * ratioOfCycleSize), 1).toInt
 
-    val orderedRdd = cycles.asOrderedRDD(numSlices).mapPartitionsWithIndexOrdered {
-      case (partIndex, iter) =>
-        val rand = new Random(seed + partIndex)
-        def getCycle(time: Long): Seq[InternalRow] = {
-          val randIds = rand.shuffle(ids).take(cycleSize)
-          randIds.map {
-            id =>
+    val orderedRdd =
+      cycles.asOrderedRDD(numSlices).mapPartitionsWithIndexOrdered {
+        case (partIndex, iter) =>
+          val rand = new Random(seed + partIndex)
+          def getCycle(time: Long): Seq[InternalRow] = {
+            val randIds = rand.shuffle(ids).take(cycleSize)
+            randIds.map { id =>
               val values = columns.map {
                 case (_, fn) =>
                   fn(time, id, rand)
               }
               InternalRow.fromSeq(time +: id +: values)
+            }
           }
-        }
-        iter.map(_._2).flatMap{ case t => getCycle(t).map((t, _)) }
-    }
+          iter.map(_._2).flatMap { case t => getCycle(t).map((t, _)) }
+      }
 
     val df = DFConverter.toDataFrame(orderedRdd, schema)
     TimeSeriesRDD.fromDFWithRanges(df, orderedRdd.getPartitionRanges.toArray)

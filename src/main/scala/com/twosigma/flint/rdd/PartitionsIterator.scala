@@ -29,7 +29,13 @@ protected[flint] object PartitionsIterator {
     partitions: Seq[Partition],
     context: TaskContext,
     preservesPartitionsOrdering: Boolean = false // FIXME: This is a band-aid which should be fixed.
-  ): PartitionsIterator[T] = new PartitionsIterator(rdd, partitions, context, preservesPartitionsOrdering)
+  ): PartitionsIterator[T] =
+    new PartitionsIterator(
+      rdd,
+      partitions,
+      context,
+      preservesPartitionsOrdering
+    )
 }
 
 /**

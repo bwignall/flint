@@ -17,10 +17,12 @@
 package com.twosigma.flint.rdd
 
 protected[flint] object PeekableIterator {
-  def apply[T](iter: Iterator[T]): PeekableIterator[T] = new PeekableIterator(iter)
+  def apply[T](iter: Iterator[T]): PeekableIterator[T] =
+    new PeekableIterator(iter)
 }
 
-protected[flint] class PeekableIterator[T](iter: Iterator[T]) extends Iterator[T] {
+protected[flint] class PeekableIterator[T](iter: Iterator[T])
+  extends Iterator[T] {
   var peeked: Option[T] = None
 
   def peek: Option[T] = {

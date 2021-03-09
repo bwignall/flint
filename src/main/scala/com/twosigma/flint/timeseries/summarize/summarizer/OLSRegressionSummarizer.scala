@@ -16,7 +16,11 @@
 
 package com.twosigma.flint.timeseries.summarize.summarizer
 
-import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.{ OLSRegressionOutput, OLSRegressionState, OLSRegressionSummarizer => RegressionSummarizer }
+import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.{
+  OLSRegressionOutput,
+  OLSRegressionState,
+  OLSRegressionSummarizer => RegressionSummarizer
+}
 import com.twosigma.flint.rdd.function.summarize.summarizer.RegressionRow
 import com.twosigma.flint.timeseries.row.Schema
 import com.twosigma.flint.timeseries.summarize._
@@ -100,7 +104,8 @@ case class OLSRegressionSummarizer(
   shouldIntercept: Boolean,
   shouldIgnoreConstants: Boolean,
   constantErrorBound: Double
-) extends LeftSubtractableSummarizer with FilterNullInput {
+) extends LeftSubtractableSummarizer
+  with FilterNullInput {
 
   private val dimensionOfX = xColumns.length
   private val isWeighted = weightColumn != null
@@ -108,10 +113,13 @@ case class OLSRegressionSummarizer(
   private val xColumnIds = xColumns.map(inputSchema.fieldIndex)
   private val weightColumnId = weightColumn.map(inputSchema.fieldIndex)
 
-  private final val yExtractor = asDoubleExtractor(inputSchema(yColumnId).dataType, yColumnId)
-  private final val weightExtractor = weightColumnId.map { id => asDoubleExtractor(inputSchema(id).dataType, id) }
-  private final val xExtractors = xColumnIds.map {
-    id => id -> asDoubleExtractor(inputSchema(id).dataType, id)
+  private final val yExtractor =
+    asDoubleExtractor(inputSchema(yColumnId).dataType, yColumnId)
+  private final val weightExtractor = weightColumnId.map { id =>
+    asDoubleExtractor(inputSchema(id).dataType, id)
+  }
+  private final val xExtractors = xColumnIds.map { id =>
+    id -> asDoubleExtractor(inputSchema(id).dataType, id)
   }.toMap
 
   override type T = RegressionRow
@@ -119,7 +127,13 @@ case class OLSRegressionSummarizer(
   override type V = OLSRegressionOutput
 
   override val summarizer =
-    new RegressionSummarizer(dimensionOfX, shouldIntercept, isWeighted, shouldIgnoreConstants, constantErrorBound)
+    new RegressionSummarizer(
+      dimensionOfX,
+      shouldIntercept,
+      isWeighted,
+      shouldIgnoreConstants,
+      constantErrorBound
+    )
 
   override def toT(r: InternalRow): RegressionRow = {
     val x = new Array[Double](xColumnIds.length)
@@ -139,23 +153,26 @@ case class OLSRegressionSummarizer(
 
   override val schema = OLSRegressionSummarizer.outputSchema
 
-  override def fromV(o: OLSRegressionOutput): InternalRow = InternalRow.fromSeq(
-    Array[Any](
-      o.count,
-      new GenericArrayData(o.beta),
-      o.intercept,
-      o.hasIntercept,
-      o.stdErrOfIntercept,
-      new GenericArrayData(o.stdErrOfBeta),
-      o.rSquared,
-      o.r,
-      o.tStatOfIntercept,
-      new GenericArrayData(o.tStatOfBeta),
-      o.logLikelihood,
-      o.akaikeIC,
-      o.bayesIC,
-      o.cond,
-      new GenericArrayData(o.constantsCoordinates.map(i => UTF8String.fromString(xColumns(i))))
+  override def fromV(o: OLSRegressionOutput): InternalRow =
+    InternalRow.fromSeq(
+      Array[Any](
+        o.count,
+        new GenericArrayData(o.beta),
+        o.intercept,
+        o.hasIntercept,
+        o.stdErrOfIntercept,
+        new GenericArrayData(o.stdErrOfBeta),
+        o.rSquared,
+        o.r,
+        o.tStatOfIntercept,
+        new GenericArrayData(o.tStatOfBeta),
+        o.logLikelihood,
+        o.akaikeIC,
+        o.bayesIC,
+        o.cond,
+        new GenericArrayData(
+          o.constantsCoordinates.map(i => UTF8String.fromString(xColumns(i)))
+        )
+      )
     )
-  )
 }

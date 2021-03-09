@@ -25,11 +25,17 @@ import org.apache.spark.sql.types.DataType
  */
 object CatalystTypeConvertersWrapper {
   def toCatalystRowConverter(dataType: DataType): Row => InternalRow = {
-    CatalystTypeConverters.createToCatalystConverter(dataType)(_).asInstanceOf[InternalRow]
+    CatalystTypeConverters
+      .createToCatalystConverter(dataType)(_)
+      .asInstanceOf[InternalRow]
   }
 
-  def toScalaRowConverter(dataType: DataType): InternalRow => GenericRowWithSchema = {
-    CatalystTypeConverters.createToScalaConverter(dataType)(_).asInstanceOf[GenericRowWithSchema]
+  def toScalaRowConverter(
+    dataType: DataType
+  ): InternalRow => GenericRowWithSchema = {
+    CatalystTypeConverters
+      .createToScalaConverter(dataType)(_)
+      .asInstanceOf[GenericRowWithSchema]
   }
 
   def toCatalystConverter(dataType: DataType): Any => Any =

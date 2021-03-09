@@ -21,6 +21,7 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.{ SQLContext, SparkSession, types }
 
 trait TimeType {
+
   /**
    * return the time of a row in nanoseconds since epoch.
    * @return
@@ -58,8 +59,11 @@ object TimeType {
     timeType match {
       case "long" => LongType
       case "timestamp" => TimestampType
-      case _ => throw new IllegalAccessException(s"Unsupported time type: ${timeType}. " +
-        s"Only `long` and `timestamp` are supported.")
+      case _ =>
+        throw new IllegalAccessException(
+          s"Unsupported time type: ${timeType}. " +
+            s"Only `long` and `timestamp` are supported."
+        )
     }
   }
 
@@ -67,13 +71,17 @@ object TimeType {
     sqlType match {
       case types.LongType => LongType
       case types.TimestampType => TimestampType
-      case _ => throw new IllegalArgumentException(s"Unsupported time type: ${sqlType}")
+      case _ =>
+        throw new IllegalArgumentException(s"Unsupported time type: ${sqlType}")
     }
   }
 
   def get(sparkSession: SparkSession): TimeType = {
-    TimeType(sparkSession.conf.get(
-      FlintConf.TIME_TYPE_CONF, FlintConf.TIME_TYPE_DEFAULT
-    ))
+    TimeType(
+      sparkSession.conf.get(
+        FlintConf.TIME_TYPE_CONF,
+        FlintConf.TIME_TYPE_DEFAULT
+      )
+    )
   }
 }

@@ -16,7 +16,12 @@
 
 package com.twosigma.flint.hadoop
 
-import java.io.{ DataInputStream, DataOutputStream, ObjectInputStream, ObjectOutputStream }
+import java.io.{
+  DataInputStream,
+  DataOutputStream,
+  ObjectInputStream,
+  ObjectOutputStream
+}
 import java.io.IOException
 
 import scala.reflect.{ classTag, ClassTag }
@@ -26,7 +31,8 @@ import org.apache.hadoop.io.Writable
 // Note: we could make this implement InputSplit, but we do not because many input splits do a
 // cast to their specific InputSplit, so we do not want to risk it. Further, this currently works
 // for any Writable.
-case class WriSer[T <: Writable: ClassTag](@transient var get: T) extends Serializable {
+case class WriSer[T <: Writable: ClassTag](@transient var get: T)
+  extends Serializable {
   def this() = this(null.asInstanceOf[T])
 
   @throws(classOf[IOException])
@@ -38,7 +44,11 @@ case class WriSer[T <: Writable: ClassTag](@transient var get: T) extends Serial
   @throws(classOf[IOException])
   @throws(classOf[ClassNotFoundException])
   private def readObject(in: ObjectInputStream) {
-    get = in.readObject.asInstanceOf[ClassTag[T]].runtimeClass.newInstance.asInstanceOf[T]
+    get = in.readObject
+      .asInstanceOf[ClassTag[T]]
+      .runtimeClass
+      .newInstance
+      .asInstanceOf[T]
     get.readFields(new DataInputStream(in))
   }
 }

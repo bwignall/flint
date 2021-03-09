@@ -36,9 +36,17 @@ protected[flint] object LeftJoin {
     rightSk: V2 => SK
   )(implicit ord: Ordering[K]): OrderedRDD[K, (V, Option[(K, V2)])] = {
     // A map from left partition index to left range split and right partitions.
-    val leftIndexToJoinSplits = TreeMap(RangeMergeJoin.leftJoinSplits(
-      toleranceFn, leftRdd.rangeSplits, rightRdd.rangeSplits
-    ).map { case (split, parts) => (split.partition.index, (split, parts)) }: _*)
+    val leftIndexToJoinSplits = TreeMap(
+      RangeMergeJoin
+        .leftJoinSplits(
+          toleranceFn,
+          leftRdd.rangeSplits,
+          rightRdd.rangeSplits
+        )
+        .map {
+          case (split, parts) => (split.partition.index, (split, parts))
+        }: _*
+    )
 
     val leftDep = new OneToOneDependency(leftRdd)
     val rightDep = new NarrowDependency(rightRdd) {
@@ -51,29 +59,35 @@ protected[flint] object LeftJoin {
       case (idx, joinSplit) => (idx, joinSplit._2)
     })
 
-    val joinedSplits = leftIndexToJoinSplits.map { case (_, (split, _)) => split }.toArray
+    val joinedSplits = leftIndexToJoinSplits.map {
+      case (_, (split, _)) => split
+    }.toArray
 
     // We don't need the left dependency as we will just load it on demand here
-    new OrderedRDD[K, (V, Option[(K, V2)])](leftRdd.sc, joinedSplits, Seq(leftDep, rightDep))(
-      (part, context) => {
-        val parts = rightPartitions.value(part.index)
-        val rightIter = PeekableIterator(PartitionsIterator(rightRdd, parts, context))
-        val lastSeen = new JHashMap[SK, (K, V2)](skMapInitialSize)
-        leftRdd.iterator(part, context).map {
-          case (k, v) =>
-            // Catch-up the iterator for the right table to match the left key. In the
-            // process, we'll have the last-seen row for each SK in the right table.
-            val sk = leftSk(v)
-            catchUp(k, rightSk, rightIter, lastSeen)
-            val lastSeenRight = lastSeen.get(sk)
-            if (lastSeenRight != null && ord.gteq(lastSeenRight._1, toleranceFn(k))) {
-              (k, (v, Some(lastSeenRight)))
-            } else {
-              (k, (v, None))
-            }
-        }
+    new OrderedRDD[K, (V, Option[(K, V2)])](
+      leftRdd.sc,
+      joinedSplits,
+      Seq(leftDep, rightDep)
+    )((part, context) => {
+      val parts = rightPartitions.value(part.index)
+      val rightIter = PeekableIterator(
+        PartitionsIterator(rightRdd, parts, context)
+      )
+      val lastSeen = new JHashMap[SK, (K, V2)](skMapInitialSize)
+      leftRdd.iterator(part, context).map {
+        case (k, v) =>
+          // Catch-up the iterator for the right table to match the left key. In the
+          // process, we'll have the last-seen row for each SK in the right table.
+          val sk = leftSk(v)
+          catchUp(k, rightSk, rightIter, lastSeen)
+          val lastSeenRight = lastSeen.get(sk)
+          if (lastSeenRight != null && ord.gteq(lastSeenRight._1, toleranceFn(k))) {
+            (k, (v, Some(lastSeenRight)))
+          } else {
+            (k, (v, None))
+          }
       }
-    )
+    })
   }
 
   /**

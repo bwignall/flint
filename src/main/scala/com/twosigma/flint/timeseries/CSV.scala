@@ -151,7 +151,9 @@ object CSV {
     )
 
     val timeColumnType = df.schema(timeColumnName).dataType
-    val timeColumnUnit = if (timeColumnType == DataTypes.TimestampType) { MILLISECONDS } else { timeUnit }
+    val timeColumnUnit = if (timeColumnType == DataTypes.TimestampType) {
+      MILLISECONDS
+    } else { timeUnit }
 
     if (keepOriginTimeColumn) {
       val renamedTimeColumnName = s"${timeColumnName}_"
@@ -159,10 +161,17 @@ object CSV {
     }
 
     val dfConverted = convertTimeToLong(df, timeColumnName)
-    TimeSeriesRDD.fromDF(dfConverted)(isSorted = sorted, timeColumnUnit, timeColumn = timeColumnName)
+    TimeSeriesRDD.fromDF(dfConverted)(
+      isSorted = sorted,
+      timeColumnUnit,
+      timeColumn = timeColumnName
+    )
   }
 
-  private[this] def convertTimeToLong(dataFrame: DataFrame, timeColumnName: String): DataFrame = {
+  private[this] def convertTimeToLong(
+    dataFrame: DataFrame,
+    timeColumnName: String
+  ): DataFrame = {
     val dataType = dataFrame.schema(timeColumnName).dataType
 
     val intToLong = udf[Long, Int](_.toLong)
@@ -172,11 +181,20 @@ object CSV {
       case DataTypes.LongType =>
         dataFrame
       case DataTypes.IntegerType =>
-        dataFrame.withColumn(timeColumnName, intToLong(dataFrame(timeColumnName)))
+        dataFrame.withColumn(
+          timeColumnName,
+          intToLong(dataFrame(timeColumnName))
+        )
       case DataTypes.TimestampType =>
-        dataFrame.withColumn(timeColumnName, timestampToLong(dataFrame(timeColumnName)))
+        dataFrame.withColumn(
+          timeColumnName,
+          timestampToLong(dataFrame(timeColumnName))
+        )
 
-      case _ => sys.error(s"Columns of ${dataType.typeName} type are not supported as a `time` column.")
+      case _ =>
+        sys.error(
+          s"Columns of ${dataType.typeName} type are not supported as a `time` column."
+        )
     }
   }
 }

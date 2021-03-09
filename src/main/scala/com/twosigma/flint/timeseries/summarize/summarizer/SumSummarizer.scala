@@ -23,15 +23,18 @@ import com.twosigma.flint.timeseries.summarize._
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.types._
 
-case class SumSummarizerFactory(sumColumn: String) extends BaseSummarizerFactory(sumColumn) {
-  override def apply(inputSchema: StructType): SumSummarizer = SumSummarizer(inputSchema, prefixOpt, requiredColumns)
+case class SumSummarizerFactory(sumColumn: String)
+  extends BaseSummarizerFactory(sumColumn) {
+  override def apply(inputSchema: StructType): SumSummarizer =
+    SumSummarizer(inputSchema, prefixOpt, requiredColumns)
 }
 
 case class SumSummarizer(
   override val inputSchema: StructType,
   override val prefixOpt: Option[String],
   requiredColumns: ColumnList
-) extends LeftSubtractableSummarizer with FilterNullInput {
+) extends LeftSubtractableSummarizer
+  with FilterNullInput {
   private val Sequence(Seq(sumColumn)) = requiredColumns
   private val sumColumnIndex = inputSchema.fieldIndex(sumColumn)
 
@@ -41,7 +44,8 @@ case class SumSummarizer(
   override val summarizer = subtractable.SumSummarizer[Double]()
   override val schema = Schema.of(s"${sumColumn}_sum" -> DoubleType)
 
-  private final val sumExtractor = asDoubleExtractor(inputSchema(sumColumnIndex).dataType, sumColumnIndex)
+  private final val sumExtractor =
+    asDoubleExtractor(inputSchema(sumColumnIndex).dataType, sumColumnIndex)
 
   override def toT(r: InternalRow): T = sumExtractor(r)
 

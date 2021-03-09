@@ -39,7 +39,10 @@ object TreeReduce {
     f: (T, T) => T,
     depth: Int = 2
   ): T = {
-    require(depth >= 1, s"Depth must be greater than or equal to 1 but got $depth.")
+    require(
+      depth >= 1,
+      s"Depth must be greater than or equal to 1 but got $depth."
+    )
 
     val reducePartition: Iterator[T] => Option[T] = iter => {
       if (iter.hasNext) {
@@ -49,7 +52,8 @@ object TreeReduce {
       }
     }
 
-    val partiallyReduced = rdd.mapPartitions(it => Iterator(reducePartition(it)))
+    val partiallyReduced =
+      rdd.mapPartitions(it => Iterator(reducePartition(it)))
 
     val op: (Option[T], Option[T]) => Option[T] = (c, x) => {
       if (c.isDefined && x.isDefined) {

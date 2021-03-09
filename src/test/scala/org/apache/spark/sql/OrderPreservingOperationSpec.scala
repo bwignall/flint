@@ -22,12 +22,18 @@ import org.apache.spark.sql.{ functions => F }
 
 class OrderPreservingOperationSpec extends FlintSuite with FlintTestData {
 
-  val inputTransformations = Set(withTime2Column, withTime3ColumnUdf, filterV, orderByV, repartition)
-  val allInputTransformations = inputTransformations.subsets().filter(_.nonEmpty).flatMap{ transformations =>
-    transformations.toList.permutations
-  }.map { transformations =>
-    transformations.reduce((x, y) => x.andThen(y))
-  }.toList
+  val inputTransformations =
+    Set(withTime2Column, withTime3ColumnUdf, filterV, orderByV, repartition)
+  val allInputTransformations = inputTransformations
+    .subsets()
+    .filter(_.nonEmpty)
+    .flatMap { transformations =>
+      transformations.toList.permutations
+    }
+    .map { transformations =>
+      transformations.reduce((x, y) => x.andThen(y))
+    }
+    .toList
 
   def withInputTransform(
     transformations: Seq[(DataFrame) => DataFrame]
@@ -37,9 +43,15 @@ class OrderPreservingOperationSpec extends FlintSuite with FlintTestData {
     }
   }
 
-  def assertOrderPreserving(op: (DataFrame) => DataFrame, isOrderPreserving: Boolean): Unit = {
+  def assertOrderPreserving(
+    op: (DataFrame) => DataFrame,
+    isOrderPreserving: Boolean
+  ): Unit = {
     def test(df: DataFrame): Unit = {
-      assert(OrderPreservingOperation.isOrderPreserving(df, op(df)) == isOrderPreserving)
+      assert(
+        OrderPreservingOperation
+          .isOrderPreserving(df, op(df)) == isOrderPreserving
+      )
     }
     withInputTransform(allInputTransformations)(testData)(test)
   }
@@ -114,9 +126,12 @@ class OrderPreservingOperationSpec extends FlintSuite with FlintTestData {
   }
 
   it should "test when not derived" in {
-    assert(!OrderPreservingOperation.isOrderPreserving(
-      testData.select("time", "v"), testData2.select("time", "v")
-    ))
+    assert(
+      !OrderPreservingOperation.isOrderPreserving(
+        testData.select("time", "v"),
+        testData2.select("time", "v")
+      )
+    )
   }
 
 }

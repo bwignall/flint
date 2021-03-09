@@ -16,7 +16,10 @@
 
 package com.twosigma.flint.rdd
 
-import com.twosigma.flint.rdd.function.group.{ Intervalize, SummarizeByKeyIterator }
+import com.twosigma.flint.rdd.function.group.{
+  Intervalize,
+  SummarizeByKeyIterator
+}
 import com.twosigma.flint.rdd.function.join._
 import com.twosigma.flint.rdd.function.summarize._
 import com.twosigma.flint.rdd.function.summarize.summarizer.Summarizer
@@ -32,7 +35,8 @@ import org.apache.spark._
 import scala.collection.mutable
 import scala.reflect.ClassTag
 
-private[flint] case class OrderedRDDPartition(override val index: Int) extends Partition
+private[flint] case class OrderedRDDPartition(override val index: Int)
+  extends Partition
 
 object OrderedRDD {
 
@@ -51,11 +55,13 @@ object OrderedRDD {
     rdd: RDD[(K, V)],
     rddType: KeyPartitioningType,
     keyRdd: RDD[K] = null
-  )(implicit ord: Ordering[K]): OrderedRDD[K, V] = rddType match {
-    case KeyPartitioningType.NormalizedSorted => Conversion.fromNormalizedSortedRDD(rdd)
-    case KeyPartitioningType.Sorted => Conversion.fromSortedRDD(rdd, keyRdd)
-    case KeyPartitioningType.UnSorted => Conversion.fromUnsortedRDD(rdd)
-  }
+  )(implicit ord: Ordering[K]): OrderedRDD[K, V] =
+    rddType match {
+      case KeyPartitioningType.NormalizedSorted =>
+        Conversion.fromNormalizedSortedRDD(rdd)
+      case KeyPartitioningType.Sorted => Conversion.fromSortedRDD(rdd, keyRdd)
+      case KeyPartitioningType.UnSorted => Conversion.fromUnsortedRDD(rdd)
+    }
 
   /**
    * Convert a sorted [[org.apache.spark.rdd.RDD RDD]] to an [[OrderedRDD]] with no extra cost.
@@ -111,8 +117,7 @@ class OrderedRDD[K: ClassTag, V: ClassTag](
   @transient val sc: SparkContext,
   @transient private[flint] val splits: Seq[RangeSplit[K]],
   @transient private[flint] val deps: Seq[Dependency[_]] = Nil
-)(create: (Partition, TaskContext) => Iterator[(K, V)])(implicit ord: Ordering[K])
-  extends RDD[(K, V)](sc, deps) {
+)(create: (Partition, TaskContext) => Iterator[(K, V)])(implicit ord: Ordering[K]) extends RDD[(K, V)](sc, deps) {
 
   private val self = this
 
@@ -120,7 +125,8 @@ class OrderedRDD[K: ClassTag, V: ClassTag](
    * A sequence of [[RangeSplit]]s sorted by their partitions' indices where a [[RangeSplit]]
    * represents an non-empty partition with its [[Range]] information.
    */
-  val rangeSplits: Array[RangeSplit[K]] = splits.sortBy(_.partition.index).toArray
+  val rangeSplits: Array[RangeSplit[K]] =
+    splits.sortBy(_.partition.index).toArray
 
   // Sanity checks
   if (rangeSplits.length > 1) {
@@ -130,21 +136,23 @@ class OrderedRDD[K: ClassTag, V: ClassTag](
     )
 
     // Check whether they are increasing and non overlapping.
-    rangeSplits.headOption.map {
-      s0 =>
-        rangeSplits.foldLeft((s0, true)) {
-          case ((s1, isOrdered), s2) =>
-            s1.range.end.fold(sys.error("Only the final partition is allowed to be unbound.")) {
-              e => (s2, isOrdered && ord.lteq(e, s2.range.begin))
+    rangeSplits.headOption.map { s0 =>
+      rangeSplits.foldLeft((s0, true)) {
+        case ((s1, isOrdered), s2) =>
+          s1.range.end.fold(
+            sys.error("Only the final partition is allowed to be unbound.")
+          ) { e =>
+              (s2, isOrdered && ord.lteq(e, s2.range.begin))
             }
-        }
+      }
     }
 
     rangeSplits.zipWithIndex.foreach {
-      case (split, idx) => require(
-        split.partition.index == idx,
-        "The indices of rangeSplits are not consistent to their partitions indices."
-      )
+      case (split, idx) =>
+        require(
+          split.partition.index == idx,
+          "The indices of rangeSplits are not consistent to their partitions indices."
+        )
     }
 
     deps.foreach {
@@ -166,15 +174,20 @@ class OrderedRDD[K: ClassTag, V: ClassTag](
   // Internal or developer APIs
   // ==============================================================================================
 
-  override def compute(partition: Partition, context: TaskContext): Iterator[(K, V)] = create(partition, context)
+  override def compute(
+    partition: Partition,
+    context: TaskContext
+  ): Iterator[(K, V)] = create(partition, context)
 
-  override protected def getPartitions: Array[Partition] = rangeSplits.map(_.partition)
+  override protected def getPartitions: Array[Partition] =
+    rangeSplits.map(_.partition)
 
   /**
    * @note We can totally use the info that we get from the splits, but right now there is no point
    * because we're not running on the HDFS nodes anyway.
    */
-  override protected def getPreferredLocations(split: Partition): Seq[String] = Nil
+  override protected def getPreferredLocations(split: Partition): Seq[String] =
+    Nil
 
   /**
    * Similar to [[org.apache.spark.rdd.RDD.mapPartitionsWithIndex]], it returns an [[OrderedRDD]] by applying a function
@@ -187,7 +200,8 @@ class OrderedRDD[K: ClassTag, V: ClassTag](
     f: (Int, Iterator[(K, V)]) => Iterator[(K, V2)]
   ): OrderedRDD[K, V2] = {
     new OrderedRDD(self.sc, rangeSplits, Seq(new OneToOneDependency(self)))(
-      (partition, taskContext) => f(partition.index, self.iterator(partition, taskContext))
+      (partition, taskContext) =>
+        f(partition.index, self.iterator(partition, taskContext))
     )
   }
 
@@ -216,7 +230,9 @@ class OrderedRDD[K: ClassTag, V: ClassTag](
     val partitioner = new RangePartitioner(numPartitions, self, true)
     // TODO: we should improve the Partitioner or the ShuffledRDD to report the Range per partition
     //       which we should use later for fromSortedRDD to avoid extra read and thus lazy.
-    Conversion.fromSortedRDD(new ShuffledRDD[K, V, V](self, partitioner).setKeyOrdering(ord))
+    Conversion.fromSortedRDD(
+      new ShuffledRDD[K, V, V](self, partitioner).setKeyOrdering(ord)
+    )
   }
 
   /**
@@ -235,25 +251,24 @@ class OrderedRDD[K: ClassTag, V: ClassTag](
       return this
     } else {
       // table of ranges and partitions from coalescing
-      val coalesced = (0 until numPartitions).map {
-        i =>
-          // array indices of aggregated partitions
-          val begin = ((i.toLong * rangeSplits.length) / numPartitions).toInt
-          val end = (((i.toLong + 1) * rangeSplits.length) / numPartitions).toInt
+      val coalesced = (0 until numPartitions).map { i =>
+        // array indices of aggregated partitions
+        val begin = ((i.toLong * rangeSplits.length) / numPartitions).toInt
+        val end = (((i.toLong + 1) * rangeSplits.length) / numPartitions).toInt
 
-          // ranges and partitions that will be coalesced together
-          val mySplits = rangeSplits.slice(begin, end)
-          val coalescedRanges = CloseOpen(
-            mySplits(0).range.begin,
-            mySplits(mySplits.length - 1).range.end
-          )
-          val coalescedPartitions = mySplits.map(_.partition)
-          (i, coalescedRanges, coalescedPartitions)
+        // ranges and partitions that will be coalesced together
+        val mySplits = rangeSplits.slice(begin, end)
+        val coalescedRanges = CloseOpen(
+          mySplits(0).range.begin,
+          mySplits(mySplits.length - 1).range.end
+        )
+        val coalescedPartitions = mySplits.map(_.partition)
+        (i, coalescedRanges, coalescedPartitions)
       }
 
       // array of RangeSplits with new partition index
-      val coalescedSplits = coalesced.map {
-        x => RangeSplit(OrderedRDDPartition(x._1).asInstanceOf[Partition], x._2)
+      val coalescedSplits = coalesced.map { x =>
+        RangeSplit(OrderedRDDPartition(x._1).asInstanceOf[Partition], x._2)
       }
 
       // dependencies to parent RDD
@@ -292,7 +307,8 @@ class OrderedRDD[K: ClassTag, V: ClassTag](
    * @return the merged [[OrderedRDD]].
    */
   // TODO: check the invariants of the merged OrderedRDD.
-  def ++[V2: ClassTag](that: OrderedRDD[K, V2]): OrderedRDD[K, Either[V, V2]] = Merge.++(self, that)
+  def ++[V2: ClassTag](that: OrderedRDD[K, V2]): OrderedRDD[K, Either[V, V2]] =
+    Merge.++(self, that)
 
   /**
    * Left-join two tables as of a key and or on a secondary key.
@@ -312,7 +328,8 @@ class OrderedRDD[K: ClassTag, V: ClassTag](
     toleranceFn: K => K,
     leftSk: V => SK1,
     rightSk: V2 => SK2
-  )(implicit ev: SK1 =:= SK2): OrderedRDD[K, (V, Option[(K, V2)])] = LeftJoin(self, that, toleranceFn, leftSk, rightSk)
+  )(implicit ev: SK1 =:= SK2): OrderedRDD[K, (V, Option[(K, V2)])] =
+    LeftJoin(self, that, toleranceFn, leftSk, rightSk)
 
   /**
    * Left-join this and the other [[OrderedRDD]] as of a key and or on a secondary key using inexact key
@@ -352,7 +369,8 @@ class OrderedRDD[K: ClassTag, V: ClassTag](
     toleranceFn: K => K,
     leftSk: V => SK,
     rightSk: V2 => SK
-  ): OrderedRDD[K, (Option[(K, V)], Option[(K, V2)])] = SymmetricJoin(self, that, toleranceFn, leftSk, rightSk)
+  ): OrderedRDD[K, (Option[(K, V)], Option[(K, V2)])] =
+    SymmetricJoin(self, that, toleranceFn, leftSk, rightSk)
 
   /**
    * For each row of an [[OrderedRDD]], apply a [[Summarizer]] to all rows of its window.
@@ -380,7 +398,13 @@ class OrderedRDD[K: ClassTag, V: ClassTag](
     sk: V => SK,
     overlapWindow: K => (K, K)
   ): OrderedRDD[K, (V, V2)] =
-    SummarizeWindows.applyOverlapped(self, window, summarizer, sk, overlapWindow)
+    SummarizeWindows.applyOverlapped(
+      self,
+      window,
+      summarizer,
+      sk,
+      overlapWindow
+    )
 
   def summarizeWindowBatches[SK: ClassTag, U, V2: ClassTag](
     window: K => (K, K),
@@ -390,7 +414,15 @@ class OrderedRDD[K: ClassTag, V: ClassTag](
     otherSk: V => SK,
     batchSize: Int
   ): OrderedRDD[K, V2] =
-    SummarizeWindows.applyBatch(self, window, summarizer, sk, other, otherSk, batchSize)
+    SummarizeWindows.applyBatch(
+      self,
+      window,
+      summarizer,
+      sk,
+      other,
+      otherSk,
+      batchSize
+    )
 
   /**
    * Apply a [[Summarizer]] to all rows of an [[OrderedRDD]].
@@ -434,7 +466,8 @@ class OrderedRDD[K: ClassTag, V: ClassTag](
     windowFn: K => (K, K),
     skFn: V => SK,
     depth: Int
-  ): Map[SK, (U, V2)] = Summarize.summarizeState(self, summarizer, windowFn, skFn, depth)
+  ): Map[SK, (U, V2)] =
+    Summarize.summarizeState(self, summarizer, windowFn, skFn, depth)
 
   /**
    * Similar to [[org.apache.spark.rdd.RDD.zipWithIndex]], it zips values of this [[OrderedRDD]] with
@@ -444,11 +477,14 @@ class OrderedRDD[K: ClassTag, V: ClassTag](
    */
   def zipWithIndexOrdered: OrderedRDD[K, (V, Long)] = {
     val withIndex = self.zipWithIndex
-    val indexToPartition = sc.broadcast(withIndex.partitions.map { p => (p.index, p) }.toMap)
+    val indexToPartition = sc.broadcast(withIndex.partitions.map { p =>
+      (p.index, p)
+    }.toMap)
     new OrderedRDD(sc, rangeSplits, Seq(new OneToOneDependency(withIndex)))(
-      (p, tc) => withIndex.iterator(indexToPartition.value(p.index), tc).map {
-        case ((k, v), idx) => (k, (v, idx))
-      }
+      (p, tc) =>
+        withIndex.iterator(indexToPartition.value(p.index), tc).map {
+          case ((k, v), idx) => (k, (v, idx))
+        }
     )
   }
 
@@ -478,7 +514,9 @@ class OrderedRDD[K: ClassTag, V: ClassTag](
    * @return a new [[OrderedRDD]] by applying a function to all values of this [[OrderedRDD]] and then
    *         flattening the results.
    */
-  def flatMapValues[V2: ClassTag](fn: (K, V) => TraversableOnce[V2]): OrderedRDD[K, V2] =
+  def flatMapValues[V2: ClassTag](
+    fn: (K, V) => TraversableOnce[V2]
+  ): OrderedRDD[K, V2] =
     new OrderedRDD(sc, rangeSplits, Seq(new OneToOneDependency(self)))(
       (p, tc) => iterator(p, tc).flatMap { case (k, v) => fn(k, v).map((k, _)) }
     )
@@ -496,7 +534,9 @@ class OrderedRDD[K: ClassTag, V: ClassTag](
   /**
    * Similar to [[org.apache.spark.rdd.RDD]]'s collect, but the ordering of this [[OrderedRDD]] will be preserved.
    */
-  def collectOrdered[V2: ClassTag](fn: PartialFunction[(K, V), V2]): OrderedRDD[K, V2] =
+  def collectOrdered[V2: ClassTag](
+    fn: PartialFunction[(K, V), V2]
+  ): OrderedRDD[K, V2] =
     new OrderedRDD(sc, rangeSplits, Seq(new OneToOneDependency(self)))(
       (p, tc) =>
         iterator(p, tc).collect(new PartialFunction[(K, V), (K, V2)] {
@@ -516,13 +556,16 @@ class OrderedRDD[K: ClassTag, V: ClassTag](
    * @return an [[OrderedRDD]] of grouped rows with the same key. The ordering of rows in each group is preserved.
    */
   def groupByKey[SK](skFn: V => SK): OrderedRDD[K, Array[V]] =
-    new OrderedRDD[K, Array[V]](sc, rangeSplits, Seq(new OneToOneDependency(self)))(
-      (p, tc) => {
-        val iter = new SummarizeByKeyIterator(iterator(p, tc), skFn, new RowsSummarizer[V])
-        tc.addTaskCompletionListener[Unit]((_) => iter.close())
-        iter.map { case (k, (_, v)) => (k, v) }
-      }
-    )
+    new OrderedRDD[K, Array[V]](
+      sc,
+      rangeSplits,
+      Seq(new OneToOneDependency(self))
+    )((p, tc) => {
+      val iter =
+        new SummarizeByKeyIterator(iterator(p, tc), skFn, new RowsSummarizer[V])
+      tc.addTaskCompletionListener[Unit]((_) => iter.close())
+      iter.map { case (k, (_, v)) => (k, v) }
+    })
 
   /**
    * Takes an ordered RDD and summarizes it using the summarizer provided
@@ -539,14 +582,19 @@ class OrderedRDD[K: ClassTag, V: ClassTag](
    * @tparam V2 the output type which will determine the value of the summarizer.
    * @return an [[OrderedRDD]] of summarized rows with the same key. The ordering of each key is preserved.
    */
-  def summarizeByKey[SK, U, V2: ClassTag](skFn: V => SK, summarizer: Summarizer[V, U, V2]): OrderedRDD[K, (SK, V2)] =
-    new OrderedRDD[K, (SK, V2)](sc, rangeSplits, Seq(new OneToOneDependency(self)))(
-      (p, tc) => {
-        val iter = new SummarizeByKeyIterator(iterator(p, tc), skFn, summarizer)
-        tc.addTaskCompletionListener[Unit]((_) => iter.close())
-        iter
-      }
-    )
+  def summarizeByKey[SK, U, V2: ClassTag](
+    skFn: V => SK,
+    summarizer: Summarizer[V, U, V2]
+  ): OrderedRDD[K, (SK, V2)] =
+    new OrderedRDD[K, (SK, V2)](
+      sc,
+      rangeSplits,
+      Seq(new OneToOneDependency(self))
+    )((p, tc) => {
+      val iter = new SummarizeByKeyIterator(iterator(p, tc), skFn, summarizer)
+      tc.addTaskCompletionListener[Unit]((_) => iter.close())
+      iter
+    })
 
   /**
    * Intervalize this [[OrderedRDD]] by mapping its keys to the begin or the end of an interval
@@ -556,7 +604,11 @@ class OrderedRDD[K: ClassTag, V: ClassTag](
    * @return An [[OrderedRDD]] whose keys are intervalized and the original keys are kept in the
    *         values as (K, V)s.
    */
-  def intervalize(intervalizer: Array[K], inclusion: String, rounding: String): OrderedRDD[K, (K, V)] =
+  def intervalize(
+    intervalizer: Array[K],
+    inclusion: String,
+    rounding: String
+  ): OrderedRDD[K, (K, V)] =
     Intervalize.intervalize(self, intervalizer, inclusion, rounding)
 
   /**
@@ -579,7 +631,9 @@ class OrderedRDD[K: ClassTag, V: ClassTag](
    */
   // TODO: check the invariants of the merged OrderedRDD.
   def shift(fn: K => K): OrderedRDD[K, V] = {
-    val newRangeSplits = rangeSplits.map { rs => RangeSplit(rs.partition, rs.range.shift(fn)) }
+    val newRangeSplits = rangeSplits.map { rs =>
+      RangeSplit(rs.partition, rs.range.shift(fn))
+    }
     new OrderedRDD(sc, newRangeSplits, Seq(new OneToOneDependency(self)))(
       (p, tc) => iterator(p, tc).map { case (k, v) => (fn(k), v) }
     )

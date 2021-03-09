@@ -21,9 +21,9 @@ import java.io.Serializable;
 /**
  * This uses the {@linktourl http://en.wikipedia.org/wiki/Kahan_summation_algorithm}
  * to minimize errors when adding a large amount of doubles.
- *
+ * <p>
  * This implements a slightly modification of Kahan Summation named Neumaier Summation.
- *
+ * <p>
  * Note it is mutable and not thread safe.
  */
 public class Kahan implements Serializable {

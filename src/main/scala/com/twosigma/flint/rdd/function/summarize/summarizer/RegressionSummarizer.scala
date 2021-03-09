@@ -26,6 +26,7 @@ case class RegressionRow(
 )
 
 object RegressionSummarizer {
+
   /**
    *  Transform a [[RegressionRow]] into sqrt-weighted predictor, sqrt-weighted response, original response, and
    *  original weight.
@@ -125,7 +126,9 @@ object RegressionSummarizer {
     matrixOfXX: DenseMatrix[Double]
   ): Double = {
     val k = beta.length
-    require(matrixOfXX.rows == matrixOfXX.cols && vectorOfXY.length == k && matrixOfXX.cols == k)
+    require(
+      matrixOfXX.rows == matrixOfXX.cols && vectorOfXY.length == k && matrixOfXX.cols == k
+    )
     var residualSumOfSquares = sumOfYSquared
     var i = 0
     while (i < beta.length) {
@@ -148,15 +151,16 @@ object RegressionSummarizer {
     sumOfY: Double,
     residualSumOfSquares: Double,
     shouldIntercept: Boolean
-  ): Double = if (sumOfYSquared == 0.0 || sumOfWeights == 0.0) {
-    Double.NaN
-  } else {
-    val meanOfY = sumOfY / sumOfWeights
-    var varianceOfY = sumOfYSquared / sumOfWeights
-    if (shouldIntercept) {
-      varianceOfY -= meanOfY * meanOfY
+  ): Double =
+    if (sumOfYSquared == 0.0 || sumOfWeights == 0.0) {
+      Double.NaN
+    } else {
+      val meanOfY = sumOfY / sumOfWeights
+      var varianceOfY = sumOfYSquared / sumOfWeights
+      if (shouldIntercept) {
+        varianceOfY -= meanOfY * meanOfY
+      }
+      (varianceOfY - residualSumOfSquares / sumOfWeights) / varianceOfY
     }
-    (varianceOfY - residualSumOfSquares / sumOfWeights) / varianceOfY
-  }
 
 }

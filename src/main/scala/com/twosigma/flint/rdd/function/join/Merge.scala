@@ -16,7 +16,12 @@
 
 package com.twosigma.flint.rdd.function.join
 
-import com.twosigma.flint.rdd.{ PeekableIterator, PartitionsIterator, MergeIterator, RangeSplit }
+import com.twosigma.flint.rdd.{
+  PeekableIterator,
+  PartitionsIterator,
+  MergeIterator,
+  RangeSplit
+}
 import org.apache.spark.NarrowDependency
 import com.twosigma.flint.rdd._
 
@@ -27,25 +32,29 @@ protected[flint] object Merge {
   def apply[K: Ordering: ClassTag, V: ClassTag](
     left: OrderedRDD[K, V],
     right: OrderedRDD[K, V]
-  ): OrderedRDD[K, V] = ++(left, right).mapValues {
-    case (_, Left(v)) => v
-    case (_, Right(v)) => v
-  }
+  ): OrderedRDD[K, V] =
+    ++(left, right).mapValues {
+      case (_, Left(v)) => v
+      case (_, Right(v)) => v
+    }
 
   def ++[K: ClassTag, V: ClassTag, V2: ClassTag](
     left: OrderedRDD[K, V],
     right: OrderedRDD[K, V2]
-  )(
-    implicit
-    ord: Ordering[K]
-  ): OrderedRDD[K, Either[V, V2]] = {
+  )(implicit ord: Ordering[K]): OrderedRDD[K, Either[V, V2]] = {
     // A map from new partition to a RangeMergeJoin.
-    val partToMergeJoin = RangeMergeJoin.mergeSplits(left.rangeSplits, right.rangeSplits).zipWithIndex.map {
-      case (mergeJoin, idx) => (OrderedRDDPartition(idx), mergeJoin)
-    }.toMap
+    val partToMergeJoin = RangeMergeJoin
+      .mergeSplits(left.rangeSplits, right.rangeSplits)
+      .zipWithIndex
+      .map {
+        case (mergeJoin, idx) => (OrderedRDDPartition(idx), mergeJoin)
+      }
+      .toMap
 
     // A map from partition index to a RangeMergeJoin.
-    val partitionIndexToMergeJoin = partToMergeJoin.map { case (p, m) => (p.index, m) }
+    val partitionIndexToMergeJoin = partToMergeJoin.map {
+      case (p, m) => (p.index, m)
+    }
     val leftDep = new NarrowDependency(left) {
       override def getParents(partitionId: Int) =
         partitionIndexToMergeJoin(partitionId).left.map(_.partition.index)
@@ -58,22 +67,28 @@ protected[flint] object Merge {
       case (p, mergeJoin) => RangeSplit(p, mergeJoin.range)
     }.toArray
 
-    new OrderedRDD[K, Either[V, V2]](left.sc, mergedSplits, Seq(leftDep, rightDep))(
-      (part, context) => {
-        val mergedJoin = partitionIndexToMergeJoin(part.index)
-        // Select rows from both RDDs whose key belongs to this RangeMergeJoin's range
-        val leftParts = mergedJoin.left.map(_.partition)
-        val leftIter = PeekableIterator(PartitionsIterator(left, leftParts, context).filter {
+    new OrderedRDD[K, Either[V, V2]](
+      left.sc,
+      mergedSplits,
+      Seq(leftDep, rightDep)
+    )((part, context) => {
+      val mergedJoin = partitionIndexToMergeJoin(part.index)
+      // Select rows from both RDDs whose key belongs to this RangeMergeJoin's range
+      val leftParts = mergedJoin.left.map(_.partition)
+      val leftIter = PeekableIterator(
+        PartitionsIterator(left, leftParts, context).filter {
           case (k, _) => mergedJoin.range.contains(k)
-        })
-        val rightParts = mergedJoin.right.map(_.partition)
-        val rightIter = PeekableIterator(PartitionsIterator(right, rightParts, context).filter {
+        }
+      )
+      val rightParts = mergedJoin.right.map(_.partition)
+      val rightIter = PeekableIterator(
+        PartitionsIterator(right, rightParts, context).filter {
           case (k, _) => mergedJoin.range.contains(k)
-        })
-        // Perform an ordered merge of the selected rows.
-        MergeIterator(leftIter, rightIter)
-      }
-    )
+        }
+      )
+      // Perform an ordered merge of the selected rows.
+      MergeIterator(leftIter, rightIter)
+    })
   }
 
 }

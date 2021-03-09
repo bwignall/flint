@@ -93,7 +93,9 @@ class ExponentialWeightedMovingAverageSummarizer(
     }
   }
 
-  override def render(u: ExponentialWeightedMovingAverageState): ExponentialWeightedMovingAverageOutput = {
+  override def render(
+    u: ExponentialWeightedMovingAverageState
+  ): ExponentialWeightedMovingAverageOutput = {
     if (u.count > 0L) {
       convention match {
         case ExponentialWeightedMovingAverageConvention.Core =>
@@ -103,7 +105,9 @@ class ExponentialWeightedMovingAverageSummarizer(
         case ExponentialWeightedMovingAverageConvention.Legacy =>
           ExponentialWeightedMovingAverageOutput(u.primaryESValue)
         case _ =>
-          throw new IllegalArgumentException(s"Not supported convention $convention")
+          throw new IllegalArgumentException(
+            s"Not supported convention $convention"
+          )
       }
     } else {
       ExponentialWeightedMovingAverageOutput(Double.NaN)

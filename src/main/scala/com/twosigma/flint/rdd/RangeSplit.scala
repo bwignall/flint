@@ -28,10 +28,7 @@ object RangeSplit {
    *
    * The `begins` must be sorted.
    */
-  private[rdd] def getNextBegin[K](begin: K, begins: IndexedSeq[K])(
-    implicit
-    ord: Ordering[K]
-  ): Option[K] = {
+  private[rdd] def getNextBegin[K](begin: K, begins: IndexedSeq[K])(implicit ord: Ordering[K]): Option[K] = {
     val result: SearchResult = begins.search(begin)
     var i = result.insertionPoint
     while (i < begins.length && !ord.gt(begins(i), begin)) {
@@ -54,13 +51,17 @@ object RangeSplit {
     splits: IndexedSeq[RangeSplit[K]]
   ): Seq[RangeSplit[K]] = {
     val split = RangeSplit(OrderedRDDPartition(0), range)
-    Range.intersect(split, splits, { r: RangeSplit[K] => r.range }, true).map(splits(_))
+    Range
+      .intersect(split, splits, { r: RangeSplit[K] => r.range }, true)
+      .map(splits(_))
   }
 
   /**
    * Test whether `splits` are sorted by their ranges.
    */
-  private[rdd] def isSortedByRange[K: Ordering](splits: Seq[RangeSplit[K]]): Boolean =
+  private[rdd] def isSortedByRange[K: Ordering](
+    splits: Seq[RangeSplit[K]]
+  ): Boolean =
     Range.isSorted(splits, { r: RangeSplit[K] => r.range })
 }
 

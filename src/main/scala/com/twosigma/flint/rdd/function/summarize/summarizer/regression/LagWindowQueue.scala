@@ -24,14 +24,20 @@ class LagWindowQueue[E](
   lagWindow: LagWindow
 ) extends Serializable {
 
-  private val queue: mutable.Queue[LagElement[E]] = new mutable.Queue[LagElement[E]]()
+  private val queue: mutable.Queue[LagElement[E]] =
+    new mutable.Queue[LagElement[E]]()
 
-  private def isNew(timestamp: Long): Boolean = queue.nonEmpty && queue.last.timestamp != timestamp
+  private def isNew(timestamp: Long): Boolean =
+    queue.nonEmpty && queue.last.timestamp != timestamp
 
   def enqueue(timeStamp: Long, e: E): LagElement[E] = {
     if (queue.isEmpty || isNew(timeStamp)) {
       queue.enqueue(LagElement(timeStamp, e))
-      while (queue.size > 1 && !lagWindow.shouldKeep(timeStamp, queue.head.timestamp, queue.size)) {
+      while (queue.size > 1 && !lagWindow.shouldKeep(
+        timeStamp,
+        queue.head.timestamp,
+        queue.size
+      )) {
         queue.dequeue()
       }
     }

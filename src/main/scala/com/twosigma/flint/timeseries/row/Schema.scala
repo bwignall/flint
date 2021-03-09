@@ -22,8 +22,15 @@ import org.apache.spark.sql.types._
 
 private[timeseries] object Schema {
   def addColumnPrefix(field: StructField, prefix: Option[String]): StructField =
-    prefix.map(p =>
-      StructField(s"${p}_${field.name}", field.dataType, field.nullable, field.metadata)).getOrElse(field)
+    prefix
+      .map(p =>
+        StructField(
+          s"${p}_${field.name}",
+          field.dataType,
+          field.nullable,
+          field.metadata
+        ))
+      .getOrElse(field)
 
   /**
    * Check if the names of columns are unique and throw [[IllegalArgumentException]] otherwise.
@@ -31,10 +38,9 @@ private[timeseries] object Schema {
    * @param schema The schema expected to check the uniqueness.
    */
   def requireUniqueColumnNames(schema: StructType): Unit = {
-    val duplicates = schema
-      .fieldNames
-      .groupBy{ name => name }
-      .filter{ case (_, group) => group.length > 1 }
+    val duplicates = schema.fieldNames
+      .groupBy { name => name }
+      .filter { case (_, group) => group.length > 1 }
       .keys
       .toSeq
 
@@ -47,23 +53,31 @@ private[timeseries] object Schema {
   }
 
   def rename(schema: StructType, fromTo: Seq[(String, String)]): StructType = {
-    val newSchema = StructType(schema.map {
-      field => fromTo.toMap.get(field.name).fold(field)(StructField(_, field.dataType, field.nullable))
+    val newSchema = StructType(schema.map { field =>
+      fromTo.toMap
+        .get(field.name)
+        .fold(field)(StructField(_, field.dataType, field.nullable))
     })
     requireUniqueColumnNames(newSchema)
     newSchema
   }
 
   def add(schema: StructType, columns: Seq[(String, DataType)]): StructType = {
-    val newSchema = StructType(schema.fields ++ columns.map{ case (n, t) => StructField(n, t) })
+    val newSchema = StructType(schema.fields ++ columns.map {
+      case (n, t) => StructField(n, t)
+    })
     requireUniqueColumnNames(newSchema)
     newSchema
   }
 
-  def addOrUpdate(schema: StructType, columns: Seq[((String, DataType), Option[Int])]): StructType = {
+  def addOrUpdate(
+    schema: StructType,
+    columns: Seq[((String, DataType), Option[Int])]
+  ): StructType = {
     val oldFields = schema.fields.clone()
     columns.foreach {
-      case ((name, dataType), Some(index)) => oldFields(index) = StructField(name, dataType)
+      case ((name, dataType), Some(index)) =>
+        oldFields(index) = StructField(name, dataType)
       case _ => // Nothing
     }
 
@@ -83,8 +97,14 @@ private[timeseries] object Schema {
    * @param keyFields The other possible fields expected to append.
    * @return a new schema with the appended time column etc.
    */
-  def prependTimeAndKey(schema: StructType, keyFields: Seq[StructField], timeType: TimeType): StructType = {
-    val newSchema = StructType((TimeSeriesRDD.timeField(timeType) +: keyFields) ++ schema.fields)
+  def prependTimeAndKey(
+    schema: StructType,
+    keyFields: Seq[StructField],
+    timeType: TimeType
+  ): StructType = {
+    val newSchema = StructType(
+      (TimeSeriesRDD.timeField(timeType) +: keyFields) ++ schema.fields
+    )
     requireUniqueColumnNames(newSchema)
     newSchema
   }
@@ -97,7 +117,9 @@ private[timeseries] object Schema {
    *         simply return the original string .
    */
   def prependTimeIfMissing(columns: Seq[String]): Seq[String] =
-    columns.find(_ == TimeSeriesRDD.timeColumnName).fold(TimeSeriesRDD.timeColumnName +: columns) { _ => columns }
+    columns
+      .find(_ == TimeSeriesRDD.timeColumnName)
+      .fold(TimeSeriesRDD.timeColumnName +: columns) { _ => columns }
 
   /**
    * Create a schema with the given sequence of fields.
@@ -109,15 +131,16 @@ private[timeseries] object Schema {
    *       an IllegalArgumentException.
    */
   def apply(columns: (String, DataType)*): StructType = {
-    val cols: Seq[(String, DataType)] = if (!columns.map(_._1).contains(TimeSeriesRDD.timeColumnName)) {
-      (TimeSeriesRDD.timeColumnName, LongType) +: columns
-    } else {
-      require(
-        columns.contains((TimeSeriesRDD.timeColumnName, LongType)),
-        s"The columns doesn't contain a field name ${TimeSeriesRDD.timeColumnName} of LongType"
-      )
-      columns
-    }
+    val cols: Seq[(String, DataType)] =
+      if (!columns.map(_._1).contains(TimeSeriesRDD.timeColumnName)) {
+        (TimeSeriesRDD.timeColumnName, LongType) +: columns
+      } else {
+        require(
+          columns.contains((TimeSeriesRDD.timeColumnName, LongType)),
+          s"The columns doesn't contain a field name ${TimeSeriesRDD.timeColumnName} of LongType"
+        )
+        columns
+      }
     of(cols: _*)
   }
 
@@ -127,9 +150,10 @@ private[timeseries] object Schema {
    * @param columns A sequence of tuple(s) specifying the name and the data type of a field.
    * @return a schema.
    */
-  def of(columns: (String, DataType)*): StructType = StructType(columns.map {
-    case (columnName, dataType) => StructField(columnName, dataType)
-  })
+  def of(columns: (String, DataType)*): StructType =
+    StructType(columns.map {
+      case (columnName, dataType) => StructField(columnName, dataType)
+    })
 
   /**
    * Create a schema with updated column data types or throw an exception if the operation isn't valid.
@@ -150,13 +174,16 @@ private[timeseries] object Schema {
     }
 
     updatesWithIndex.foreach {
-      case ((name, _), indexOpt) => require(
-        indexOpt.nonEmpty,
-        s"$name column isn't found in the RDD"
-      )
+      case ((name, _), indexOpt) =>
+        require(
+          indexOpt.nonEmpty,
+          s"$name column isn't found in the RDD"
+        )
     }
 
-    val currentDataTypes = updatesWithIndex.map { case (_, index) => schema.fields(index.get).dataType }
+    val currentDataTypes = updatesWithIndex.map {
+      case (_, index) => schema.fields(index.get).dataType
+    }
     require(
       currentDataTypes.forall(_.isInstanceOf[NumericType]),
       s"Casting non-numeric columns isn't allowed."
@@ -165,14 +192,16 @@ private[timeseries] object Schema {
     // If all sanity checks above are passed, it will be safe to cast the columns.
     val patches = updates.toMap
     val updatedFields = schema.fields.map { structField =>
-      patches.get(structField.name).fold(structField)(StructField(structField.name, _))
+      patches
+        .get(structField.name)
+        .fold(structField)(StructField(structField.name, _))
     }
 
     StructType(updatedFields)
   }
 
   def append(schema: StructType, columns: (String, DataType)*): StructType = {
-    StructType(schema.fields ++ columns.map{
+    StructType(schema.fields ++ columns.map {
       case (columnName, dataType) => StructField(columnName, dataType)
     })
   }

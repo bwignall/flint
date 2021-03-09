@@ -43,9 +43,10 @@ object ColumnList {
    * [[Sequence]] should be used to specify a list of columns.
    */
   case class Sequence(columns: Seq[String]) extends ColumnList {
-    def ++(other: ColumnList): ColumnList = other match {
-      case All => All
-      case Sequence(seq) => Sequence(columns ++ seq)
-    }
+    def ++(other: ColumnList): ColumnList =
+      other match {
+        case All => All
+        case Sequence(seq) => Sequence(columns ++ seq)
+      }
   }
 }

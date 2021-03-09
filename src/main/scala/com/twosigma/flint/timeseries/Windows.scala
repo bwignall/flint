@@ -16,7 +16,10 @@
 
 package com.twosigma.flint.timeseries
 
-import com.twosigma.flint.timeseries.window.{ ShiftTimeWindow, AbsoluteTimeWindow }
+import com.twosigma.flint.timeseries.window.{
+  ShiftTimeWindow,
+  AbsoluteTimeWindow
+}
 import scala.concurrent.duration.Duration
 
 object Windows {

@@ -40,7 +40,8 @@ case class ProductState(
  * keep track of the sign of the product, as this is flipped for every negative value encountered. This is necessary
  * with the sum of logs approach as we cannot take the log of a negative number.
  */
-class ProductSummarizer extends LeftSubtractableSummarizer[Double, ProductState, Double] {
+class ProductSummarizer
+  extends LeftSubtractableSummarizer[Double, ProductState, Double] {
   def zero(): ProductState = ProductState(0L, 0L, true, new Kahan())
 
   def add(u: ProductState, data: Double): ProductState = {

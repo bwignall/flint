@@ -89,10 +89,11 @@ case class ExponentialWeightedMovingAverageSummarizer(
 
   override val schema: StructType = Schema.of(s"${xColumn}_ewma" -> DoubleType)
 
-  override def toT(r: InternalRow): EWMARow = EWMARow(
-    time = getTimeNanos(r, timeColumnId),
-    x = xExtractor(r)
-  )
+  override def toT(r: InternalRow): EWMARow =
+    EWMARow(
+      time = getTimeNanos(r, timeColumnId),
+      x = xExtractor(r)
+    )
 
   override def fromV(
     o: ExponentialWeightedMovingAverageOutput

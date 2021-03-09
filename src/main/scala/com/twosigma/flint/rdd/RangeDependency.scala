@@ -41,35 +41,39 @@ private[rdd] object RangeDependency {
     val sortedHeaders = headers.sortBy(_.partition.index).toArray
 
     // Assume partitions are sorted, i.e. the keys of ith partition are less or equal than those of (i + 1)th partition.
-    sortedHeaders.reduceOption {
-      (h1, h2) =>
-        if (ord.lteq(h1.firstKey, h2.firstKey)) {
-          h2
-        } else {
-          sys.error(s"Partitions are not sorted. " +
+    sortedHeaders.reduceOption { (h1, h2) =>
+      if (ord.lteq(h1.firstKey, h2.firstKey)) {
+        h2
+      } else {
+        sys.error(
+          s"Partitions are not sorted. " +
             s"The partition ${h1.partition.index} has the first key ${h1.firstKey} and " +
-            s"the partition ${h2.partition.index} has the first key ${h2.firstKey}.")
-        }
+            s"the partition ${h2.partition.index} has the first key ${h2.firstKey}."
+        )
+      }
     }
 
-    val (nonNormalizedPartitions, nonNormalizedRanges) = sortedHeaders.zipWithIndex.map {
-      case (hdr, idx) =>
-        val range = if (idx < sortedHeaders.length - 1) {
-          // It must be close-close range except the last one.
-          Range.closeClose(hdr.firstKey, sortedHeaders(idx + 1).firstKey)
-        } else {
-          // This is by the best of our knowledge to tell the range of records in each partition.
-          Range.closeOpen(hdr.firstKey, None)
-        }
-        (hdr.partition, range)
-    }.unzip
+    val (nonNormalizedPartitions, nonNormalizedRanges) =
+      sortedHeaders.zipWithIndex.map {
+        case (hdr, idx) =>
+          val range = if (idx < sortedHeaders.length - 1) {
+            // It must be close-close range except the last one.
+            Range.closeClose(hdr.firstKey, sortedHeaders(idx + 1).firstKey)
+          } else {
+            // This is by the best of our knowledge to tell the range of records in each partition.
+            Range.closeOpen(hdr.firstKey, None)
+          }
+          (hdr.partition, range)
+      }.unzip
 
     require(Range.isSorted(nonNormalizedRanges))
 
     val normalizedRanges = normalizationStrategy.normalize(sortedHeaders)
     normalizedRanges.sortBy(_.begin).zipWithIndex.map {
       case (normalizedRange, idx) =>
-        val parents = normalizedRange.intersectsWith(nonNormalizedRanges, true).map(nonNormalizedPartitions(_))
+        val parents = normalizedRange
+          .intersectsWith(nonNormalizedRanges, true)
+          .map(nonNormalizedPartitions(_))
         RangeDependency[K, P](idx, normalizedRange, parents)
     }
   }
@@ -100,16 +104,14 @@ private[rdd] case class RangeDependency[K, P <: Partition](
 ) extends Serializable
 
 private[rdd] trait PartitionNormalizationStrategy {
+
   /**
    * Return a sequence of close-open ranges from a sequence of [[OrderedPartitionHeader]]s that could be
    * used to define the ranges of normalized partitions.
    */
   final def normalize[K, P <: Partition](
     headers: Seq[OrderedPartitionHeader[K, P]]
-  )(
-    implicit
-    ord: Ordering[K]
-  ): Seq[CloseOpen[K]] = {
+  )(implicit ord: Ordering[K]): Seq[CloseOpen[K]] = {
     if (headers.isEmpty) {
       Seq.empty
     } else {
@@ -119,14 +121,12 @@ private[rdd] trait PartitionNormalizationStrategy {
 
   def doNormalize[K, P <: Partition](
     headers: Seq[OrderedPartitionHeader[K, P]]
-  )(
-    implicit
-    ord: Ordering[K]
-  ): Seq[CloseOpen[K]]
+  )(implicit ord: Ordering[K]): Seq[CloseOpen[K]]
 
 }
 
-private[rdd] object BasicNormalizationStrategy extends PartitionNormalizationStrategy {
+private[rdd] object BasicNormalizationStrategy
+  extends PartitionNormalizationStrategy {
 
   /**
    * This strategy works as follows:
@@ -151,22 +151,27 @@ private[rdd] object BasicNormalizationStrategy extends PartitionNormalizationStr
    */
   override def doNormalize[K, P <: Partition](
     headers: Seq[OrderedPartitionHeader[K, P]]
-  )(
-    implicit
-    ord: Ordering[K]
-  ): Seq[CloseOpen[K]] = {
+  )(implicit ord: Ordering[K]): Seq[CloseOpen[K]] = {
 
     // Collect all existing second keys which could be an empty set.
-    val secondKeys = headers.filter(_.secondKey.isDefined).map {
-      _.secondKey.get
-    }.sorted.zipWithIndex.map(_.swap).toMap
+    val secondKeys = headers
+      .filter(_.secondKey.isDefined)
+      .map {
+        _.secondKey.get
+      }
+      .sorted
+      .zipWithIndex
+      .map(_.swap)
+      .toMap
 
     val firstKey = headers.head.firstKey
     if (headers.head.secondKey.isDefined) {
       // For the case that the first partition has multiple keys.
-      CloseOpen(firstKey, secondKeys.get(1)) +: secondKeys.toSeq.filter(_._1 > 0).map {
-        case (idx, secondKey) => CloseOpen(secondKey, secondKeys.get(idx + 1))
-      }
+      CloseOpen(firstKey, secondKeys.get(1)) +: secondKeys.toSeq
+        .filter(_._1 > 0)
+        .map {
+          case (idx, secondKey) => CloseOpen(secondKey, secondKeys.get(idx + 1))
+        }
     } else {
       // For the case that the first partition has only a single key.
       CloseOpen(firstKey, secondKeys.get(0)) +: secondKeys.toSeq.map {
@@ -176,7 +181,8 @@ private[rdd] object BasicNormalizationStrategy extends PartitionNormalizationStr
   }
 }
 
-private[rdd] object HeavyKeysNormalizationStrategy extends PartitionNormalizationStrategy {
+private[rdd] object HeavyKeysNormalizationStrategy
+  extends PartitionNormalizationStrategy {
 
   /**
    * This strategy is similar [[BasicNormalizationStrategy]], but it allocates a separate partition to rows with
@@ -208,24 +214,25 @@ private[rdd] object HeavyKeysNormalizationStrategy extends PartitionNormalizatio
    */
   override def doNormalize[K, P <: Partition](
     headers: Seq[OrderedPartitionHeader[K, P]]
-  )(
-    implicit
-    ord: Ordering[K]
-  ): Seq[CloseOpen[K]] = {
+  )(implicit ord: Ordering[K]): Seq[CloseOpen[K]] = {
 
     val sortedHeaders = headers.sortBy(_.partition.index)
 
-    val partitionBoundaries = sortedHeaders.head.firstKey +: sortedHeaders.tail.map {
-      header => header.secondKey.getOrElse(header.firstKey)
-    }
+    val partitionBoundaries =
+      sortedHeaders.head.firstKey +: sortedHeaders.tail.map { header =>
+        header.secondKey.getOrElse(header.firstKey)
+      }
 
     val distinctBoundaries = partitionBoundaries.distinct
     val lastElement = distinctBoundaries.last
 
     val partitionIntervals = if (distinctBoundaries.size > 1) {
-      distinctBoundaries.sliding(2).map {
-        case Seq(begin, end) => CloseOpen(begin, Some(end))
-      }.toSeq
+      distinctBoundaries
+        .sliding(2)
+        .map {
+          case Seq(begin, end) => CloseOpen(begin, Some(end))
+        }
+        .toSeq
     } else {
       Seq.empty
     }

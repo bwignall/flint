@@ -29,10 +29,11 @@ case class NthCentralMomentState(
 
 case class NthCentralMomentOutput(count: Long, moments: Array[Double]) {
 
-  def nthCentralMoment(moment: Int): Double = moment match {
-    case 1 => 0
-    case _ => moments(moment - 2)
-  }
+  def nthCentralMoment(moment: Int): Double =
+    moment match {
+      case 1 => 0
+      case _ => moments(moment - 2)
+    }
 }
 
 // This summarizer uses mutable state
@@ -85,10 +86,16 @@ case class NthCentralMomentSummarizer(moment: Int)
         var deltaOverCountRunningProduct = 1d
         for (k <- 1 to p - 2) {
           deltaOverCountRunningProduct *= deltaOverCount
-          u.moments(p - 2).add(binomials(p - 2)(k - 1) * prevMoments(p - k - 2) * deltaOverCountRunningProduct)
+          u.moments(p - 2)
+            .add(
+              binomials(p - 2)(k - 1) * prevMoments(
+                p - k - 2
+              ) * deltaOverCountRunningProduct
+            )
         }
 
-        u.moments(p - 2).add(countDeltaRunningProduct * (1d - oneMinusCountRunningProduct))
+        u.moments(p - 2)
+          .add(countDeltaRunningProduct * (1d - oneMinusCountRunningProduct))
       }
       u
     }
@@ -121,12 +128,16 @@ case class NthCentralMomentSummarizer(moment: Int)
         var deltaOverCountRunningProduct = 1d
         for (k <- 1 to p - 2) {
           deltaOverCountRunningProduct *= deltaOverCount
-          u.moments(p - 2).add(
-            -binomials(p - 2)(k - 1) * u.moments(p - k - 2).value * deltaOverCountRunningProduct
-          )
+          u.moments(p - 2)
+            .add(
+              -binomials(p - 2)(k - 1) * u
+                .moments(p - k - 2)
+                .value * deltaOverCountRunningProduct
+            )
         }
 
-        u.moments(p - 2).add(-countDeltaRunningProduct * (1d - oneMinusCountRunningProduct))
+        u.moments(p - 2)
+          .add(-countDeltaRunningProduct * (1d - oneMinusCountRunningProduct))
       }
       u.count -= 1L
 
@@ -175,8 +186,12 @@ case class NthCentralMomentSummarizer(moment: Int)
       u1.moments(p - 2)
         .add(
           binomials(p - 2)(k - 1) *
-            (pow(-u2.count.toDouble / newCount, k.toDouble) * prevMoments1(p - k - 2) +
-              pow(u1.count.toDouble / newCount, k.toDouble) * u2.moments(p - k - 2).value) *
+            (pow(-u2.count.toDouble / newCount, k.toDouble) * prevMoments1(
+              p - k - 2
+            ) +
+              pow(u1.count.toDouble / newCount, k.toDouble) * u2
+              .moments(p - k - 2)
+              .value) *
               pow(meanDelta, k.toDouble)
         )
     }

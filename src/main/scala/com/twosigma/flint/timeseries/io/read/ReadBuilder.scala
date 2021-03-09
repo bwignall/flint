@@ -107,7 +107,10 @@ class ReadBuilder(
    * @return this [[ReadBuilder]]
    */
   @PythonApi
-  def range(@Nullable beginNanos: java.lang.Long, @Nullable endNanos: java.lang.Long): this.type =
+  def range(
+    @Nullable beginNanos: java.lang.Long,
+    @Nullable endNanos: java.lang.Long
+  ): this.type =
     range(Option(beginNanos).map(_.toLong), Option(endNanos).map(_.toLong))
 
   /**
@@ -117,8 +120,12 @@ class ReadBuilder(
    * @param endNanosOpt If defined, the exclusive end time in nanoseconds.
    * @return this [[ReadBuilder]]
    */
-  private[read] def range(beginNanosOpt: Option[Long], endNanosOpt: Option[Long]): this.type = {
-    parameters.range = parameters.range.copy(rawBeginNanosOpt = beginNanosOpt, rawEndNanosOpt = endNanosOpt)
+  private[read] def range(
+    beginNanosOpt: Option[Long],
+    endNanosOpt: Option[Long]
+  ): this.type = {
+    parameters.range = parameters.range
+      .copy(rawBeginNanosOpt = beginNanosOpt, rawEndNanosOpt = endNanosOpt)
     this
   }
 
@@ -131,15 +138,23 @@ class ReadBuilder(
    * @param end A string that specifies the time distance to expand the end time, e.g., "7days"
    * @return
    */
-  def expand(@Nullable begin: String = null, @Nullable end: String = null): this.type = {
-    val expandBeginNanos = Option(begin).map(begin => Long.box(Duration(begin).toNanos)).orNull
-    val expandEndNanos = Option(end).map(end => Long.box(Duration(end).toNanos)).orNull
+  def expand(
+    @Nullable begin: String = null,
+    @Nullable end: String = null
+  ): this.type = {
+    val expandBeginNanos =
+      Option(begin).map(begin => Long.box(Duration(begin).toNanos)).orNull
+    val expandEndNanos =
+      Option(end).map(end => Long.box(Duration(end).toNanos)).orNull
     expand(expandBeginNanos, expandEndNanos)
     this
   }
 
   @PythonApi
-  def expand(@Nullable beginNanos: java.lang.Long, @Nullable endNanos: java.lang.Long): this.type = {
+  def expand(
+    @Nullable beginNanos: java.lang.Long,
+    @Nullable endNanos: java.lang.Long
+  ): this.type = {
     parameters.range = parameters.range.copy(
       expandBeginNanosOpt = Option(beginNanos).map(_.toLong),
       expandEndNanosOpt = Option(endNanos).map(_.toLong)
@@ -187,7 +202,8 @@ class ReadBuilder(
     TimeSeriesRDD.fromParquet(
       sc,
       paths,
-      isSorted = parameters.extraOptions.getOrElse("isSorted", "true").toBoolean,
+      isSorted =
+        parameters.extraOptions.getOrElse("isSorted", "true").toBoolean,
       beginNanos = parameters.range.beginNanosOpt,
       endNanos = parameters.range.endNanosOpt,
       columns = parameters.columns,
@@ -210,9 +226,12 @@ class ReadBuilder(
     @Nullable offset: String = null,
     endInclusive: Boolean = true
   ): TimeSeriesRDD =
-    clock(name, Duration(frequency).toNanos,
+    clock(
+      name,
+      Duration(frequency).toNanos,
       Option(offset).map(v => Long.box(Duration(v).toNanos)).orNull,
-      endInclusive)
+      endInclusive
+    )
 
   @PythonApi
   private[read] def clock(
@@ -258,8 +277,9 @@ object ReadBuilder {
    * Subclass of [[Parameters]] with accessor methods that are used by the methods
    * in [[ReadBuilder]] and in the Python API.
    */
-  private[read] class ReadBuilderParameters(additionalDefaults: Map[String, String] = Map.empty)
-    extends Parameters(defaultOptions ++ additionalDefaults) {
+  private[read] class ReadBuilderParameters(
+    additionalDefaults: Map[String, String] = Map.empty
+  ) extends Parameters(defaultOptions ++ additionalDefaults) {
 
     /** Returns the value of the `TIME_UNIT` option as a [[TimeUnit]] */
     def timeUnit: TimeUnit = Duration("1" + timeUnitString).unit

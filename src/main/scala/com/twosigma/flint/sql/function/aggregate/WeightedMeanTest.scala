@@ -16,7 +16,10 @@
 
 package com.twosigma.flint.sql.function.aggregate
 
-import org.apache.spark.sql.expressions.{ MutableAggregationBuffer, UserDefinedAggregateFunction }
+import org.apache.spark.sql.expressions.{
+  MutableAggregationBuffer,
+  UserDefinedAggregateFunction
+}
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types._
 import scala.math.{ abs, signum, sqrt }
@@ -35,19 +38,29 @@ import scala.math.{ abs, signum, sqrt }
 
 class WeightedMeanTest extends UserDefinedAggregateFunction {
   override def inputSchema: StructType =
-    StructType(StructField("value", DoubleType) :: StructField("weight", DoubleType) :: Nil)
+    StructType(
+      StructField("value", DoubleType) :: StructField(
+        "weight",
+        DoubleType
+      ) :: Nil
+    )
 
   override def bufferSchema: StructType =
-    StructType(StructField("count", LongType) ::
-      StructField("sumWeight", DoubleType) ::
-      StructField("mean", DoubleType) ::
-      StructField("sumSquareOfDiffFromMean", DoubleType) ::
-      StructField("sumSquareOfWeights", DoubleType) :: Nil)
+    StructType(
+      StructField("count", LongType) ::
+        StructField("sumWeight", DoubleType) ::
+        StructField("mean", DoubleType) ::
+        StructField("sumSquareOfDiffFromMean", DoubleType) ::
+        StructField("sumSquareOfWeights", DoubleType) :: Nil
+    )
 
-  override def dataType: DataType = StructType(StructField("weightedMean", DoubleType) ::
-    StructField("weightedStandardDeviation", DoubleType) ::
-    StructField("weightedTstat", DoubleType) ::
-    StructField("observationCount", LongType) :: Nil)
+  override def dataType: DataType =
+    StructType(
+      StructField("weightedMean", DoubleType) ::
+        StructField("weightedStandardDeviation", DoubleType) ::
+        StructField("weightedTstat", DoubleType) ::
+        StructField("observationCount", LongType) :: Nil
+    )
 
   override def deterministic: Boolean = true
 
@@ -105,7 +118,8 @@ class WeightedMeanTest extends UserDefinedAggregateFunction {
       buffer1(1) = sumWeight1 + sumWeight2
       // This particular way to calculate mean is chosen based on
       // http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Parallel_algorithm
-      buffer1(2) = (sumWeight1 * mean1 + sumWeight2 * mean2) / (sumWeight1 + sumWeight2)
+      buffer1(2) =
+        (sumWeight1 * mean1 + sumWeight2 * mean2) / (sumWeight1 + sumWeight2)
       buffer1(3) = sumSquareOfDiffFromMean1 + sumSquareOfDiffFromMean2 +
         delta * delta * sumWeight1 * sumWeight2 / (sumWeight1 + sumWeight2)
       buffer1(4) = sumSquareOfWeights1 + sumSquareOfWeights2

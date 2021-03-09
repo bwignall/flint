@@ -20,7 +20,12 @@ import java.io.ByteArrayOutputStream
 import java.nio.channels.Channels
 import java.util
 
-import com.twosigma.flint.arrow.{ ArrowFieldWriter, ArrowPayload, ArrowUtils, ArrowWriter }
+import com.twosigma.flint.arrow.{
+  ArrowFieldWriter,
+  ArrowPayload,
+  ArrowUtils,
+  ArrowWriter
+}
 import org.apache.arrow.memory.{ BufferAllocator, RootAllocator }
 import org.apache.arrow.vector.VectorSchemaRoot
 import org.apache.arrow.vector.ipc.ArrowFileWriter
@@ -60,8 +65,11 @@ case class ArrowSummarizerResult(baseRows: Array[Any], arrowBatch: Array[Byte])
  *
  * This summarizer is only meant to be used in local mode, such as in summarizeCycles and summarizeWindows.
  */
-case class ArrowSummarizer(inputSchema: StructType, outputSchema: StructType, includeBaseRows: Boolean)
-  extends Summarizer[InternalRow, ArrowSummarizerState, ArrowSummarizerResult] {
+case class ArrowSummarizer(
+  inputSchema: StructType,
+  outputSchema: StructType,
+  includeBaseRows: Boolean
+) extends Summarizer[InternalRow, ArrowSummarizerState, ArrowSummarizerResult] {
   private[this] val size = outputSchema.size
   require(size > 0, "Cannot create summarizer with no input columns")
 
@@ -85,7 +93,10 @@ case class ArrowSummarizer(inputSchema: StructType, outputSchema: StructType, in
     }
   }
 
-  override def add(u: ArrowSummarizerState, row: InternalRow): ArrowSummarizerState = {
+  override def add(
+    u: ArrowSummarizerState,
+    row: InternalRow
+  ): ArrowSummarizerState = {
     if (!u.initialized) {
       init(u)
     }

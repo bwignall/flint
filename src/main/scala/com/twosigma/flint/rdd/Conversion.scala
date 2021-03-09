@@ -56,54 +56,72 @@ object Conversion {
     // Gather header information for each partition from the given `rdd` via the `keyRdd`.
     // We use `keyRdd` instead of `rdd` could potentially utilize the fact that iterating
     // through `keyRdd` could be much faster than that of `rdd`.
-    val headers = keys.mapPartitionsWithIndex {
-      case (idx, iter) =>
-        Iterator(if (iter.nonEmpty) {
-          val firstKey = iter.next
-          // XXX Try to find the first two distinct keys for every partition. If there is
-          // only one key in the whole partition, put the second key as None.
-          // A basic assumption we made here is that there are not too many records with the
-          // same key within a single partition. Thus, searching the distinct second key should be
-          // considered as a ``light weight'' operation.
-          Seq(OrderedPartitionHeader(
-            // The following partition is not the right type which should be the type of *current*
-            // partition. We will convert it back later on.
-            OrderedRDDPartition(idx),
-            firstKey,
-            iter.find(it => ord.gt(it, firstKey))
-          ))
-        } else {
-          Seq.empty
-        })
-    }.fold(Seq.empty)(_ ++ _).map {
-      // Convert the partition type back. This is a trick to avoid propagating the partition of
-      // parent rdd all around.
-      hdr =>
-        // Note that the following uses the partitions from `rdd` instead of partitions from `keyRdd`.
-        require(rdd.partitions(hdr.partition.index).index == hdr.partition.index)
-        OrderedPartitionHeader(rdd.partitions(hdr.partition.index), hdr.firstKey, hdr.secondKey)
-    }
+    val headers = keys
+      .mapPartitionsWithIndex {
+        case (idx, iter) =>
+          Iterator(if (iter.nonEmpty) {
+            val firstKey = iter.next
+            // XXX Try to find the first two distinct keys for every partition. If there is
+            // only one key in the whole partition, put the second key as None.
+            // A basic assumption we made here is that there are not too many records with the
+            // same key within a single partition. Thus, searching the distinct second key should be
+            // considered as a ``light weight'' operation.
+            Seq(
+              OrderedPartitionHeader(
+                // The following partition is not the right type which should be the type of *current*
+                // partition. We will convert it back later on.
+                OrderedRDDPartition(idx),
+                firstKey,
+                iter.find(it => ord.gt(it, firstKey))
+              )
+            )
+          } else {
+            Seq.empty
+          })
+      }
+      .fold(Seq.empty)(_ ++ _)
+      .map {
+        // Convert the partition type back. This is a trick to avoid propagating the partition of
+        // parent rdd all around.
+        hdr =>
+          // Note that the following uses the partitions from `rdd` instead of partitions from `keyRdd`.
+          require(
+            rdd.partitions(hdr.partition.index).index == hdr.partition.index
+          )
+          OrderedPartitionHeader(
+            rdd.partitions(hdr.partition.index),
+            hdr.firstKey,
+            hdr.secondKey
+          )
+      }
 
     val rangeDep = RangeDependency.normalize(headers)
     val dependencies = rangeDep.map { d => (d.index, d.parents) }.toMap
 
     val dep = new NarrowDependency(rdd) {
       override def getParents(partitionId: Int): Seq[Int] =
-        dependencies.getOrElse(
-          partitionId,
-          sys.error(s"Unclear dependency for the parents of partition $partitionId.")
-        ).map(_.index).sorted
+        dependencies
+          .getOrElse(
+            partitionId,
+            sys.error(
+              s"Unclear dependency for the parents of partition $partitionId."
+            )
+          )
+          .map(_.index)
+          .sorted
     }
-    val splits = rangeDep.map {
-      d => RangeSplit(OrderedRDDPartition(d.index).asInstanceOf[Partition], d.range)
+    val splits = rangeDep.map { d =>
+      RangeSplit(OrderedRDDPartition(d.index).asInstanceOf[Partition], d.range)
     }
-    val partitionIndexToParents = rangeDep.map{ d => (d.index, d) }.toMap
+    val partitionIndexToParents = rangeDep.map { d => (d.index, d) }.toMap
 
     new OrderedRDD[K, V](rdd.sparkContext, splits, Seq(dep))(
       (part, context) => {
         val thisDep = partitionIndexToParents.getOrElse(
           part.index,
-          sys.error(s"Unclear dependency for the parents of partition ${part.index}.")
+          sys.error(
+            s"Unclear dependency for the parents of partition ${part.index}."
+          )
         )
         val iter = PeekableIterator(
           OrderedIterator(
@@ -127,42 +145,62 @@ object Conversion {
    *            does not necessarily have tuple(s) with the smallest keys.
    * @return an [[OrderedRDD]].
    */
-  def fromNormalizedSortedRDD[K: Ordering: ClassTag, V: ClassTag](rdd: RDD[(K, V)]): OrderedRDD[K, V] = {
-    val partitionToFirstKey = rdd.mapPartitionsWithIndex {
-      case (index, iter) =>
-        Iterator(if (iter.nonEmpty) Map(index -> iter.next._1) else Map[Int, K]())
-    }.reduce(_ ++ _)
+  def fromNormalizedSortedRDD[K: Ordering: ClassTag, V: ClassTag](
+    rdd: RDD[(K, V)]
+  ): OrderedRDD[K, V] = {
+    val partitionToFirstKey = rdd
+      .mapPartitionsWithIndex {
+        case (index, iter) =>
+          Iterator(
+            if (iter.nonEmpty) Map(index -> iter.next._1)
+            else Map[Int, K]()
+          )
+      }
+      .reduce(_ ++ _)
 
-    val indexMapping = SortedMap[Int, (Int, K)]() ++ partitionToFirstKey.toSeq.sortBy(_._1).zipWithIndex.map(_.swap)
+    val indexMapping = SortedMap[Int, (Int, K)]() ++ partitionToFirstKey.toSeq
+      .sortBy(_._1)
+      .zipWithIndex
+      .map(_.swap)
 
     val rangeSplits = indexMapping.map {
       case (idx, (parentIdx, begin)) =>
         val end = indexMapping.get(idx + 1).flatMap {
           case (idx2, _) => partitionToFirstKey.get(idx2)
         }
-        RangeSplit(OrderedRDDPartition(idx).asInstanceOf[Partition], CloseOpen(begin, end))
+        RangeSplit(
+          OrderedRDDPartition(idx).asInstanceOf[Partition],
+          CloseOpen(begin, end)
+        )
     }.toArray
 
     val indexToParentPartition = indexMapping.map {
       case (idx, (parentIdx, _)) => (idx, rdd.partitions(parentIdx))
     }
 
-    new OrderedRDD[K, V](rdd.sparkContext, rangeSplits, Seq(new OneToOneDependency(rdd) {
-      override def getParents(partitionId: Int) = List(indexMapping(partitionId)._1)
-    }))(
-      (partition, context) => {
-        val range = rangeSplits(partition.index).range
-        // We capture this as debug information in case of failure
-        // Potentially can use toDebugString but it seems heavyweight.
-        val rddString = rdd.toString()
-        val iter = rdd.iterator(indexToParentPartition(partition.index), context)
-          .map(rangeValidationFunction(rddString, range))
-        new InterruptibleIterator[(K, V)](context, iter)
-      }
-    )
+    new OrderedRDD[K, V](
+      rdd.sparkContext,
+      rangeSplits,
+      Seq(new OneToOneDependency(rdd) {
+        override def getParents(partitionId: Int) =
+          List(indexMapping(partitionId)._1)
+      })
+    )((partition, context) => {
+      val range = rangeSplits(partition.index).range
+      // We capture this as debug information in case of failure
+      // Potentially can use toDebugString but it seems heavyweight.
+      val rddString = rdd.toString()
+      val iter = rdd
+        .iterator(indexToParentPartition(partition.index), context)
+        .map(rangeValidationFunction(rddString, range))
+      new InterruptibleIterator[(K, V)](context, iter)
+    })
   }
 
-  private def rangeValidationFunction[K, V](rddString: String, range: CloseOpen[K])(r: (K, V)): (K, V) = {
+  private def rangeValidationFunction[K, V](
+    rddString: String,
+    range: CloseOpen[K]
+  )(r: (K, V)): (K, V) = {
     require(
       range.contains(r._1),
       s"Key ${r._1} must be in range $range for RDD: $rddString"
@@ -177,10 +215,13 @@ object Conversion {
    * @param rdd The RDD of (K, SK, V) tuple(s) expected to convert.
    * @return an [[OrderedRDD]].
    */
-  def fromUnsortedRDD[K: Ordering: ClassTag, V: ClassTag](rdd: RDD[(K, V)]): OrderedRDD[K, V] = rdd match {
-    case orderedRdd: OrderedRDD[K, V] => orderedRdd
-    case _ => fromNormalizedSortedRDD(rdd.sortBy(_._1))
-  }
+  def fromUnsortedRDD[K: Ordering: ClassTag, V: ClassTag](
+    rdd: RDD[(K, V)]
+  ): OrderedRDD[K, V] =
+    rdd match {
+      case orderedRdd: OrderedRDD[K, V] => orderedRdd
+      case _ => fromNormalizedSortedRDD(rdd.sortBy(_._1))
+    }
 
   /**
    * Convert a sorted rows backed by a CSV file into an [[OrderedRDD]].
@@ -197,10 +238,12 @@ object Conversion {
   )(parse: Iterator[String] => Iterator[(Long, V)]): OrderedRDD[Long, V] = {
     // TODO: add unit test for it.
     val sortedRdd = fromInputFormat(
-      sc, file, CSVInputFormatConf(TextInputFormatConf(file, numPartitions))
-    ) {
-      iter => parse(iter.map(_._2))
-    }
+      sc,
+      file,
+      CSVInputFormatConf(TextInputFormatConf(file, numPartitions))
+    ) { iter =>
+        parse(iter.map(_._2))
+      }
     fromSortedRDD(sortedRdd)
   }
 
@@ -219,10 +262,17 @@ object Conversion {
       case r => parse(Iterator(r)).next._1
     }
     case class FilePartition(override val index: Int) extends Partition
-    val broadcastFileSplits = sc.broadcast(fileSplits.map { case (idx, t) => (idx, t._2) })
+    val broadcastFileSplits = sc.broadcast(fileSplits.map {
+      case (idx, t) => (idx, t._2)
+    })
     new RDD[(K, V)](sc, Nil) {
-      override def compute(split: Partition, context: TaskContext): Iterator[(K, V)] =
-        parse(Hadoop.readRecords(ifConf)(broadcastFileSplits.value(split.index)))
+      override def compute(
+        split: Partition,
+        context: TaskContext
+      ): Iterator[(K, V)] =
+        parse(
+          Hadoop.readRecords(ifConf)(broadcastFileSplits.value(split.index))
+        )
 
       override protected def getPartitions: Array[Partition] =
         fileSplits.keys.map { idx => FilePartition(idx) }.toArray
@@ -239,7 +289,11 @@ object Conversion {
     }
     // Cannot call rdd.partitions on executors because getPartitions might access transient fields
     val parentParts = rdd.partitions
-    new OrderedRDD[K, V](rdd.sparkContext, splits, Seq(new OneToOneDependency(rdd)))({
+    new OrderedRDD[K, V](
+      rdd.sparkContext,
+      splits,
+      Seq(new OneToOneDependency(rdd))
+    )({
       case (part, context) =>
         val iter = rdd.iterator(parentParts(part.index), context)
         new InterruptibleIterator[(K, V)](context, iter)
@@ -265,7 +319,10 @@ object Conversion {
     deps: Seq[Dependency[_]],
     rangeSplits: Seq[RangeSplit[K]]
   ): OrderedRDD[K, V] = {
-    require(deps.length == 1, "An OrderedRDD created from a RDD or a Dataframe should have only one dependency")
+    require(
+      deps.length == 1,
+      "An OrderedRDD created from a RDD or a Dataframe should have only one dependency"
+    )
     val dep = deps.head
 
     require(
@@ -280,9 +337,11 @@ object Conversion {
     }: _*)
 
     // map(identify) because of https://issues.scala-lang.org/browse/SI-7005
-    val indexToParentParts = indexToParentPartIndices.mapValues {
-      case indices: Seq[Int] => indices.map(rdd.partitions(_))
-    }.map(identity)
+    val indexToParentParts = indexToParentPartIndices
+      .mapValues {
+        case indices: Seq[Int] => indices.map(rdd.partitions(_))
+      }
+      .map(identity)
 
     // It is cleaner to create the dependency map instead of put the old dependencies object inside the new one.
     val newDep = narrowDep match {

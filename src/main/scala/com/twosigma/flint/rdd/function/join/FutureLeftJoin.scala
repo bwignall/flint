@@ -35,35 +35,60 @@ protected[flint] object FutureLeftJoin {
     strictForward: Boolean
   )(implicit ord: Ordering[K]): OrderedRDD[K, (V, Option[(K, V2)])] = {
     // A map from left partition index to left range split and right partitions.
-    val indexToJoinSplits = TreeMap(RangeMergeJoin.futureLeftJoinSplits(
-      toleranceFn, leftRdd.rangeSplits, rightRdd.rangeSplits
-    ).map { case (split, parts) => (split.partition.index, (split, parts)) }: _*)
+    val indexToJoinSplits = TreeMap(
+      RangeMergeJoin
+        .futureLeftJoinSplits(
+          toleranceFn,
+          leftRdd.rangeSplits,
+          rightRdd.rangeSplits
+        )
+        .map {
+          case (split, parts) => (split.partition.index, (split, parts))
+        }: _*
+    )
 
     val leftDep = new OneToOneDependency(leftRdd)
     val rightDep = new NarrowDependency(rightRdd) {
-      override def getParents(partitionId: Int): Seq[Int] = indexToJoinSplits(partitionId)._2.map(_.index)
+      override def getParents(partitionId: Int): Seq[Int] =
+        indexToJoinSplits(partitionId)._2.map(_.index)
     }
     // A map from left partition index to right partitions.
-    val leftPartitions = indexToJoinSplits.map { case (idx, joinSplit) => (idx, joinSplit._2) }
-    val joinedSplits = indexToJoinSplits.map { case (_, (split, _)) => split }.toArray
+    val leftPartitions = indexToJoinSplits.map {
+      case (idx, joinSplit) => (idx, joinSplit._2)
+    }
+    val joinedSplits = indexToJoinSplits.map {
+      case (_, (split, _)) => split
+    }.toArray
 
-    new OrderedRDD[K, (V, Option[(K, V2)])](leftRdd.sc, joinedSplits, Seq(leftDep, rightDep))(
-      (part, context) => {
-        val parts = leftPartitions(part.index)
-        val rightIter = PeekableIterator(PartitionsIterator(rightRdd, parts, context))
-        val foreSeen = new util.HashMap[SK, util.Deque[(K, V2)]]()
-        leftRdd.iterator(part, context).map {
-          case (k, v) =>
-            val sk = leftSk(v)
-            val queueForSk = forward(k, sk, toleranceFn(k), rightSk, rightIter, foreSeen, strictForward)
-            if (queueForSk.isEmpty) {
-              (k, (v, None))
-            } else {
-              (k, (v, Some(queueForSk.peekFirst())))
-            }
-        }
+    new OrderedRDD[K, (V, Option[(K, V2)])](
+      leftRdd.sc,
+      joinedSplits,
+      Seq(leftDep, rightDep)
+    )((part, context) => {
+      val parts = leftPartitions(part.index)
+      val rightIter = PeekableIterator(
+        PartitionsIterator(rightRdd, parts, context)
+      )
+      val foreSeen = new util.HashMap[SK, util.Deque[(K, V2)]]()
+      leftRdd.iterator(part, context).map {
+        case (k, v) =>
+          val sk = leftSk(v)
+          val queueForSk = forward(
+            k,
+            sk,
+            toleranceFn(k),
+            rightSk,
+            rightIter,
+            foreSeen,
+            strictForward
+          )
+          if (queueForSk.isEmpty) {
+            (k, (v, None))
+          } else {
+            (k, (v, Some(queueForSk.peekFirst())))
+          }
       }
-    )
+    })
   }
 
   @inline
@@ -71,7 +96,10 @@ protected[flint] object FutureLeftJoin {
     if (strictForward) ord.lt(leftK, rightK) else ord.lteq(leftK, rightK)
 
   @inline
-  private def purge[K, V](q: util.Deque[(K, V)], k: K, strictForward: Boolean)(implicit ord: Ordering[K]) =
+  private def purge[K, V](q: util.Deque[(K, V)], k: K, strictForward: Boolean)(
+    implicit
+    ord: Ordering[K]
+  ) =
     while (!q.isEmpty && !passes(k, q.peekFirst()._1, strictForward)) {
       q.pollFirst()
     }
@@ -110,7 +138,11 @@ protected[flint] object FutureLeftJoin {
       queueForLeftSk = new util.ArrayDeque[(K, V)]()
       foreSeen.put(leftSk, queueForLeftSk)
     }
-    found = !queueForLeftSk.isEmpty && passes(leftK, queueForLeftSk.peekFirst()._1, strictForward)
+    found = !queueForLeftSk.isEmpty && passes(
+      leftK,
+      queueForLeftSk.peekFirst()._1,
+      strictForward
+    )
 
     // Add elements from rightIter until we find a match
     while (!found && rightIter.hasNext && rightKeyInRange) {
@@ -126,7 +158,11 @@ protected[flint] object FutureLeftJoin {
         }
         purge(queueForRightSk, leftK, strictForward)
         queueForRightSk.addLast((rightK, rightV))
-        found = !queueForLeftSk.isEmpty && passes(leftK, queueForLeftSk.peekFirst()._1, strictForward)
+        found = !queueForLeftSk.isEmpty && passes(
+          leftK,
+          queueForLeftSk.peekFirst()._1,
+          strictForward
+        )
       }
     }
 

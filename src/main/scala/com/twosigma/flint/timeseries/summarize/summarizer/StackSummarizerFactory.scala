@@ -25,16 +25,18 @@ case class StackSummarizerFactory(factories: Seq[SummarizerFactory])
   extends SummarizerFactory {
 
   factories.foreach {
-    case factory => require(
-      !factory.isInstanceOf[OverlappableSummarizerFactory],
-      "Stacking overlappable summarizers are not supported"
-    )
+    case factory =>
+      require(
+        !factory.isInstanceOf[OverlappableSummarizerFactory],
+        "Stacking overlappable summarizers are not supported"
+      )
   }
 
   /**
    * This doesn't affect input validation because [[StackSummarizer]] extends [[InputAlwaysValid]]
    */
-  override val requiredColumns: ColumnList = factories.map(_.requiredColumns).reduce(_ ++ _)
+  override val requiredColumns: ColumnList =
+    factories.map(_.requiredColumns).reduce(_ ++ _)
 
   def apply(inputSchema: StructType): Summarizer = {
     val summarizers = factories.map(f => f.apply(inputSchema))
@@ -48,7 +50,8 @@ class StackSummarizer(
   override val prefixOpt: Option[String],
   override val requiredColumns: ColumnList,
   summarizers: Seq[Summarizer]
-) extends Summarizer with InputAlwaysValid {
+) extends Summarizer
+  with InputAlwaysValid {
 
   override type T = InternalRow
   override type U = Seq[Any]
@@ -59,12 +62,16 @@ class StackSummarizer(
     s"Summarizers must have identical schemas to be stacked: ${summarizers.map(_.outputSchema).mkString(" vs. ")}"
   )
   override val schema: StructType = StructType(
-    StructField(StackSummarizer.stackColumn, ArrayType(summarizers.head.outputSchema))
+    StructField(
+      StackSummarizer.stackColumn,
+      ArrayType(summarizers.head.outputSchema)
+    )
       :: Nil
   )
 
   override val summarizer =
-    com.twosigma.flint.rdd.function.summarize.summarizer.StackSummarizer(summarizers)
+    com.twosigma.flint.rdd.function.summarize.summarizer
+      .StackSummarizer(summarizers)
 
   // Convert the output of `summarizer` to the InternalRow.
   override def fromV(v: V): InternalRow = InternalRow(new GenericArrayData(v))

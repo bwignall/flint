@@ -21,6 +21,8 @@ import java.text.{ DateFormat, SimpleDateFormat }
 // TODO should this really live here like this?
 object Parsing {
   // This is NOT thread safe, so we need to make sure to grab a new one where appropriate.
-  def timeFormatStandard: DateFormat = new SimpleDateFormat("yyyyMMdd H:mm:ss.SSS")
-  def timeFormatDashesPlusTimeZone: DateFormat = new SimpleDateFormat("yyyy-MM-dd H:mm:ss.SSS Z")
+  def timeFormatStandard: DateFormat =
+    new SimpleDateFormat("yyyyMMdd H:mm:ss.SSS")
+  def timeFormatDashesPlusTimeZone: DateFormat =
+    new SimpleDateFormat("yyyy-MM-dd H:mm:ss.SSS Z")
 }

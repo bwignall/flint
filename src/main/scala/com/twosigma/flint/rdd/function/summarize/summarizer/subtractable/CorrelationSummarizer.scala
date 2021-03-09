@@ -43,16 +43,20 @@ case class CorrelationSummarizer()
   val meanSummarizer = NthMomentSummarizer(1)
   val varianceSummarizer = NthCentralMomentSummarizer(2)
 
-  override def zero(): CorrelationState = CorrelationState(
-    0,
-    new Kahan(),
-    meanSummarizer.zero(),
-    meanSummarizer.zero(),
-    varianceSummarizer.zero(),
-    varianceSummarizer.zero()
-  )
+  override def zero(): CorrelationState =
+    CorrelationState(
+      0,
+      new Kahan(),
+      meanSummarizer.zero(),
+      meanSummarizer.zero(),
+      varianceSummarizer.zero(),
+      varianceSummarizer.zero()
+    )
 
-  override def add(u: CorrelationState, data: (Double, Double)): CorrelationState = {
+  override def add(
+    u: CorrelationState,
+    data: (Double, Double)
+  ): CorrelationState = {
     val (x, y) = data
 
     u.count += 1L
@@ -72,7 +76,10 @@ case class CorrelationSummarizer()
     u
   }
 
-  override def subtract(u: CorrelationState, data: (Double, Double)): CorrelationState = {
+  override def subtract(
+    u: CorrelationState,
+    data: (Double, Double)
+  ): CorrelationState = {
     require(u.count != 0L)
     if (u.count == 1L) {
       zero()
@@ -95,7 +102,10 @@ case class CorrelationSummarizer()
     }
   }
 
-  override def merge(u1: CorrelationState, u2: CorrelationState): CorrelationState = {
+  override def merge(
+    u1: CorrelationState,
+    u2: CorrelationState
+  ): CorrelationState = {
     if (u1.count == 0L) {
       u2
     } else if (u2.count == 0L) {
@@ -110,7 +120,9 @@ case class CorrelationSummarizer()
 
       val deltaX = xMean2 - xMean1
       val deltaY = yMean2 - yMean1
-      u1.covariance.add(deltaX * deltaY * (u1.count * u2.count) / (u1.count + u2.count))
+      u1.covariance.add(
+        deltaX * deltaY * (u1.count * u2.count) / (u1.count + u2.count)
+      )
 
       u1.count += u2.count
       u1.xMean = meanSummarizer.merge(u1.xMean, u2.xMean)
@@ -127,11 +139,16 @@ case class CorrelationSummarizer()
       CorrelationOutput(Double.NaN, Double.NaN, Double.NaN, 0L)
     } else {
       val covariance = u.covariance.value / u.count
-      val xDev = sqrt(varianceSummarizer.render(u.xVariance).nthCentralMoment(2))
-      val yDev = sqrt(varianceSummarizer.render(u.yVariance).nthCentralMoment(2))
+      val xDev = sqrt(
+        varianceSummarizer.render(u.xVariance).nthCentralMoment(2)
+      )
+      val yDev = sqrt(
+        varianceSummarizer.render(u.yVariance).nthCentralMoment(2)
+      )
       // correlation should be in [-1.0, 1.0] interval
       val correlation = max(-1.0, min(1.0, covariance / (xDev * yDev)))
-      val tStat = correlation * sqrt(u.count - 2d) / sqrt(1.0 - correlation * correlation)
+      val tStat =
+        correlation * sqrt(u.count - 2d) / sqrt(1.0 - correlation * correlation)
 
       CorrelationOutput(covariance, correlation, tStat, u.count)
     }

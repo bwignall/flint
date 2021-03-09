@@ -21,7 +21,10 @@ import com.twosigma.flint.timeseries.window.TimeWindow
 import com.twosigma.flint.timeseries.Windows
 import com.twosigma.flint.timeseries.row.Schema
 import org.apache.spark.sql.types._
-import com.twosigma.flint.rdd.function.summarize.summarizer.overlappable.{ LagSumSummarizerState, LagSumSummarizer => LSSummarizer }
+import com.twosigma.flint.rdd.function.summarize.summarizer.overlappable.{
+  LagSumSummarizerState,
+  LagSumSummarizer => LSSummarizer
+}
 import com.twosigma.flint.timeseries.summarize.ColumnList.Sequence
 import org.apache.spark.sql.catalyst.InternalRow
 
@@ -39,8 +42,10 @@ private[flint] object LagSumSummarizer {
   )
 }
 
-private[flint] case class LagSumSummarizerFactory(column: String, maxLookback: String)
-  extends OverlappableSummarizerFactory {
+private[flint] case class LagSumSummarizerFactory(
+  column: String,
+  maxLookback: String
+) extends OverlappableSummarizerFactory {
   override val window: TimeWindow = Windows.pastAbsoluteTime(maxLookback)
 
   override val requiredColumns: ColumnList = {
@@ -59,12 +64,14 @@ private[flint] case class LagSumSummarizer(
   override val inputSchema: StructType,
   override val prefixOpt: Option[String],
   requiredColumns: ColumnList
-) extends OverlappableSummarizer with FilterNullInput {
+) extends OverlappableSummarizer
+  with FilterNullInput {
 
   private val Sequence(Seq(column)) = requiredColumns
   private val columnId = inputSchema.fieldIndex(column)
 
-  private final val columnExtractor = asDoubleExtractor(inputSchema(columnId).dataType, columnId)
+  private final val columnExtractor =
+    asDoubleExtractor(inputSchema(columnId).dataType, columnId)
 
   override type T = Double
   override type U = LagSumSummarizerState
@@ -77,9 +84,11 @@ private[flint] case class LagSumSummarizer(
   override val schema = LagSumSummarizer.outputSchema
 
   override def fromV(o: LagSumSummarizerState): InternalRow = {
-    InternalRow.fromSeq(Array[Any](
-      o.lagSum,
-      o.sum
-    ))
+    InternalRow.fromSeq(
+      Array[Any](
+        o.lagSum,
+        o.sum
+      )
+    )
   }
 }

@@ -20,8 +20,14 @@ import java.util.{ HashMap => JHashMap, LinkedList => JLinkedList }
 
 import com.twosigma.flint.rdd._
 import com.twosigma.flint.rdd.function.summarize.summarizer.overlappable.OverlappableSummarizer
-import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.{ LeftSubtractableOverlappableSummarizer, LeftSubtractableSummarizer }
-import com.twosigma.flint.rdd.function.summarize.summarizer.{ FlippableSummarizer, Summarizer }
+import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.{
+  LeftSubtractableOverlappableSummarizer,
+  LeftSubtractableSummarizer
+}
+import com.twosigma.flint.rdd.function.summarize.summarizer.{
+  FlippableSummarizer,
+  Summarizer
+}
 import com.twosigma.flint.rdd.function.window.summarizer.WindowBatchSummarizer
 import com.twosigma.flint.util.collection.Implicits._
 import grizzled.slf4j.Logger
@@ -47,29 +53,29 @@ object SummarizeWindows {
       val splits = overlappedRdd.rangeSplits
       summarizer match {
         case fs: FlippableSummarizer[V, U, V2] =>
-          overlappedRdd.mapPartitionsWithIndexOverlapped(
-            (partitionIndex, iterator) =>
+          overlappedRdd
+            .mapPartitionsWithIndexOverlapped((partitionIndex, iterator) =>
               new WindowFlipperIterator(
                 iterator.buffered,
                 splits(partitionIndex).range,
                 windowFn,
                 fs,
                 skFn
-              )
-          ).nonOverlapped()
+              ))
+            .nonOverlapped()
         // In WindowSummarizerIterator, a LeftSubtractableSummarizer will use subtract to remove rows while moving
         // the window whereas a normal Summarizer will recompute a new window from a zero state.
         case _: Summarizer[V, U, V2] =>
-          overlappedRdd.mapPartitionsWithIndexOverlapped(
-            (partitionIndex, iterator) =>
+          overlappedRdd
+            .mapPartitionsWithIndexOverlapped((partitionIndex, iterator) =>
               new WindowIterator(
                 iterator.buffered,
                 splits(partitionIndex).range,
                 windowFn,
                 summarizer,
                 skFn
-              )
-          ).nonOverlapped()
+              ))
+            .nonOverlapped()
       }
     } else {
       val overlappedRdd = OverlappedOrderedRDD(rdd, otherRdd, window)
@@ -77,21 +83,37 @@ object SummarizeWindows {
       val leftDeps = new OneToOneDependency(rdd)
       val rightDeps = new OneToOneDependency(overlappedRdd)
 
-      new OrderedRDD[K, (V, V2)](rdd.sc, rdd.rangeSplits, Seq(leftDeps, rightDeps))(
-        (part, context) => {
-          val rightPart = overlappedRdd.partitions(part.index)
-          val leftIter = rdd.iterator(part, context)
-          val rightIter = overlappedRdd.iterator(rightPart, context)
-          summarizer match {
-            case fs: FlippableSummarizer[V, U, V2] =>
-              new WindowJoinFlipperIterator(leftIter, rightIter, windowFn, fs, skFn, otherSkFn)
-            // In WindowJoinIterator, a LeftSubtractableSummarizer will use subtract to remove rows while moving
-            // the window whereas a normal Summarizer will recompute a new window from a zero state.
-            case _: Summarizer[V, U, V2] =>
-              new WindowJoinIterator(leftIter, rightIter, windowFn, summarizer, skFn, otherSkFn)
-          }
+      new OrderedRDD[K, (V, V2)](
+        rdd.sc,
+        rdd.rangeSplits,
+        Seq(leftDeps, rightDeps)
+      )((part, context) => {
+        val rightPart = overlappedRdd.partitions(part.index)
+        val leftIter = rdd.iterator(part, context)
+        val rightIter = overlappedRdd.iterator(rightPart, context)
+        summarizer match {
+          case fs: FlippableSummarizer[V, U, V2] =>
+            new WindowJoinFlipperIterator(
+              leftIter,
+              rightIter,
+              windowFn,
+              fs,
+              skFn,
+              otherSkFn
+            )
+          // In WindowJoinIterator, a LeftSubtractableSummarizer will use subtract to remove rows while moving
+          // the window whereas a normal Summarizer will recompute a new window from a zero state.
+          case _: Summarizer[V, U, V2] =>
+            new WindowJoinIterator(
+              leftIter,
+              rightIter,
+              windowFn,
+              summarizer,
+              skFn,
+              otherSkFn
+            )
         }
-      )
+      })
     }
   }
 
@@ -101,17 +123,17 @@ object SummarizeWindows {
     summarizer: OverlappableSummarizer[V, U, V2],
     skFn: V => SK,
     lagWindow: K => (K, K)
-  )(
-    implicit
-    ord: Ordering[K]
-  ): OrderedRDD[K, (V, V2)] = {
+  )(implicit ord: Ordering[K]): OrderedRDD[K, (V, V2)] = {
     val windowFn = getWindowRange(window) _
     val lagWindowFn = getCloseOpenWindowRange(lagWindow) _
 
     val composedWindow: K => (K, K) = { k =>
       val lagWindowRange = lagWindowFn(windowFn(k).begin)
       require(
-        ord.equiv(lagWindowRange.end.getOrElse(lagWindowRange.begin), windowFn(k).begin),
+        ord.equiv(
+          lagWindowRange.end.getOrElse(lagWindowRange.begin),
+          windowFn(k).begin
+        ),
         "Lag window and data window must be contiguous"
       )
       (lagWindowFn(windowFn(k).begin).begin, windowFn(k).end.get)
@@ -122,14 +144,21 @@ object SummarizeWindows {
     if (otherRdd == null) {
       val overlappedRdd = OverlappedOrderedRDD(rdd, composedWindow)
       val splits = overlappedRdd.rangeSplits
-      overlappedRdd.mapPartitionsWithIndexOverlapped(
-        (partitionIndex, iterator) =>
+      overlappedRdd
+        .mapPartitionsWithIndexOverlapped((partitionIndex, iterator) =>
           new OverlappableWindowIterator(
-            iterator.buffered, splits(partitionIndex).range, windowFn, lagWindowFn, summarizer, skFn
-          )
-      ).nonOverlapped()
+            iterator.buffered,
+            splits(partitionIndex).range,
+            windowFn,
+            lagWindowFn,
+            summarizer,
+            skFn
+          ))
+        .nonOverlapped()
     } else {
-      throw new scala.NotImplementedError("Join iterator not implemented for overlappable summarizers")
+      throw new scala.NotImplementedError(
+        "Join iterator not implemented for overlappable summarizers"
+      )
     }
   }
 
@@ -141,10 +170,7 @@ object SummarizeWindows {
     otherRdd: OrderedRDD[K, V],
     otherSkFn: V => SK,
     batchSize: Int
-  )(
-    implicit
-    ord: Ordering[K]
-  ): OrderedRDD[K, V2] = {
+  )(implicit ord: Ordering[K]): OrderedRDD[K, V2] = {
     require(
       otherRdd == null && otherSkFn == null || otherRdd != null && otherSkFn != null,
       "Must specify both otherRdd and otherSkFn or neither."
@@ -160,12 +186,22 @@ object SummarizeWindows {
         val rightPart = overlappedRdd.partitions(part.index)
         val leftIter = rdd.iterator(part, context)
         val rightIter = overlappedRdd.iterator(rightPart, context)
-        new WindowBatchIterator(leftIter, rightIter, windowFn, summarizer, skFn, otherSkFn, batchSize)
+        new WindowBatchIterator(
+          leftIter,
+          rightIter,
+          windowFn,
+          summarizer,
+          skFn,
+          otherSkFn,
+          batchSize
+        )
       }
     )
   }
 
-  private[rdd] def getCloseOpenWindowRange[K](windowFn: K => (K, K))(k: K)(implicit ord: Ordering[K]): Range[K] = {
+  private[rdd] def getCloseOpenWindowRange[K](
+    windowFn: K => (K, K)
+  )(k: K)(implicit ord: Ordering[K]): Range[K] = {
     val (b, e) = windowFn(k)
     val range = Range.closeOpen(b, Some(e))
     require(
@@ -175,15 +211,24 @@ object SummarizeWindows {
     range
   }
 
-  private[rdd] def getWindowRange[K](windowFn: K => (K, K))(k: K)(implicit ord: Ordering[K]): Range[K] = {
+  private[rdd] def getWindowRange[K](
+    windowFn: K => (K, K)
+  )(k: K)(implicit ord: Ordering[K]): Range[K] = {
     val (b, e) = windowFn(k)
     val range = Range.closeClose(b, e)
-    require(range.contains(k), s"The window function produces a window [$b, $e] which doesn't include key $k.")
+    require(
+      range.contains(k),
+      s"The window function produces a window [$b, $e] which doesn't include key $k."
+    )
     range
   }
 
   // this function helps to avoid unnecessary memory allocations
-  private[rdd] def lazyGetOrDefault[K, V](map: JHashMap[K, V], key: K, lazyDefaultValue: => V): V = {
+  private[rdd] def lazyGetOrDefault[K, V](
+    map: JHashMap[K, V],
+    key: K,
+    lazyDefaultValue: => V
+  ): V = {
     val mapValue = map.get(key)
     if (mapValue == null) {
       lazyDefaultValue
@@ -254,12 +299,14 @@ class WindowBatchIterator[K, SK, V, U, V2](
   leftSkFn: V => SK,
   rightSkFn: V => SK,
   batchSize: Int
-)(implicit ord: Ordering[K]) extends Iterator[(K, V2)] {
+)(implicit ord: Ordering[K])
+  extends Iterator[(K, V2)] {
 
   private[this] val INITIAL_MAP_CAPACITY = 1024
   private[this] val leftIterBuffered = leftIter.buffered
   private[this] val rightIterBuffered = rightIter.buffered
-  private val windows = new JHashMap[SK, JLinkedList[(K, V)]](INITIAL_MAP_CAPACITY)
+  private val windows =
+    new JHashMap[SK, JLinkedList[(K, V)]](INITIAL_MAP_CAPACITY)
 
   override def hasNext: Boolean = leftIterBuffered.hasNext
 
@@ -278,7 +325,8 @@ class WindowBatchIterator[K, SK, V, U, V2](
       val entry = windowsIter.next()
       val sk = entry.getKey
       val window = entry.getValue
-      val (_, remainingWindow) = window.dropWhile(kv => !firstWindowRange.contains(kv._1))
+      val (_, remainingWindow) =
+        window.dropWhile(kv => !firstWindowRange.contains(kv._1))
 
       val remainingWindowIter = remainingWindow.iterator()
       while (remainingWindowIter.hasNext) {
@@ -301,19 +349,26 @@ class WindowBatchIterator[K, SK, V, U, V2](
 
       // Drop rows in window that is not used for the current window
       {
-        val (droppedWindow, _) = currentWindow.dropWhile(kv => !windowRange.contains(kv._1))
-        droppedWindow.foldLeft(state) { case (u, (_, v)) => summarizer.subtractRight(u, leftSk, v); u }
+        val (droppedWindow, _) =
+          currentWindow.dropWhile(kv => !windowRange.contains(kv._1))
+        droppedWindow.foldLeft(state) {
+          case (u, (_, v)) => summarizer.subtractRight(u, leftSk, v); u
+        }
       }
 
       // Iterate right iter and drop rows that is before the current window range
-      while (rightIterBuffered.hasNext && windowRange.beginGt(rightIterBuffered.head._1)) {
+      while (rightIterBuffered.hasNext && windowRange.beginGt(
+        rightIterBuffered.head._1
+      )) {
         rightIterBuffered.next()
       }
 
       // Iterate right iter and add all rows in the current window range into the state
       // Note this will add rows of other SK into the state as well. This is fine.
       // This also drops rows from windows for other SK if they are passed by the current window.
-      while (rightIterBuffered.hasNext && windowRange.contains(rightIterBuffered.head._1)) {
+      while (rightIterBuffered.hasNext && windowRange.contains(
+        rightIterBuffered.head._1
+      )) {
         val (rightK, rightV) = rightIterBuffered.next()
         val rightSk = rightSkFn(rightV)
 
@@ -326,7 +381,8 @@ class WindowBatchIterator[K, SK, V, U, V2](
         // Drop rows in window that is passed by current window
         // Each window row will only be add/dropped once and the inner while will at most visit one undropped row.
         // So this is linear rather than quadratic.
-        val (droppedWindow, _) = windowForRight.dropWhile(kv => windowRange.beginGt(kv._1))
+        val (droppedWindow, _) =
+          windowForRight.dropWhile(kv => windowRange.beginGt(kv._1))
         droppedWindow.foldLeft(state) {
           case (u, (_, droppedRightV)) =>
             summarizer.subtractRight(u, rightSk, droppedRightV)
@@ -388,40 +444,55 @@ private[rdd] class WindowJoinFlipperIterator[K, SK, V, U, V2](
   summarizer: FlippableSummarizer[V, U, V2],
   leftSkFn: V => SK,
   rightSkFn: V => SK
-)(implicit ord: Ordering[K]) extends Iterator[(K, (V, V2))] {
+)(implicit ord: Ordering[K])
+  extends Iterator[(K, (V, V2))] {
   private[this] val INITIAL_MAP_CAPACITY = 1024
   private[this] val rightIterBuffered = rightIter.buffered
 
   // For each secondary key, stores a list of key to suffix pairs, in increasing order of key.
-  private[this] val skToLeftWindowSuffixSums = new JHashMap[SK, JLinkedList[(K, U)]](INITIAL_MAP_CAPACITY)
+  private[this] val skToLeftWindowSuffixSums =
+    new JHashMap[SK, JLinkedList[(K, U)]](INITIAL_MAP_CAPACITY)
   // For each secondary key, stores the current prefix sum.
-  private[this] val skToRightWindowPrefixSum = new JHashMap[SK, U](INITIAL_MAP_CAPACITY)
+  private[this] val skToRightWindowPrefixSum =
+    new JHashMap[SK, U](INITIAL_MAP_CAPACITY)
   // For each secondary key, stores the current rows in the prefix as key value pairs.
-  private[this] val skToRightWindow = new JHashMap[SK, JLinkedList[(K, V)]](INITIAL_MAP_CAPACITY)
+  private[this] val skToRightWindow =
+    new JHashMap[SK, JLinkedList[(K, V)]](INITIAL_MAP_CAPACITY)
 
   // For a given secondary key, flips the right window to become the new left window and computes its suffixes.
   // After this function, the left window will contain suffix sums within the range and the right window will be empty.
   private[this] def flip(sk: SK, windowRange: Range[K]): Unit = {
     val leftWindowSuffixSums =
-      SummarizeWindows.lazyGetOrDefault(skToLeftWindowSuffixSums, sk, new JLinkedList[(K, U)]())
+      SummarizeWindows.lazyGetOrDefault(
+        skToLeftWindowSuffixSums,
+        sk,
+        new JLinkedList[(K, U)]()
+      )
     assert(leftWindowSuffixSums.isEmpty)
 
     // Get rows in the right window (within the range) in order to flip them.
-    val rightWindow = SummarizeWindows.lazyGetOrDefault(skToRightWindow, sk, new JLinkedList[(K, V)]())
+    val rightWindow = SummarizeWindows.lazyGetOrDefault(
+      skToRightWindow,
+      sk,
+      new JLinkedList[(K, V)]()
+    )
     rightWindow.dropWhile { kv => !windowRange.contains(kv._1) }
 
     // Calculate suffix sums.
-    val newLeftWindowSuffixSums = rightWindow.foldRight(new JLinkedList[(K, U)]()) {
-      case (currWindowSuffixSums, (k, v)) =>
-        val newRow = summarizer.add(summarizer.zero(), v)
-        if (currWindowSuffixSums.isEmpty) {
-          currWindowSuffixSums.add((k, newRow))
-        } else {
-          // This requires immutability of the right state during the merge operation.
-          currWindowSuffixSums.addFirst((k, summarizer.merge(newRow, currWindowSuffixSums.getFirst._2)))
-        }
-        currWindowSuffixSums
-    }
+    val newLeftWindowSuffixSums =
+      rightWindow.foldRight(new JLinkedList[(K, U)]()) {
+        case (currWindowSuffixSums, (k, v)) =>
+          val newRow = summarizer.add(summarizer.zero(), v)
+          if (currWindowSuffixSums.isEmpty) {
+            currWindowSuffixSums.add((k, newRow))
+          } else {
+            // This requires immutability of the right state during the merge operation.
+            currWindowSuffixSums.addFirst(
+              (k, summarizer.merge(newRow, currWindowSuffixSums.getFirst._2))
+            )
+          }
+          currWindowSuffixSums
+      }
 
     // Flip right window into left window and reset right window to zero.
     skToLeftWindowSuffixSums.put(sk, newLeftWindowSuffixSums)
@@ -437,7 +508,11 @@ private[rdd] class WindowJoinFlipperIterator[K, SK, V, U, V2](
     val windowRange = windowFn(k)
 
     // Drop rows.
-    var leftWindowSuffixSums = SummarizeWindows.lazyGetOrDefault(skToLeftWindowSuffixSums, leftSk, new JLinkedList[(K, U)]())
+    var leftWindowSuffixSums = SummarizeWindows.lazyGetOrDefault(
+      skToLeftWindowSuffixSums,
+      leftSk,
+      new JLinkedList[(K, U)]()
+    )
     leftWindowSuffixSums.dropWhile { kv => windowRange.beginGt(kv._1) }
     skToLeftWindowSuffixSums.put(leftSk, leftWindowSuffixSums)
 
@@ -446,30 +521,51 @@ private[rdd] class WindowJoinFlipperIterator[K, SK, V, U, V2](
       flip(leftSk, windowRange)
     }
 
-    while (rightIterBuffered.hasNext && windowRange.beginGt(rightIterBuffered.head._1)) {
+    while (rightIterBuffered.hasNext && windowRange.beginGt(
+      rightIterBuffered.head._1
+    )) {
       rightIterBuffered.next()
     }
 
     // Add rows that are within the window range.
-    while (rightIterBuffered.hasNext && windowRange.contains(rightIterBuffered.head._1)) {
+    while (rightIterBuffered.hasNext && windowRange.contains(
+      rightIterBuffered.head._1
+    )) {
       val (k, v) = rightIterBuffered.next()
       val sk = rightSkFn(v)
 
       // Updates the right window by adding the row.
-      val rightWindow = SummarizeWindows.lazyGetOrDefault(skToRightWindow, sk, new JLinkedList[(K, V)]())
+      val rightWindow = SummarizeWindows.lazyGetOrDefault(
+        skToRightWindow,
+        sk,
+        new JLinkedList[(K, V)]()
+      )
       rightWindow.addLast((k, v))
       skToRightWindow.put(sk, rightWindow)
 
       // Updates the right window sum by adding the row to the prefix sum.
-      val rightWindowPrefixSum = SummarizeWindows.lazyGetOrDefault(skToRightWindowPrefixSum, sk, summarizer.zero())
+      val rightWindowPrefixSum = SummarizeWindows.lazyGetOrDefault(
+        skToRightWindowPrefixSum,
+        sk,
+        summarizer.zero()
+      )
       skToRightWindowPrefixSum.put(sk, summarizer.add(rightWindowPrefixSum, v))
     }
 
     // Merge the corresponding suffix of the left window with the prefix of the right window.
-    leftWindowSuffixSums =
-      SummarizeWindows.lazyGetOrDefault(skToLeftWindowSuffixSums, leftSk, new JLinkedList[(K, U)]())
-    val leftWindowSuffixSum = if (leftWindowSuffixSums.isEmpty) summarizer.zero() else leftWindowSuffixSums.getFirst._2
-    val rightWindowPrefixSum = SummarizeWindows.lazyGetOrDefault(skToRightWindowPrefixSum, leftSk, summarizer.zero())
+    leftWindowSuffixSums = SummarizeWindows.lazyGetOrDefault(
+      skToLeftWindowSuffixSums,
+      leftSk,
+      new JLinkedList[(K, U)]()
+    )
+    val leftWindowSuffixSum =
+      if (leftWindowSuffixSums.isEmpty) summarizer.zero()
+      else leftWindowSuffixSums.getFirst._2
+    val rightWindowPrefixSum = SummarizeWindows.lazyGetOrDefault(
+      skToRightWindowPrefixSum,
+      leftSk,
+      summarizer.zero()
+    )
     val state = summarizer.merge(leftWindowSuffixSum, rightWindowPrefixSum)
     val rendered = summarizer.render(state)
 
@@ -487,42 +583,57 @@ private[rdd] class WindowFlipperIterator[K, SK, V, U, V2](
   windowFn: K => Range[K],
   summarizer: FlippableSummarizer[V, U, V2],
   skFn: V => SK
-)(implicit ord: Ordering[K]) extends Iterator[(K, (V, V2))] {
+)(implicit ord: Ordering[K])
+  extends Iterator[(K, (V, V2))] {
 
   val logger = Logger(this.getClass)
 
   private[this] val INITIAL_MAP_CAPACITY = 1024
   // For each secondary key, stores a list of key to suffix pairs, in increasing order of key.
-  private[this] val skToLeftWindowSuffixSums = new JHashMap[SK, JLinkedList[(K, U)]](INITIAL_MAP_CAPACITY)
+  private[this] val skToLeftWindowSuffixSums =
+    new JHashMap[SK, JLinkedList[(K, U)]](INITIAL_MAP_CAPACITY)
   private[this] val coreRowBuffer = new JLinkedList[(K, V)]()
   // For each secondary key, stores the current prefix sum.
-  private[this] val skToRightWindowPrefixSum = new JHashMap[SK, U](INITIAL_MAP_CAPACITY)
+  private[this] val skToRightWindowPrefixSum =
+    new JHashMap[SK, U](INITIAL_MAP_CAPACITY)
   // For each secondary key, stores the current rows in the prefix as key value pairs.
-  private[this] val skToRightWindow = new JHashMap[SK, JLinkedList[(K, V)]](INITIAL_MAP_CAPACITY)
+  private[this] val skToRightWindow =
+    new JHashMap[SK, JLinkedList[(K, V)]](INITIAL_MAP_CAPACITY)
 
   // For a given secondary key, flips the right window to become the new left window and computes its suffixes.
   // After this function, the left window will contain suffix sums within the range and the right window will be empty.
   private[this] def flip(sk: SK, windowRange: Range[K]): Unit = {
     val leftWindowSuffixSums =
-      SummarizeWindows.lazyGetOrDefault(skToLeftWindowSuffixSums, sk, new JLinkedList[(K, U)]())
+      SummarizeWindows.lazyGetOrDefault(
+        skToLeftWindowSuffixSums,
+        sk,
+        new JLinkedList[(K, U)]()
+      )
     assert(leftWindowSuffixSums.isEmpty)
 
     // Get rows in the right window (within the range) in order to flip them.
-    val rightWindow = SummarizeWindows.lazyGetOrDefault(skToRightWindow, sk, new JLinkedList[(K, V)]())
+    val rightWindow = SummarizeWindows.lazyGetOrDefault(
+      skToRightWindow,
+      sk,
+      new JLinkedList[(K, V)]()
+    )
     rightWindow.dropWhile { kv => !windowRange.contains(kv._1) }
 
     // Calculate suffix sums.
-    val newLeftWindowSuffixSums = rightWindow.foldRight(new JLinkedList[(K, U)]()) {
-      case (currWindowSuffixSums, (k, v)) =>
-        val newRow = summarizer.add(summarizer.zero(), v)
-        if (currWindowSuffixSums.isEmpty) {
-          currWindowSuffixSums.add((k, newRow))
-        } else {
-          // This requires immutability of the right state during the merge operation.
-          currWindowSuffixSums.addFirst((k, summarizer.merge(newRow, currWindowSuffixSums.getFirst._2)))
-        }
-        currWindowSuffixSums
-    }
+    val newLeftWindowSuffixSums =
+      rightWindow.foldRight(new JLinkedList[(K, U)]()) {
+        case (currWindowSuffixSums, (k, v)) =>
+          val newRow = summarizer.add(summarizer.zero(), v)
+          if (currWindowSuffixSums.isEmpty) {
+            currWindowSuffixSums.add((k, newRow))
+          } else {
+            // This requires immutability of the right state during the merge operation.
+            currWindowSuffixSums.addFirst(
+              (k, summarizer.merge(newRow, currWindowSuffixSums.getFirst._2))
+            )
+          }
+          currWindowSuffixSums
+      }
 
     // Flip right window into left window and reset right window to zero.
     skToLeftWindowSuffixSums.put(sk, newLeftWindowSuffixSums)
@@ -548,11 +659,19 @@ private[rdd] class WindowFlipperIterator[K, SK, V, U, V2](
       // not actually by in the first coreRow's window. In this case, those rows will be dropped
       // later while flipping the window.
       if (initWindowRange.contains(k)) {
-        val rightWindow = SummarizeWindows.lazyGetOrDefault(skToRightWindow, sk, new JLinkedList[(K, V)]())
-        val rightWindowPrefixSum = skToRightWindowPrefixSum.getOrDefault(sk, summarizer.zero())
+        val rightWindow = SummarizeWindows.lazyGetOrDefault(
+          skToRightWindow,
+          sk,
+          new JLinkedList[(K, V)]()
+        )
+        val rightWindowPrefixSum =
+          skToRightWindowPrefixSum.getOrDefault(sk, summarizer.zero())
         rightWindow.addLast((k, v))
         skToRightWindow.put(sk, rightWindow)
-        skToRightWindowPrefixSum.put(sk, summarizer.add(rightWindowPrefixSum, v))
+        skToRightWindowPrefixSum.put(
+          sk,
+          summarizer.add(rightWindowPrefixSum, v)
+        )
       }
     }
   }
@@ -564,7 +683,8 @@ private[rdd] class WindowFlipperIterator[K, SK, V, U, V2](
     !coreRowBuffer.isEmpty || (iter.hasNext && coreRange.contains(iter.head._1))
   }
 
-  override def next(): (K, (V, V2)) = if (hasNext) computeNext() else Iterator.empty.next
+  override def next(): (K, (V, V2)) =
+    if (hasNext) computeNext() else Iterator.empty.next
 
   private def computeNext(): (K, (V, V2)) = {
     // This is a little bit tricky. After `rampUp`, `iter.head` is guaranteed to point
@@ -577,10 +697,16 @@ private[rdd] class WindowFlipperIterator[K, SK, V, U, V2](
     val (coreK, coreV) = Option(coreRowBuffer.peekFirst()).getOrElse(iter.head)
     val coreSk = skFn(coreV)
     val windowRange = windowFn(coreK)
-    logger.debug(s"Invoking next() with core row: ($coreK, $coreSk, $coreV) and the window of $coreK: $windowRange")
+    logger.debug(
+      s"Invoking next() with core row: ($coreK, $coreSk, $coreV) and the window of $coreK: $windowRange"
+    )
 
     // Drop rows.
-    var leftWindowSuffixSums = SummarizeWindows.lazyGetOrDefault(skToLeftWindowSuffixSums, coreSk, new JLinkedList[(K, U)]())
+    var leftWindowSuffixSums = SummarizeWindows.lazyGetOrDefault(
+      skToLeftWindowSuffixSums,
+      coreSk,
+      new JLinkedList[(K, U)]()
+    )
     leftWindowSuffixSums.dropWhile { kv => windowRange.beginGt(kv._1) }
     skToLeftWindowSuffixSums.put(coreSk, leftWindowSuffixSums)
 
@@ -601,12 +727,20 @@ private[rdd] class WindowFlipperIterator[K, SK, V, U, V2](
       }
 
       // Updates the right window by adding the row.
-      val rightWindow = SummarizeWindows.lazyGetOrDefault(skToRightWindow, sk, new JLinkedList[(K, V)]())
+      val rightWindow = SummarizeWindows.lazyGetOrDefault(
+        skToRightWindow,
+        sk,
+        new JLinkedList[(K, V)]()
+      )
       rightWindow.addLast((k, v))
       skToRightWindow.put(sk, rightWindow)
 
       // Updates the right window sum by adding the row to the prefix sum.
-      val rightWindowPrefixSum = SummarizeWindows.lazyGetOrDefault(skToRightWindowPrefixSum, sk, summarizer.zero())
+      val rightWindowPrefixSum = SummarizeWindows.lazyGetOrDefault(
+        skToRightWindowPrefixSum,
+        sk,
+        summarizer.zero()
+      )
       skToRightWindowPrefixSum.put(sk, summarizer.add(rightWindowPrefixSum, v))
     }
 
@@ -614,10 +748,19 @@ private[rdd] class WindowFlipperIterator[K, SK, V, U, V2](
     logger.debug(s"Invoking next() to remove: $removed")
 
     // Merge the corresponding suffix of the left window with the prefix of the right window.
-    leftWindowSuffixSums =
-      SummarizeWindows.lazyGetOrDefault(skToLeftWindowSuffixSums, coreSk, new JLinkedList[(K, U)]())
-    val leftWindowSuffixSum = if (leftWindowSuffixSums.isEmpty) summarizer.zero() else leftWindowSuffixSums.getFirst._2
-    val rightWindowPrefixSum = SummarizeWindows.lazyGetOrDefault(skToRightWindowPrefixSum, coreSk, summarizer.zero())
+    leftWindowSuffixSums = SummarizeWindows.lazyGetOrDefault(
+      skToLeftWindowSuffixSums,
+      coreSk,
+      new JLinkedList[(K, U)]()
+    )
+    val leftWindowSuffixSum =
+      if (leftWindowSuffixSums.isEmpty) summarizer.zero()
+      else leftWindowSuffixSums.getFirst._2
+    val rightWindowPrefixSum = SummarizeWindows.lazyGetOrDefault(
+      skToRightWindowPrefixSum,
+      coreSk,
+      summarizer.zero()
+    )
     val state = summarizer.merge(leftWindowSuffixSum, rightWindowPrefixSum)
     val rendered = summarizer.render(state)
 
@@ -632,10 +775,12 @@ private[rdd] class WindowJoinIterator[K, SK, V, U, V2](
   summarizer: Summarizer[V, U, V2],
   leftSkFn: V => SK,
   rightSkFn: V => SK
-)(implicit ord: Ordering[K]) extends Iterator[(K, (V, V2))] {
+)(implicit ord: Ordering[K])
+  extends Iterator[(K, (V, V2))] {
   private val INITIAL_MAP_CAPACITY = 1024
 
-  private val windows = new JHashMap[SK, JLinkedList[(K, V)]](INITIAL_MAP_CAPACITY)
+  private val windows =
+    new JHashMap[SK, JLinkedList[(K, V)]](INITIAL_MAP_CAPACITY)
   private val summarizerStates = new JHashMap[SK, U](INITIAL_MAP_CAPACITY)
   private val rightIterBuffered = rightIter.buffered
 
@@ -647,12 +792,24 @@ private[rdd] class WindowJoinIterator[K, SK, V, U, V2](
     val windowRange = windowFn(k)
 
     // Drop rows from the current window.
-    val window = SummarizeWindows.lazyGetOrDefault(windows, leftSk, new JLinkedList[(K, V)]())
-    val priorState = SummarizeWindows.lazyGetOrDefault(summarizerStates, leftSk, summarizer.zero())
-    val (droppedWindow, _) = window.dropWhile { kv => !windowRange.contains(kv._1) }
+    val window = SummarizeWindows.lazyGetOrDefault(
+      windows,
+      leftSk,
+      new JLinkedList[(K, V)]()
+    )
+    val priorState = SummarizeWindows.lazyGetOrDefault(
+      summarizerStates,
+      leftSk,
+      summarizer.zero()
+    )
+    val (droppedWindow, _) = window.dropWhile { kv =>
+      !windowRange.contains(kv._1)
+    }
     val currentState: U = summarizer match {
       case lss: LeftSubtractableSummarizer[V, U, V2] =>
-        droppedWindow.foldLeft(priorState) { case (u, (_, v)) => lss.subtract(u, v) }
+        droppedWindow.foldLeft(priorState) {
+          case (u, (_, v)) => lss.subtract(u, v)
+        }
       case s: Summarizer[V, U, V2] =>
         window.foldLeft(s.zero()) { case (u, (_, v)) => s.add(u, v) }
     }
@@ -660,18 +817,30 @@ private[rdd] class WindowJoinIterator[K, SK, V, U, V2](
     windows.put(leftSk, window)
     summarizerStates.put(leftSk, currentState)
 
-    while (rightIterBuffered.hasNext && windowRange.beginGt(rightIterBuffered.head._1)) {
+    while (rightIterBuffered.hasNext && windowRange.beginGt(
+      rightIterBuffered.head._1
+    )) {
       rightIterBuffered.next()
     }
 
     // Add rows
-    while (rightIterBuffered.hasNext && windowRange.contains(rightIterBuffered.head._1)) {
+    while (rightIterBuffered.hasNext && windowRange.contains(
+      rightIterBuffered.head._1
+    )) {
       val (k, v) = rightIterBuffered.next()
       val sk = rightSkFn(v)
 
       // Update windows
-      val window = SummarizeWindows.lazyGetOrDefault(windows, sk, new JLinkedList[(K, V)]())
-      val u = SummarizeWindows.lazyGetOrDefault(summarizerStates, sk, summarizer.zero())
+      val window = SummarizeWindows.lazyGetOrDefault(
+        windows,
+        sk,
+        new JLinkedList[(K, V)]()
+      )
+      val u = SummarizeWindows.lazyGetOrDefault(
+        summarizerStates,
+        sk,
+        summarizer.zero()
+      )
 
       // This is a little bit tricky here. Consider this case:
       //
@@ -693,7 +862,10 @@ private[rdd] class WindowJoinIterator[K, SK, V, U, V2](
     }
 
     val state = summarizerStates.get(leftSk)
-    require(state != null, s"Unexpected state: Summarize state is empty for $leftSk")
+    require(
+      state != null,
+      s"Unexpected state: Summarize state is empty for $leftSk"
+    )
     val rendered = summarizer.render(state)
 
     (k, (leftV, rendered))
@@ -735,13 +907,15 @@ private[rdd] class WindowIterator[K, SK, V, U, V2](
   windowFn: K => Range[K],
   summarizer: Summarizer[V, U, V2],
   skFn: V => SK
-)(implicit ord: Ordering[K]) extends Iterator[(K, (V, V2))] {
+)(implicit ord: Ordering[K])
+  extends Iterator[(K, (V, V2))] {
 
   val logger = Logger(this.getClass)
 
   private val INITIAL_MAP_CAPACITY = 1024
 
-  private val windows = new JHashMap[SK, JLinkedList[(K, V)]](INITIAL_MAP_CAPACITY)
+  private val windows =
+    new JHashMap[SK, JLinkedList[(K, V)]](INITIAL_MAP_CAPACITY)
   private val summarizerStates = new JHashMap[SK, U](INITIAL_MAP_CAPACITY)
   private val coreRowBuffer = new JLinkedList[(K, V)]()
 
@@ -763,8 +937,16 @@ private[rdd] class WindowIterator[K, SK, V, U, V2](
       // not actually by in the first coreRow's window. In this case, those rows will be dropped
       // later.
       if (initWindowRange.contains(k)) {
-        val window = SummarizeWindows.lazyGetOrDefault(windows, sk, new JLinkedList[(K, V)]())
-        val u = SummarizeWindows.lazyGetOrDefault(summarizerStates, sk, summarizer.zero())
+        val window = SummarizeWindows.lazyGetOrDefault(
+          windows,
+          sk,
+          new JLinkedList[(K, V)]()
+        )
+        val u = SummarizeWindows.lazyGetOrDefault(
+          summarizerStates,
+          sk,
+          summarizer.zero()
+        )
         window.add((k, v))
         windows.put(sk, window)
         summarizerStates.put(sk, summarizer.add(u, v))
@@ -779,7 +961,8 @@ private[rdd] class WindowIterator[K, SK, V, U, V2](
     !coreRowBuffer.isEmpty || (iter.hasNext && coreRange.contains(iter.head._1))
   }
 
-  override def next(): (K, (V, V2)) = if (hasNext) computeNext() else Iterator.empty.next
+  override def next(): (K, (V, V2)) =
+    if (hasNext) computeNext() else Iterator.empty.next
 
   private def computeNext(): (K, (V, V2)) = {
     // This is a little bit tricky. After `rampUp`, `iter.head` is guaranteed to point
@@ -789,15 +972,29 @@ private[rdd] class WindowIterator[K, SK, V, U, V2](
     val (coreK, coreV) = Option(coreRowBuffer.peekFirst()).getOrElse(iter.head)
     val coreSk = skFn(coreV)
     val windowRange = windowFn(coreK)
-    logger.debug(s"Invoking next() with core row: ($coreK, $coreSk, $coreV) and the window of $coreK: $windowRange")
+    logger.debug(
+      s"Invoking next() with core row: ($coreK, $coreSk, $coreV) and the window of $coreK: $windowRange"
+    )
 
     // Drop rows.
-    val window = SummarizeWindows.lazyGetOrDefault(windows, coreSk, new JLinkedList[(K, V)]())
-    val priorState = SummarizeWindows.lazyGetOrDefault(summarizerStates, coreSk, summarizer.zero())
-    val (droppedWindow, _) = window.dropWhile { kv => !windowRange.contains(kv._1) }
+    val window = SummarizeWindows.lazyGetOrDefault(
+      windows,
+      coreSk,
+      new JLinkedList[(K, V)]()
+    )
+    val priorState = SummarizeWindows.lazyGetOrDefault(
+      summarizerStates,
+      coreSk,
+      summarizer.zero()
+    )
+    val (droppedWindow, _) = window.dropWhile { kv =>
+      !windowRange.contains(kv._1)
+    }
     val currentState: U = summarizer match {
       case lss: LeftSubtractableSummarizer[V, U, V2] =>
-        droppedWindow.foldLeft(priorState) { case (u, (_, v)) => lss.subtract(u, v) }
+        droppedWindow.foldLeft(priorState) {
+          case (u, (_, v)) => lss.subtract(u, v)
+        }
       case s: Summarizer[V, U, V2] =>
         window.foldLeft(s.zero()) { case (u, (_, v)) => s.add(u, v) }
     }
@@ -817,8 +1014,16 @@ private[rdd] class WindowIterator[K, SK, V, U, V2](
       }
 
       // Update windows
-      val window = SummarizeWindows.lazyGetOrDefault(windows, sk, new JLinkedList[(K, V)]())
-      val u = SummarizeWindows.lazyGetOrDefault(summarizerStates, sk, summarizer.zero())
+      val window = SummarizeWindows.lazyGetOrDefault(
+        windows,
+        sk,
+        new JLinkedList[(K, V)]()
+      )
+      val u = SummarizeWindows.lazyGetOrDefault(
+        summarizerStates,
+        sk,
+        summarizer.zero()
+      )
       window.add((k, v))
       windows.put(sk, window)
       summarizerStates.put(sk, summarizer.add(u, v))
@@ -857,14 +1062,17 @@ private[rdd] class OverlappableWindowIterator[K, SK, V, U, V2](
   lagWindowFn: K => Range[K],
   summarizer: OverlappableSummarizer[V, U, V2],
   skFn: V => SK
-)(implicit ord: Ordering[K]) extends Iterator[(K, (V, V2))] {
+)(implicit ord: Ordering[K])
+  extends Iterator[(K, (V, V2))] {
 
   val logger = Logger(this.getClass)
 
   private val INITIAL_MAP_CAPACITY = 1024
 
-  private val lagWindows = new JHashMap[SK, JLinkedList[(K, V)]](INITIAL_MAP_CAPACITY)
-  private val windows = new JHashMap[SK, JLinkedList[(K, V)]](INITIAL_MAP_CAPACITY)
+  private val lagWindows =
+    new JHashMap[SK, JLinkedList[(K, V)]](INITIAL_MAP_CAPACITY)
+  private val windows =
+    new JHashMap[SK, JLinkedList[(K, V)]](INITIAL_MAP_CAPACITY)
   private val summarizerStates = new JHashMap[SK, U](INITIAL_MAP_CAPACITY)
   private val coreRowBuffer = new JLinkedList[(K, V)]()
 
@@ -891,9 +1099,21 @@ private[rdd] class OverlappableWindowIterator[K, SK, V, U, V2](
 
       // Put rows that `could` be in first coreRow's window in `windows`, `lagWindows` and `summarizerStates`
       if (initWindowRange.contains(k) || initLagWindowRange.contains(k)) {
-        val lagWindow = SummarizeWindows.lazyGetOrDefault(lagWindows, sk, new JLinkedList[(K, V)]())
-        val window = SummarizeWindows.lazyGetOrDefault(windows, sk, new JLinkedList[(K, V)]())
-        val u = SummarizeWindows.lazyGetOrDefault(summarizerStates, sk, summarizer.zero())
+        val lagWindow = SummarizeWindows.lazyGetOrDefault(
+          lagWindows,
+          sk,
+          new JLinkedList[(K, V)]()
+        )
+        val window = SummarizeWindows.lazyGetOrDefault(
+          windows,
+          sk,
+          new JLinkedList[(K, V)]()
+        )
+        val u = SummarizeWindows.lazyGetOrDefault(
+          summarizerStates,
+          sk,
+          summarizer.zero()
+        )
         val overlapped = initLagWindowRange.contains(k)
         if (overlapped) {
           lagWindow.add((k, v))
@@ -914,7 +1134,8 @@ private[rdd] class OverlappableWindowIterator[K, SK, V, U, V2](
     !coreRowBuffer.isEmpty || (iter.hasNext && coreRange.endGteq(iter.head._1))
   }
 
-  override def next(): (K, (V, V2)) = if (hasNext) computeNext() else Iterator.empty.next
+  override def next(): (K, (V, V2)) =
+    if (hasNext) computeNext() else Iterator.empty.next
 
   private def computeNext(): (K, (V, V2)) = {
     // This is a little bit tricky. After `rampUp`, `iter.head` is guaranteed to point
@@ -926,11 +1147,20 @@ private[rdd] class OverlappableWindowIterator[K, SK, V, U, V2](
     val windowRange = windowFn(coreK)
     val lagWindowRange = lagWindowFn(windowRange.begin)
     // lagWindowRange must be empty (i.e. [k, k)) or contiguous with the windowRange
-    require(lagWindowRange.endEquals(Option(lagWindowRange.begin)) || lagWindowRange.endEquals(Some(windowRange.begin)))
-    logger.debug(s"Invoking next() with core row: ($coreK, $coreSk, $coreV) " +
-      s"and the window of $coreK: $windowRange, $lagWindowRange")
+    require(
+      lagWindowRange.endEquals(Option(lagWindowRange.begin)) || lagWindowRange
+        .endEquals(Some(windowRange.begin))
+    )
+    logger.debug(
+      s"Invoking next() with core row: ($coreK, $coreSk, $coreV) " +
+        s"and the window of $coreK: $windowRange, $lagWindowRange"
+    )
 
-    val priorState = SummarizeWindows.lazyGetOrDefault(summarizerStates, coreSk, summarizer.zero())
+    val priorState = SummarizeWindows.lazyGetOrDefault(
+      summarizerStates,
+      coreSk,
+      summarizer.zero()
+    )
 
     // The slices here are
     //   droppedLagWindow:       the rows that were in the lag window last iteration but are no longer in the lag
@@ -944,10 +1174,12 @@ private[rdd] class OverlappableWindowIterator[K, SK, V, U, V2](
     //   currentWindow:          the rows that were in the window last iteration and are still in the window
 
     val (droppedLagWindow, existingLagWindow) =
-      SummarizeWindows.lazyGetOrDefault(lagWindows, coreSk, new JLinkedList[(K, V)]())
+      SummarizeWindows
+        .lazyGetOrDefault(lagWindows, coreSk, new JLinkedList[(K, V)]())
         .dropWhile { kv => !lagWindowRange.contains(kv._1) }
     val (freshlyLaggedWindow, notLaggedWindow) =
-      SummarizeWindows.lazyGetOrDefault(windows, coreSk, new JLinkedList[(K, V)]())
+      SummarizeWindows
+        .lazyGetOrDefault(windows, coreSk, new JLinkedList[(K, V)]())
         .dropWhile { kv => lagWindowRange.contains(kv._1) }
     val (droppedNotLaggedWindow, currentWindow) =
       notLaggedWindow.dropWhile { kv => !windowRange.contains(kv._1) }
@@ -964,7 +1196,8 @@ private[rdd] class OverlappableWindowIterator[K, SK, V, U, V2](
           }
         // Subtract rows that have passed from the left side of the window. Since these rows were added
         // as non-overlapped, we set the overlap flag to false
-        val subtractedLaggedWindow = new JLinkedList[(K, V)](freshlyLaggedWindow)
+        val subtractedLaggedWindow =
+          new JLinkedList[(K, V)](freshlyLaggedWindow)
         subtractedLaggedWindow.addAll(droppedNotLaggedWindow)
         subtractedLaggedWindow.foldLeft(droppedLaggedState) {
           case (u, (_, v)) => lss.subtractOverlapped(u, (v, false))
@@ -987,7 +1220,8 @@ private[rdd] class OverlappableWindowIterator[K, SK, V, U, V2](
     // (1) updates the window for the "core row";
     // (2) updates the summarizer state for the window of rows that have been iterated through so far;
     // (3) puts iterated rows into "core row" buffer for future use, i.e. the next().
-    while (iter.hasNext && (lagWindowRange.contains(iter.head._1) || windowRange.contains(iter.head._1))) {
+    while (iter.hasNext && (lagWindowRange.contains(iter.head._1) || windowRange
+      .contains(iter.head._1))) {
       val (k, v) = iter.next
       val sk = skFn(v)
       if (coreRange.contains(k)) {
@@ -995,8 +1229,16 @@ private[rdd] class OverlappableWindowIterator[K, SK, V, U, V2](
       }
 
       // Update windows
-      val window = SummarizeWindows.lazyGetOrDefault(windows, sk, new JLinkedList[(K, V)]())
-      val u = SummarizeWindows.lazyGetOrDefault(summarizerStates, sk, summarizer.zero())
+      val window = SummarizeWindows.lazyGetOrDefault(
+        windows,
+        sk,
+        new JLinkedList[(K, V)]()
+      )
+      val u = SummarizeWindows.lazyGetOrDefault(
+        summarizerStates,
+        sk,
+        summarizer.zero()
+      )
       val overlapped = lagWindowRange.contains(k)
       require(!overlapped)
       window.add((k, v))

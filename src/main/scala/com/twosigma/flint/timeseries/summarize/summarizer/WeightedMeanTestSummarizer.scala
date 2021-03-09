@@ -16,15 +16,21 @@
 
 package com.twosigma.flint.timeseries.summarize.summarizer
 
-import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.{ WeightedMeanTestOutput, WeightedMeanTestState, WeightedMeanTestSummarizer => WMSummarizer }
+import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.{
+  WeightedMeanTestOutput,
+  WeightedMeanTestState,
+  WeightedMeanTestSummarizer => WMSummarizer
+}
 import com.twosigma.flint.timeseries.row.Schema
 import com.twosigma.flint.timeseries.summarize.ColumnList.Sequence
 import com.twosigma.flint.timeseries.summarize._
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.types._
 
-case class WeightedMeanTestSummarizerFactory(valueColumn: String, weightColumn: String)
-  extends BaseSummarizerFactory(valueColumn, weightColumn) {
+case class WeightedMeanTestSummarizerFactory(
+  valueColumn: String,
+  weightColumn: String
+) extends BaseSummarizerFactory(valueColumn, weightColumn) {
   override def apply(inputSchema: StructType): WeightedMeanTestSummarizer =
     WeightedMeanTestSummarizer(inputSchema, prefixOpt, requiredColumns)
 }
@@ -33,12 +39,17 @@ case class WeightedMeanTestSummarizer(
   override val inputSchema: StructType,
   override val prefixOpt: Option[String],
   requiredColumns: ColumnList
-) extends LeftSubtractableSummarizer with FilterNullInput {
+) extends LeftSubtractableSummarizer
+  with FilterNullInput {
   val Sequence(Seq(valueColumn, weightColumn)) = requiredColumns
   private val valueColumnIndex = inputSchema.fieldIndex(valueColumn)
   private val weightColumnIndex = inputSchema.fieldIndex(weightColumn)
-  private final val valueExtractor = asDoubleExtractor(inputSchema(valueColumnIndex).dataType, valueColumnIndex)
-  private final val weightExtractor = asDoubleExtractor(inputSchema(weightColumnIndex).dataType, weightColumnIndex)
+  private final val valueExtractor =
+    asDoubleExtractor(inputSchema(valueColumnIndex).dataType, valueColumnIndex)
+  private final val weightExtractor = asDoubleExtractor(
+    inputSchema(weightColumnIndex).dataType,
+    weightColumnIndex
+  )
   private val columnPrefix = s"${valueColumn}_${weightColumn}"
 
   override type T = (Double, Double)
@@ -59,5 +70,6 @@ case class WeightedMeanTestSummarizer(
       weightExtractor(r)
     )
 
-  override def fromV(v: V): InternalRow = InternalRow.fromSeq(v.productIterator.toSeq)
+  override def fromV(v: V): InternalRow =
+    InternalRow.fromSeq(v.productIterator.toSeq)
 }

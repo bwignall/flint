@@ -18,7 +18,12 @@ package org.apache.spark.sql
 
 import com.twosigma.flint.annotation.PythonApi
 
-import org.apache.spark.sql.catalyst.plans.logical.{ Filter, LogicalPlan, Project, Generate }
+import org.apache.spark.sql.catalyst.plans.logical.{
+  Filter,
+  LogicalPlan,
+  Project,
+  Generate
+}
 
 /**
  * A class to used to check whether a DataFrame operation is partition preserving.
@@ -31,17 +36,21 @@ object OrderPreservingOperation {
   def analyzedPlan(df: DataFrame): LogicalPlan =
     DFConverter.newDataFrame(df).queryExecution.analyzed
 
-  private def isOrderPreservingLogicalNode(node: LogicalPlan): Boolean = node match {
-    case _: Project => true
-    case _: Filter => true
-    case _: Generate => true
-    case _ => false
-  }
+  private def isOrderPreservingLogicalNode(node: LogicalPlan): Boolean =
+    node match {
+      case _: Project => true
+      case _: Filter => true
+      case _: Generate => true
+      case _ => false
+    }
 
   /**
    * Complexity O(n).
    */
-  private[sql] def isSubtree(plan1: LogicalPlan, plan2: LogicalPlan): Boolean = {
+  private[sql] def isSubtree(
+    plan1: LogicalPlan,
+    plan2: LogicalPlan
+  ): Boolean = {
     if (treeEquals(plan1, plan2)) {
       true
     } else {
@@ -49,13 +58,18 @@ object OrderPreservingOperation {
     }
   }
 
-  private[sql] def treeEquals(plan1: LogicalPlan, plan2: LogicalPlan): Boolean = {
+  private[sql] def treeEquals(
+    plan1: LogicalPlan,
+    plan2: LogicalPlan
+  ): Boolean = {
     if (plan1.fastEquals(plan2)) {
       assert(
         plan1.children.length == plan2.children.length,
         "Node equals but number of children node are different"
       )
-      val childrenEqual = (plan1.children zip plan2.children).forall { case (p1, p2) => treeEquals(p1, p2) }
+      val childrenEqual = (plan1.children zip plan2.children).forall {
+        case (p1, p2) => treeEquals(p1, p2)
+      }
       // Because of the way logical plan works, if the root of two tree equals,
       // the two tree should equal. If this assumption is violated, we throw an exception.
       assert(
@@ -68,7 +82,10 @@ object OrderPreservingOperation {
     }
   }
 
-  private def isOrderPreserving(plan1: LogicalPlan, plan2: LogicalPlan): Boolean = {
+  private def isOrderPreserving(
+    plan1: LogicalPlan,
+    plan2: LogicalPlan
+  ): Boolean = {
     if (treeEquals(plan1, plan2)) {
       true
     } else {
@@ -84,7 +101,8 @@ object OrderPreservingOperation {
   /**
    * Check if df2 is derived from df1, i.e., if df2 is the result of applying one or more operations on df1
    */
-  def isDerivedFrom(df1: DataFrame, df2: DataFrame): Boolean = isSubtree(analyzedPlan(df1), analyzedPlan(df2))
+  def isDerivedFrom(df1: DataFrame, df2: DataFrame): Boolean =
+    isSubtree(analyzedPlan(df1), analyzedPlan(df2))
 
   /**
    * Check if df1 -> df2 is order preserving.

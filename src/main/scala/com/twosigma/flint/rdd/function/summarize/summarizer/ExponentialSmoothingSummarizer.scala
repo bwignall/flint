@@ -104,13 +104,14 @@ case class ExponentialSmoothingSummarizer(
       }
     }
 
-  override def zero(): ExponentialSmoothingState = ExponentialSmoothingState(
-    primaryESValue = 0.0,
-    auxiliaryESValue = 0.0,
-    firstRow = None,
-    prevRow = None,
-    count = 0L
-  )
+  override def zero(): ExponentialSmoothingState =
+    ExponentialSmoothingState(
+      primaryESValue = 0.0,
+      auxiliaryESValue = 0.0,
+      firstRow = None,
+      prevRow = None,
+      count = 0L
+    )
 
   override def merge(
     u1: ExponentialSmoothingState,
@@ -123,18 +124,23 @@ case class ExponentialSmoothingSummarizer(
     } else {
       require(u1.prevRow.get.time <= u2.prevRow.get.time)
       val newU = zero()
-      val gapPeriods = timestampsToPeriods(u1.prevRow.get.time, u2.firstRow.get.time)
-      val u2Periods = timestampsToPeriods(u2.firstRow.get.time, u2.prevRow.get.time)
+      val gapPeriods =
+        timestampsToPeriods(u1.prevRow.get.time, u2.firstRow.get.time)
+      val u2Periods =
+        timestampsToPeriods(u2.firstRow.get.time, u2.prevRow.get.time)
 
       // Add the first value of u2
       newU.primaryESValue = decayForInterval(u1.primaryESValue, gapPeriods) +
         interpolateForInterval(u1.prevRow.get.x, u2.firstRow.get.x, gapPeriods)
-      newU.auxiliaryESValue = decayForInterval(u1.auxiliaryESValue, gapPeriods) +
-        interpolateForInterval(1.0, 1.0, gapPeriods)
+      newU.auxiliaryESValue =
+        decayForInterval(u1.auxiliaryESValue, gapPeriods) +
+          interpolateForInterval(1.0, 1.0, gapPeriods)
 
       // Decay over u2 period
-      newU.primaryESValue = decayForInterval(newU.primaryESValue, u2Periods) + u2.primaryESValue
-      newU.auxiliaryESValue = decayForInterval(newU.auxiliaryESValue, u2Periods) + u2.auxiliaryESValue
+      newU.primaryESValue =
+        decayForInterval(newU.primaryESValue, u2Periods) + u2.primaryESValue
+      newU.auxiliaryESValue =
+        decayForInterval(newU.auxiliaryESValue, u2Periods) + u2.auxiliaryESValue
 
       newU.count = u2.count + u1.count
       newU.firstRow = u1.firstRow
@@ -143,7 +149,9 @@ case class ExponentialSmoothingSummarizer(
     }
   }
 
-  override def render(u: ExponentialSmoothingState): ExponentialSmoothingOutput = {
+  override def render(
+    u: ExponentialSmoothingState
+  ): ExponentialSmoothingOutput = {
     if (u.count > 0L) {
       // For legacy, we inject a point at time 0 instead of utilizing the primingPeriods parameter.
       val actualPrimingPeriods = exponentialSmoothingConvention match {
@@ -154,17 +162,24 @@ case class ExponentialSmoothingSummarizer(
       }
 
       // Account for priming periods
-      val primedPrimaryESValue = interpolateForInterval(0.0, u.firstRow.get.x, actualPrimingPeriods)
-      val primedAuxiliaryESValue = interpolateForInterval(0.0, 1.0, actualPrimingPeriods)
-      val periods = timestampsToPeriods(u.firstRow.get.time, u.prevRow.get.time) max 0
-      val finalPrimaryESValue = decayForInterval(primedPrimaryESValue, periods) + u.primaryESValue
-      val finalAuxiliaryESValue = decayForInterval(primedAuxiliaryESValue, periods) + u.auxiliaryESValue
+      val primedPrimaryESValue =
+        interpolateForInterval(0.0, u.firstRow.get.x, actualPrimingPeriods)
+      val primedAuxiliaryESValue =
+        interpolateForInterval(0.0, 1.0, actualPrimingPeriods)
+      val periods =
+        timestampsToPeriods(u.firstRow.get.time, u.prevRow.get.time) max 0
+      val finalPrimaryESValue =
+        decayForInterval(primedPrimaryESValue, periods) + u.primaryESValue
+      val finalAuxiliaryESValue =
+        decayForInterval(primedAuxiliaryESValue, periods) + u.auxiliaryESValue
 
       exponentialSmoothingConvention match {
         case ExponentialSmoothingConvention.Convolution =>
           ExponentialSmoothingOutput(finalPrimaryESValue)
         case ExponentialSmoothingConvention.Core =>
-          ExponentialSmoothingOutput(finalPrimaryESValue / finalAuxiliaryESValue)
+          ExponentialSmoothingOutput(
+            finalPrimaryESValue / finalAuxiliaryESValue
+          )
         case ExponentialSmoothingConvention.Legacy =>
           ExponentialSmoothingOutput(finalPrimaryESValue)
       }
@@ -173,7 +188,10 @@ case class ExponentialSmoothingSummarizer(
     }
   }
 
-  override def add(u: ExponentialSmoothingState, row: SmoothingRow): ExponentialSmoothingState = {
+  override def add(
+    u: ExponentialSmoothingState,
+    row: SmoothingRow
+  ): ExponentialSmoothingState = {
     // Don't update here, we will account for priming periods at the end
     if (u.count == 0L) {
       u.firstRow = Some(row)

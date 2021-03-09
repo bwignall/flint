@@ -35,11 +35,12 @@ case class ZScoreSummarizer(includeCurrentObservation: Boolean)
   // We only need the unweighted mean so we always pass in a weight of 1
   val meanSummarizer = WeightedMeanTestSummarizer()
 
-  override def zero(): ZScoreState = ZScoreState(
-    0L,
-    Double.NaN,
-    meanSummarizer.zero()
-  )
+  override def zero(): ZScoreState =
+    ZScoreState(
+      0L,
+      Double.NaN,
+      meanSummarizer.zero()
+    )
 
   override def add(u: ZScoreState, value: Double): ZScoreState = {
     u.count += 1L
@@ -84,7 +85,8 @@ case class ZScoreSummarizer(includeCurrentObservation: Boolean)
     if (u.value != Double.NaN) {
       val meanTestOutput = meanSummarizer.render(u.meanState)
       if (meanTestOutput.observationCount > 1) {
-        zScore = (u.value - meanTestOutput.weighedMean) / meanTestOutput.weightedStandardDeviation
+        zScore =
+          (u.value - meanTestOutput.weighedMean) / meanTestOutput.weightedStandardDeviation
       }
     }
 

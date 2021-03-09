@@ -16,5 +16,7 @@
 
 package com.twosigma.flint.timeseries.row
 
-class DuplicateColumnsException(val message: String, val duplicates: Seq[String])
-  extends IllegalArgumentException(message)
+class DuplicateColumnsException(
+  val message: String,
+  val duplicates: Seq[String]
+) extends IllegalArgumentException(message)

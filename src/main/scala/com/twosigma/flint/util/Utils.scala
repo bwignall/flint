@@ -21,6 +21,7 @@ package com.twosigma.flint.util
  */
 
 object Utils {
+
   /**
    * Execute a block of code, then a finally block, but if exceptions happen in
    * the finally block, do not suppress the original exception.
@@ -57,4 +58,3 @@ object Utils {
     }
   }
 }
-

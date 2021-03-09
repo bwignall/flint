@@ -49,13 +49,15 @@ import com.twosigma.flint.rdd.function.summarize.summarizer.Summarizer
  * more information at [[https://www.cs.cmu.edu/~guyb/papers/Ble93.pdf Prefix Sums and Their Applications]].
  */
 object Summarizations {
+
   /**
    * This is in the favor of OrderedRDD.mapPartitionsWithIndexOrdered to convert an iterator of
    * a partition to an iterator with desired type. It is quite similar to Iterator.scanLeft but
    * easier to use.
    */
   private[this] def scanLeft[K, SK, V, Z, V2](
-    iter: Iterator[(K, V)], z: Z
+    iter: Iterator[(K, V)],
+    z: Z
   )(
     op: (Z, (K, V)) => (Z, V2)
   ): Iterator[(K, (V, V2))] =
@@ -64,14 +66,15 @@ object Summarizations {
 
       override def hasNext = iter.hasNext
 
-      override def next() = if (hasNext) {
-        val (k, v) = iter.next()
-        val res = op(s, (k, v))
-        s = res._1
-        (k, (v, res._2))
-      } else {
-        Iterator.empty.next()
-      }
+      override def next() =
+        if (hasNext) {
+          val (k, v) = iter.next()
+          val res = op(s, (k, v))
+          s = res._1
+          (k, (v, res._2))
+        } else {
+          Iterator.empty.next()
+        }
     }
 
   /**
@@ -92,31 +95,47 @@ object Summarizations {
     summarizer: Summarizer[V, U, V2],
     skFn: V => SK
   ): OrderedRDD[K, (V, V2)] = {
-    val partitionIdToIntermediate = Summarize.summarizePartition(rdd, summarizer, skFn)
+    val partitionIdToIntermediate =
+      Summarize.summarizePartition(rdd, summarizer, skFn)
     // prefixes(k) is the prefix sum (per secondary key) of partitions 0 until (k - 1)
-    val prefixes = partitionIdToIntermediate.foldLeft(
-      // The elements of a tuple is a partition index k, the prefix sum (per secondary key)
-      // of partitions 1, 2, ..., (k - 1), the sum of (per secondary key) partition k.
-      List((0, Map.empty[SK, U], Map.empty[SK, U]))
-    ) {
-        case (p, (i, uPerSK)) =>
-          val uPerSK1 = p.head._2
-          val uPerSK2 = p.head._3
-          (i, (uPerSK1 ++ uPerSK2).map {
-            case (sk, _) => (sk, summarizer.merge(
-              uPerSK1.getOrElse(sk, summarizer.zero()), uPerSK2.getOrElse(sk, summarizer.zero())
-            ))
-          }, uPerSK) :: p
-        // Remove the start value per calling foldLeft()
-      }.reverse.tail.map { x => (x._1, x._2) }.toMap
+    val prefixes = partitionIdToIntermediate
+      .foldLeft(
+        // The elements of a tuple is a partition index k, the prefix sum (per secondary key)
+        // of partitions 1, 2, ..., (k - 1), the sum of (per secondary key) partition k.
+        List((0, Map.empty[SK, U], Map.empty[SK, U]))
+      ) {
+          case (p, (i, uPerSK)) =>
+            val uPerSK1 = p.head._2
+            val uPerSK2 = p.head._3
+            (
+              i,
+              (uPerSK1 ++ uPerSK2).map {
+                case (sk, _) =>
+                  (
+                    sk,
+                    summarizer.merge(
+                      uPerSK1.getOrElse(sk, summarizer.zero()),
+                      uPerSK2.getOrElse(sk, summarizer.zero())
+                    )
+                  )
+              },
+              uPerSK
+            ) :: p
+          // Remove the start value per calling foldLeft()
+        }
+      .reverse
+      .tail
+      .map { x => (x._1, x._2) }
+      .toMap
 
     rdd.mapPartitionsWithIndexOrdered {
-      case (idx, iter) => scanLeft(iter, MHashMap.empty ++ prefixes(idx)){
-        case (uPerSK: MMap[SK, U], (k, v)) =>
-          val sk = skFn(v)
-          val added = summarizer.add(uPerSK.getOrElse(sk, summarizer.zero), v)
-          (uPerSK += sk -> added, summarizer.render(added))
-      }
+      case (idx, iter) =>
+        scanLeft(iter, MHashMap.empty ++ prefixes(idx)) {
+          case (uPerSK: MMap[SK, U], (k, v)) =>
+            val sk = skFn(v)
+            val added = summarizer.add(uPerSK.getOrElse(sk, summarizer.zero), v)
+            (uPerSK += sk -> added, summarizer.render(added))
+        }
     }
   }
 }

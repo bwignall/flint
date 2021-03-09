@@ -22,7 +22,11 @@ import scala.collection.JavaConverters._
 
 import org.apache.arrow.vector._
 import org.apache.arrow.vector.BaseValueVector
-import org.apache.arrow.vector.types.{ DateUnit, FloatingPointPrecision, TimeUnit => ArrowTimeUnit }
+import org.apache.arrow.vector.types.{
+  DateUnit,
+  FloatingPointPrecision,
+  TimeUnit => ArrowTimeUnit
+}
 import org.apache.arrow.vector.types.pojo.{ ArrowType, Schema }
 
 import org.apache.spark.sql.catalyst.expressions.UnsafeRow
@@ -129,7 +133,10 @@ class UTF8StringRowFieldWriter(
   override val valueVector: VarCharVector
 ) extends PrimitiveRowFieldWriter(ordinal, unsafeRowWriter, valueVector) {
   override def writeValue(rowIndex: Int): Unit = {
-    unsafeRowWriter.write(ordinal, UTF8String.fromBytes(valueVector.get(rowIndex)))
+    unsafeRowWriter.write(
+      ordinal,
+      UTF8String.fromBytes(valueVector.get(rowIndex))
+    )
   }
 }
 
@@ -161,7 +168,8 @@ class DateMilliRowFieldWriter(
   override protected def writeValue(rowIndex: Int): Unit = {
     unsafeRowWriter.write(
       ordinal,
-      java.util.concurrent.TimeUnit.MILLISECONDS.toDays(valueVector.get(rowIndex))
+      java.util.concurrent.TimeUnit.MILLISECONDS
+        .toDays(valueVector.get(rowIndex))
     )
   }
 }
@@ -173,7 +181,10 @@ class TimestampSecRowFieldWriter(
   override val valueVector: TimeStampSecVector
 ) extends PrimitiveRowFieldWriter(ordinal, unsafeRowWriter, valueVector) {
   override protected def writeValue(rowIndex: Int): Unit = {
-    unsafeRowWriter.write(ordinal, TimeUnit.SECONDS.toMicros(valueVector.get(rowIndex)))
+    unsafeRowWriter.write(
+      ordinal,
+      TimeUnit.SECONDS.toMicros(valueVector.get(rowIndex))
+    )
   }
 }
 
@@ -183,7 +194,10 @@ class TimestampSecTZRowFieldWriter(
   override val valueVector: TimeStampSecTZVector
 ) extends PrimitiveRowFieldWriter(ordinal, unsafeRowWriter, valueVector) {
   override protected def writeValue(rowIndex: Int): Unit = {
-    unsafeRowWriter.write(ordinal, TimeUnit.SECONDS.toMicros(valueVector.get(rowIndex)))
+    unsafeRowWriter.write(
+      ordinal,
+      TimeUnit.SECONDS.toMicros(valueVector.get(rowIndex))
+    )
   }
 }
 
@@ -193,7 +207,10 @@ class TimestampMilliRowFieldWriter(
   override val valueVector: TimeStampMilliVector
 ) extends PrimitiveRowFieldWriter(ordinal, unsafeRowWriter, valueVector) {
   override protected def writeValue(rowIndex: Int): Unit = {
-    unsafeRowWriter.write(ordinal, TimeUnit.MILLISECONDS.toMicros(valueVector.get(rowIndex)))
+    unsafeRowWriter.write(
+      ordinal,
+      TimeUnit.MILLISECONDS.toMicros(valueVector.get(rowIndex))
+    )
   }
 }
 
@@ -203,7 +220,10 @@ class TimestampMilliTZRowFieldWriter(
   override val valueVector: TimeStampMilliTZVector
 ) extends PrimitiveRowFieldWriter(ordinal, unsafeRowWriter, valueVector) {
   override protected def writeValue(rowIndex: Int): Unit = {
-    unsafeRowWriter.write(ordinal, TimeUnit.MILLISECONDS.toMicros(valueVector.get(rowIndex)))
+    unsafeRowWriter.write(
+      ordinal,
+      TimeUnit.MILLISECONDS.toMicros(valueVector.get(rowIndex))
+    )
   }
 }
 
@@ -233,7 +253,10 @@ class TimestampNanoRowFieldWriter(
   override val valueVector: TimeStampNanoVector
 ) extends PrimitiveRowFieldWriter(ordinal, unsafeRowWriter, valueVector) {
   override protected def writeValue(rowIndex: Int): Unit = {
-    unsafeRowWriter.write(ordinal, TimeUnit.NANOSECONDS.toMicros(valueVector.get(rowIndex)))
+    unsafeRowWriter.write(
+      ordinal,
+      TimeUnit.NANOSECONDS.toMicros(valueVector.get(rowIndex))
+    )
   }
 }
 
@@ -243,7 +266,10 @@ class TimestampNanoTZRowFieldWriter(
   override val valueVector: TimeStampNanoTZVector
 ) extends PrimitiveRowFieldWriter(ordinal, unsafeRowWriter, valueVector) {
   override protected def writeValue(rowIndex: Int): Unit = {
-    unsafeRowWriter.write(ordinal, TimeUnit.NANOSECONDS.toMicros(valueVector.get(rowIndex)))
+    unsafeRowWriter.write(
+      ordinal,
+      TimeUnit.NANOSECONDS.toMicros(valueVector.get(rowIndex))
+    )
   }
 }
 
@@ -256,8 +282,14 @@ class ArrowBackendUnsafeRowIterator(
   private[this] val columnCount = schema.getFields.size()
   private[this] val unsafeRowWriter = new UnsafeRowWriter(columnCount)
   private[this] val valueVectors = root.getFieldVectors.asScala.toArray
-  private[this] val rowFieldWriters = for (i <- 0 until columnCount)
-    yield RowFieldWriter(i, unsafeRowWriter, valueVectors(i), schema.getFields.get(i).getType)
+  private[this] val rowFieldWriters =
+    for (i <- 0 until columnCount)
+      yield RowFieldWriter(
+      i,
+      unsafeRowWriter,
+      valueVectors(i),
+      schema.getFields.get(i).getType
+    )
 
   override def hasNext: Boolean = rowIndex < rowCount
 
@@ -285,75 +317,139 @@ object RowFieldWriter {
   ): RowFieldWriter[_] = {
     dataType match {
       case ArrowType.Bool.INSTANCE =>
-        new BooleanRowFieldWriter(ordinal, unsafeRowWriter,
-          valueVector.asInstanceOf[BitVector])
+        new BooleanRowFieldWriter(
+          ordinal,
+          unsafeRowWriter,
+          valueVector.asInstanceOf[BitVector]
+        )
 
       case int: ArrowType.Int if int.getIsSigned && int.getBitWidth == 8 =>
-        new ByteRowFieldWriter(ordinal, unsafeRowWriter, valueVector
-          .asInstanceOf[TinyIntVector])
+        new ByteRowFieldWriter(
+          ordinal,
+          unsafeRowWriter,
+          valueVector
+          .asInstanceOf[TinyIntVector]
+        )
       case int: ArrowType.Int if int.getIsSigned && int.getBitWidth == 16 =>
-        new ShortRowFieldWriter(ordinal, unsafeRowWriter,
-          valueVector.asInstanceOf[SmallIntVector])
+        new ShortRowFieldWriter(
+          ordinal,
+          unsafeRowWriter,
+          valueVector.asInstanceOf[SmallIntVector]
+        )
       case int: ArrowType.Int if int.getIsSigned && int.getBitWidth == 32 =>
-        new IntegerRowFieldWriter(ordinal, unsafeRowWriter,
-          valueVector.asInstanceOf[IntVector])
+        new IntegerRowFieldWriter(
+          ordinal,
+          unsafeRowWriter,
+          valueVector.asInstanceOf[IntVector]
+        )
       case int: ArrowType.Int if int.getIsSigned && int.getBitWidth == 64 =>
-        new LongRowFieldWriter(ordinal, unsafeRowWriter,
-          valueVector.asInstanceOf[BigIntVector])
+        new LongRowFieldWriter(
+          ordinal,
+          unsafeRowWriter,
+          valueVector.asInstanceOf[BigIntVector]
+        )
 
       case float: ArrowType.FloatingPoint if float.getPrecision() == FloatingPointPrecision.SINGLE =>
-        new FloatRowFieldWriter(ordinal, unsafeRowWriter,
-          valueVector.asInstanceOf[Float4Vector])
+        new FloatRowFieldWriter(
+          ordinal,
+          unsafeRowWriter,
+          valueVector.asInstanceOf[Float4Vector]
+        )
       case float: ArrowType.FloatingPoint if float.getPrecision() == FloatingPointPrecision.DOUBLE =>
-        new DoubleRowFieldWriter(ordinal, unsafeRowWriter,
-          valueVector.asInstanceOf[Float8Vector])
+        new DoubleRowFieldWriter(
+          ordinal,
+          unsafeRowWriter,
+          valueVector.asInstanceOf[Float8Vector]
+        )
 
       case ArrowType.Utf8.INSTANCE =>
-        new UTF8StringRowFieldWriter(ordinal, unsafeRowWriter, valueVector
-          .asInstanceOf[VarCharVector])
+        new UTF8StringRowFieldWriter(
+          ordinal,
+          unsafeRowWriter,
+          valueVector
+          .asInstanceOf[VarCharVector]
+        )
       case ArrowType.Binary.INSTANCE =>
-        new BinaryRowFieldWriter(ordinal, unsafeRowWriter, valueVector
-          .asInstanceOf[VarBinaryVector])
+        new BinaryRowFieldWriter(
+          ordinal,
+          unsafeRowWriter,
+          valueVector
+          .asInstanceOf[VarBinaryVector]
+        )
       case d: ArrowType.Date =>
         d.getUnit match {
           case DateUnit.DAY =>
-            new DateDayRowFieldWriter(ordinal, unsafeRowWriter, valueVector
-              .asInstanceOf[DateDayVector])
+            new DateDayRowFieldWriter(
+              ordinal,
+              unsafeRowWriter,
+              valueVector
+              .asInstanceOf[DateDayVector]
+            )
           case DateUnit.MILLISECOND =>
-            new DateMilliRowFieldWriter(ordinal, unsafeRowWriter, valueVector
-              .asInstanceOf[DateMilliVector])
+            new DateMilliRowFieldWriter(
+              ordinal,
+              unsafeRowWriter,
+              valueVector
+              .asInstanceOf[DateMilliVector]
+            )
         }
 
       case d: ArrowType.Timestamp =>
         (d.getUnit, d.getTimezone) match {
           case (ArrowTimeUnit.SECOND, null) =>
-            new TimestampSecRowFieldWriter(ordinal, unsafeRowWriter,
-              valueVector.asInstanceOf[TimeStampSecVector])
+            new TimestampSecRowFieldWriter(
+              ordinal,
+              unsafeRowWriter,
+              valueVector.asInstanceOf[TimeStampSecVector]
+            )
           case (ArrowTimeUnit.SECOND, tz) =>
-            new TimestampSecTZRowFieldWriter(ordinal, unsafeRowWriter,
-              valueVector.asInstanceOf[TimeStampSecTZVector])
+            new TimestampSecTZRowFieldWriter(
+              ordinal,
+              unsafeRowWriter,
+              valueVector.asInstanceOf[TimeStampSecTZVector]
+            )
           case (ArrowTimeUnit.MILLISECOND, null) =>
-            new TimestampMilliRowFieldWriter(ordinal, unsafeRowWriter,
-              valueVector.asInstanceOf[TimeStampMilliVector])
+            new TimestampMilliRowFieldWriter(
+              ordinal,
+              unsafeRowWriter,
+              valueVector.asInstanceOf[TimeStampMilliVector]
+            )
           case (ArrowTimeUnit.MILLISECOND, tz) =>
-            new TimestampMilliTZRowFieldWriter(ordinal, unsafeRowWriter,
-              valueVector.asInstanceOf[TimeStampMilliTZVector])
+            new TimestampMilliTZRowFieldWriter(
+              ordinal,
+              unsafeRowWriter,
+              valueVector.asInstanceOf[TimeStampMilliTZVector]
+            )
           case (ArrowTimeUnit.MICROSECOND, null) =>
-            new TimestampMicroRowFieldWriter(ordinal, unsafeRowWriter,
-              valueVector.asInstanceOf[TimeStampMicroVector])
+            new TimestampMicroRowFieldWriter(
+              ordinal,
+              unsafeRowWriter,
+              valueVector.asInstanceOf[TimeStampMicroVector]
+            )
           case (ArrowTimeUnit.MICROSECOND, tz) =>
-            new TimestampMicroTZRowFieldWriter(ordinal, unsafeRowWriter,
-              valueVector.asInstanceOf[TimeStampMicroTZVector])
+            new TimestampMicroTZRowFieldWriter(
+              ordinal,
+              unsafeRowWriter,
+              valueVector.asInstanceOf[TimeStampMicroTZVector]
+            )
           case (ArrowTimeUnit.NANOSECOND, null) =>
-            new TimestampNanoRowFieldWriter(ordinal, unsafeRowWriter,
-              valueVector.asInstanceOf[TimeStampNanoVector])
+            new TimestampNanoRowFieldWriter(
+              ordinal,
+              unsafeRowWriter,
+              valueVector.asInstanceOf[TimeStampNanoVector]
+            )
           case (ArrowTimeUnit.NANOSECOND, tz) =>
-            new TimestampNanoTZRowFieldWriter(ordinal, unsafeRowWriter,
-              valueVector.asInstanceOf[TimeStampNanoTZVector])
+            new TimestampNanoTZRowFieldWriter(
+              ordinal,
+              unsafeRowWriter,
+              valueVector.asInstanceOf[TimeStampNanoTZVector]
+            )
         }
 
-      case _ => throw new UnsupportedOperationException(s"Unsupported data type: $dataType")
+      case _ =>
+        throw new UnsupportedOperationException(
+          s"Unsupported data type: $dataType"
+        )
     }
   }
 }
-

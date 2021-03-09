@@ -25,7 +25,8 @@ import scala.reflect.ClassTag
  * A resizing array queue that does not utilize wraparound. Instead, when begin is halfway through the array, the queue
  * shifts all elements back to the beginning of the underlying array. This is not thread-safe.
  */
-protected[flint] class SequentialArrayQueue[@specialized(Double) T: ClassTag] extends Serializable {
+protected[flint] class SequentialArrayQueue[@specialized(Double) T: ClassTag]
+  extends Serializable {
   private var begin: Int = 0
   private var end: Int = 0
   private var values: Array[T] = new Array[T](32)
@@ -105,7 +106,8 @@ case class QuantileSummarizer(
 
   require(p.nonEmpty, "The list of quantiles must be non-empty.")
 
-  override def zero(): SequentialArrayQueue[Double] = new SequentialArrayQueue[Double]()
+  override def zero(): SequentialArrayQueue[Double] =
+    new SequentialArrayQueue[Double]()
 
   override def merge(
     u1: SequentialArrayQueue[Double],
@@ -127,12 +129,18 @@ case class QuantileSummarizer(
     }
   }
 
-  override def add(u: SequentialArrayQueue[Double], t: Double): SequentialArrayQueue[Double] = {
+  override def add(
+    u: SequentialArrayQueue[Double],
+    t: Double
+  ): SequentialArrayQueue[Double] = {
     u.add(t)
     u
   }
 
-  override def subtract(u: SequentialArrayQueue[Double], t: Double): SequentialArrayQueue[Double] = {
+  override def subtract(
+    u: SequentialArrayQueue[Double],
+    t: Double
+  ): SequentialArrayQueue[Double] = {
     u.remove()
     u
   }

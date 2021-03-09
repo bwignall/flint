@@ -44,21 +44,26 @@ protected[flint] object TreeAggregate {
     combOp: (U, U) => U,
     depth: Int = 2
   ): U = {
-    require(depth >= 1, s"Depth must be greater than or equal to 1 but got $depth.")
+    require(
+      depth >= 1,
+      s"Depth must be greater than or equal to 1 but got $depth."
+    )
 
     if (rdd.partitions.length == 0) {
       zeroValue
     } else {
-      val aggregatePartition = (it: Iterator[T]) => it.foldLeft(zeroValue)(seqOp)
+      val aggregatePartition = (it: Iterator[T]) =>
+        it.foldLeft(zeroValue)(seqOp)
       // The following is an RDD[(Int, U)] where the key of type Int is simply the partition index.
-      var partiallyAggregated = rdd.mapPartitionsWithIndex {
-        (i, iter) => Iterator((i, aggregatePartition(iter)))
+      var partiallyAggregated = rdd.mapPartitionsWithIndex { (i, iter) =>
+        Iterator((i, aggregatePartition(iter)))
       }
       var numPartitions = partiallyAggregated.partitions.length
       // TODO: potentially could use different scale. Here, the trade-off is between the number
       //       of times of shuffling in the while-loop later and the memory pressure for each
       //       executor to perform (sorted) reduce op.
-      val scale = math.max(math.ceil(math.pow(numPartitions, 1.0 / depth)).toInt, 2)
+      val scale =
+        math.max(math.ceil(math.pow(numPartitions, 1.0 / depth)).toInt, 2)
 
       // In RDD.treeAggregate(...), it will collect all U(s) (after the number of
       // partitions is sufficient small) back to driver to reduce wall-clock time.
@@ -67,25 +72,30 @@ protected[flint] object TreeAggregate {
       while (numPartitions > 1) {
         numPartitions /= scale
         val curNumPartitions = math.max(numPartitions, 1)
-        partiallyAggregated = partiallyAggregated.map {
-          // Comparing to RDD.treeAggregate(...), the hash function used here is (i / curNumPartitions)
-          // instead of (i % curNumPartitions).
-          case (i, u) => (i / curNumPartitions, (i, u))
-        }.groupByKey(new HashPartitioner(curNumPartitions)).map {
-          // k is simply (i / curNumPartitions) from the above hash function.
-          case (k, iter) =>
-            // Note that we have to sort the U(s) by their original order before reduce op.
-            (k, iter.toArray.sortBy(_._1).map(_._2).reduce(combOp))
-        }
+        partiallyAggregated = partiallyAggregated
+          .map {
+            // Comparing to RDD.treeAggregate(...), the hash function used here is (i / curNumPartitions)
+            // instead of (i % curNumPartitions).
+            case (i, u) => (i / curNumPartitions, (i, u))
+          }
+          .groupByKey(new HashPartitioner(curNumPartitions))
+          .map {
+            // k is simply (i / curNumPartitions) from the above hash function.
+            case (k, iter) =>
+              // Note that we have to sort the U(s) by their original order before reduce op.
+              (k, iter.toArray.sortBy(_._1).map(_._2).reduce(combOp))
+          }
       }
 
       // The final step of tree aggregation should only have one single partition.
       require(partiallyAggregated.partitions.length == 1)
 
       // Aggregate in the executor side instead of driver.
-      val reduced = partiallyAggregated.mapPartitions {
-        iter => Iterator(iter.toArray.sortBy(_._1).map(_._2).reduce(combOp))
-      }.collect()
+      val reduced = partiallyAggregated
+        .mapPartitions { iter =>
+          Iterator(iter.toArray.sortBy(_._1).map(_._2).reduce(combOp))
+        }
+        .collect()
 
       require(reduced.length <= 1)
 

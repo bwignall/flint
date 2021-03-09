@@ -42,21 +42,24 @@ protected[flint] object Summarize {
     summarizer: Summarizer[V, U, V2],
     skFn: V => SK
   ): Array[(Int, Map[SK, U])] = {
-    rdd.mapPartitionsWithIndex {
-      case (idx, iter) =>
-        // Initialize the initial state.
-        val uPerSK = mutable.HashMap.empty[SK, U]
-        while (iter.hasNext) {
-          val (_, v) = iter.next()
-          val sk = skFn(v)
-          val previousU = uPerSK.getOrElse(sk, summarizer.zero())
-          uPerSK += sk -> summarizer.add(previousU, v)
-        }
-        // Make it immutable to return.
-        Array((idx, uPerSK)).iterator
-    }.collect.map{
-      case (idx, m) => (idx, collection.immutable.Map(m.toSeq: _*))
-    }
+    rdd
+      .mapPartitionsWithIndex {
+        case (idx, iter) =>
+          // Initialize the initial state.
+          val uPerSK = mutable.HashMap.empty[SK, U]
+          while (iter.hasNext) {
+            val (_, v) = iter.next()
+            val sk = skFn(v)
+            val previousU = uPerSK.getOrElse(sk, summarizer.zero())
+            uPerSK += sk -> summarizer.add(previousU, v)
+          }
+          // Make it immutable to return.
+          Array((idx, uPerSK)).iterator
+      }
+      .collect
+      .map {
+        case (idx, m) => (idx, collection.immutable.Map(m.toSeq: _*))
+      }
   }
 
   /**
@@ -97,8 +100,8 @@ protected[flint] object Summarize {
     if (rdd.getNumPartitions == 0) {
       Map.empty
     } else {
-      val partiallySummarized: RDD[Map[SK, U]] = rdd.mapPartitions {
-        iter =>
+      val partiallySummarized: RDD[Map[SK, U]] = rdd
+        .mapPartitions { iter =>
           // Initialize the initial state.
           val uPerSK = mutable.HashMap.empty[SK, U]
           while (iter.hasNext) {
@@ -108,12 +111,20 @@ protected[flint] object Summarize {
             uPerSK += sk -> summarizer.add(previousU, v)
           }
           Iterator(uPerSK)
-      }.map { m => Map[SK, U](m.toSeq: _*) } // Make it immutable to return.
+        }
+        .map { m => Map[SK, U](m.toSeq: _*) } // Make it immutable to return.
 
-      val mergeOp = (u1: Map[SK, U], u2: Map[SK, U]) => (u1 ++ u2).map {
-        case (sk, _) =>
-          (sk, summarizer.merge(u1.getOrElse(sk, summarizer.zero()), u2.getOrElse(sk, summarizer.zero())))
-      }
+      val mergeOp = (u1: Map[SK, U], u2: Map[SK, U]) =>
+        (u1 ++ u2).map {
+          case (sk, _) =>
+            (
+              sk,
+              summarizer.merge(
+                u1.getOrElse(sk, summarizer.zero()),
+                u2.getOrElse(sk, summarizer.zero())
+              )
+            )
+        }
 
       TreeReduce(partiallySummarized)(mergeOp, depth).map {
         case (sk, v) => (sk, summarizer.render(v))
@@ -136,8 +147,9 @@ protected[flint] object Summarize {
     } else {
       // Basically, an RDD of (K, (V, Boolean)) where the boolean flag indicates whether a row is overlapped.
       val overlappedRdd = OverlappedOrderedRDD(rdd, windowFn).zipOverlapped()
-      val partiallySummarized: RDD[Map[SK, U]] = overlappedRdd.map(_._2).mapPartitions {
-        iter =>
+      val partiallySummarized: RDD[Map[SK, U]] = overlappedRdd
+        .map(_._2)
+        .mapPartitions { iter =>
           // Initialize the initial state.
           val uPerSK = mutable.HashMap.empty[SK, U]
           while (iter.hasNext) {
@@ -147,12 +159,20 @@ protected[flint] object Summarize {
             uPerSK += sk -> summarizer.addOverlapped(previousU, v)
           }
           Iterator(uPerSK)
-      }.map { m => Map[SK, U](m.toSeq: _*) } // Make it immutable to return.
+        }
+        .map { m => Map[SK, U](m.toSeq: _*) } // Make it immutable to return.
 
-      val mergeOp = (u1: Map[SK, U], u2: Map[SK, U]) => (u1 ++ u2).map {
-        case (sk, _) =>
-          (sk, summarizer.merge(u1.getOrElse(sk, summarizer.zero()), u2.getOrElse(sk, summarizer.zero())))
-      }
+      val mergeOp = (u1: Map[SK, U], u2: Map[SK, U]) =>
+        (u1 ++ u2).map {
+          case (sk, _) =>
+            (
+              sk,
+              summarizer.merge(
+                u1.getOrElse(sk, summarizer.zero()),
+                u2.getOrElse(sk, summarizer.zero())
+              )
+            )
+        }
 
       TreeReduce(partiallySummarized)(mergeOp, depth)
     }

@@ -22,6 +22,8 @@ import java.util.{ LinkedList => JLinkedList }
 
 object Implicits {
 
-  implicit def javaLinkedListToHolder[V](l: JLinkedList[V]): LinkedListHolder[V] =
+  implicit def javaLinkedListToHolder[V](
+    l: JLinkedList[V]
+  ): LinkedListHolder[V] =
     new LinkedListHolder[V](l)
 }

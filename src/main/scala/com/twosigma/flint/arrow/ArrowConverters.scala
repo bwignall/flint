@@ -37,7 +37,10 @@ class ConcatClosableIterator[T](iters: Iterator[ClosableIterator[T]])
   var curIter: ClosableIterator[T] = _
 
   private def advance(): Unit = {
-    require(curIter == null || !curIter.hasNext, "Should not advance if curIter is not empty")
+    require(
+      curIter == null || !curIter.hasNext,
+      "Should not advance if curIter is not empty"
+    )
     require(iters.hasNext, "Should not advance if iters doesn't have next")
     closeCurrent()
     curIter = iters.next()
@@ -98,7 +101,11 @@ object ArrowConverters {
 
     val arrowSchema = ArrowUtils.toArrowSchema(schema)
     val allocator =
-      ArrowUtils.rootAllocator.newChildAllocator("toPayloadIterator", 0, Long.MaxValue)
+      ArrowUtils.rootAllocator.newChildAllocator(
+        "toPayloadIterator",
+        0,
+        Long.MaxValue
+      )
 
     val root = VectorSchemaRoot.create(arrowSchema, allocator)
     val arrowWriter = ArrowWriter.create(root)
@@ -114,12 +121,13 @@ object ArrowConverters {
 
     new Iterator[ArrowPayload] {
 
-      override def hasNext: Boolean = rowIter.hasNext || {
-        root.close()
-        allocator.close()
-        closed = true
-        false
-      }
+      override def hasNext: Boolean =
+        rowIter.hasNext || {
+          root.close()
+          allocator.close()
+          closed = true
+          false
+        }
 
       override def next(): ArrowPayload = {
         val out = new ByteArrayOutputStream()

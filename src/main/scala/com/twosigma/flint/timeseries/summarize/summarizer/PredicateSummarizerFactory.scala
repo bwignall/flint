@@ -16,7 +16,12 @@
 
 package com.twosigma.flint.timeseries.summarize.summarizer
 
-import com.twosigma.flint.timeseries.summarize.{ ColumnList, FilterNullInput, Summarizer, SummarizerFactory }
+import com.twosigma.flint.timeseries.summarize.{
+  ColumnList,
+  FilterNullInput,
+  Summarizer,
+  SummarizerFactory
+}
 import org.apache.spark.sql.CatalystTypeConvertersWrapper
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.types.{ DataType, StructType }
@@ -27,21 +32,32 @@ class PredicateSummarizerFactory(
   inputColumns: Seq[(String, DataType)]
 ) extends SummarizerFactory {
 
-  override val requiredColumns: ColumnList = factory.requiredColumns ++ ColumnList.Sequence(inputColumns.map(_._1))
+  override val requiredColumns: ColumnList =
+    factory.requiredColumns ++ ColumnList.Sequence(inputColumns.map(_._1))
 
   def apply(inputSchema: StructType): Summarizer = {
     inputColumns.foreach {
       case (column, dataType) =>
-        require(inputSchema.fieldNames.contains(column), s"Input schema $inputSchema doesn't contain $column column.")
+        require(
+          inputSchema.fieldNames.contains(column),
+          s"Input schema $inputSchema doesn't contain $column column."
+        )
         require(
           inputSchema(column).dataType == dataType,
           s"Input type: ${inputSchema(column).dataType} isn't equal to $dataType"
         )
     }
 
-    val filterFunction = UDFConverter.udfToFilter(f, inputSchema, inputColumns.map(_._1))
+    val filterFunction =
+      UDFConverter.udfToFilter(f, inputSchema, inputColumns.map(_._1))
     val innerSummarizer = factory(inputSchema)
-    new PredicateSummarizer(inputSchema, prefixOpt, requiredColumns, innerSummarizer, filterFunction)
+    new PredicateSummarizer(
+      inputSchema,
+      prefixOpt,
+      requiredColumns,
+      innerSummarizer,
+      filterFunction
+    )
   }
 
 }
@@ -52,7 +68,8 @@ class PredicateSummarizer(
   override val requiredColumns: ColumnList,
   val innnerSummarizer: Summarizer,
   val predicate: InternalRow => Boolean
-) extends Summarizer with FilterNullInput {
+) extends Summarizer
+  with FilterNullInput {
 
   override val schema: StructType = innnerSummarizer.schema
 
@@ -62,7 +79,8 @@ class PredicateSummarizer(
   override type U = innnerSummarizer.U
   override type V = innnerSummarizer.V
 
-  override def isValid(r: InternalRow): Boolean = super.isValid(r) && predicate(r)
+  override def isValid(r: InternalRow): Boolean =
+    super.isValid(r) && predicate(r)
 
   override def toT(r: InternalRow): T = innnerSummarizer.toT(r)
 
@@ -71,13 +89,21 @@ class PredicateSummarizer(
 
 private object UDFConverter {
 
-  def udfToFilter(function: AnyRef, inputSchema: StructType, columns: Seq[String]): InternalRow => Boolean = {
+  def udfToFilter(
+    function: AnyRef,
+    inputSchema: StructType,
+    columns: Seq[String]
+  ): InternalRow => Boolean = {
     val fieldIndices = columns.map(inputSchema.fieldIndex)
-    val columnPairs = fieldIndices.map(index => index -> inputSchema.fields(index).dataType)
+    val columnPairs =
+      fieldIndices.map(index => index -> inputSchema.fields(index).dataType)
     buildFilterFunction(function, columnPairs)
   }
 
-  private def buildFilterFunction(function: AnyRef, columns: Seq[(Int, DataType)]): InternalRow => Boolean = {
+  private def buildFilterFunction(
+    function: AnyRef,
+    columns: Seq[(Int, DataType)]
+  ): InternalRow => Boolean = {
     val extractors = columns.map {
       case (index, dataType) =>
         val converter = CatalystTypeConvertersWrapper.toScalaConverter(dataType)
@@ -106,11 +132,18 @@ private object UDFConverter {
       case 4 =>
         val func = function.asInstanceOf[(Any, Any, Any, Any) => Boolean]
         (input: InternalRow) => {
-          func(extractors(0)(input), extractors(1)(input), extractors(2)(input), extractors(3)(input))
+          func(
+            extractors(0)(input),
+            extractors(1)(input),
+            extractors(2)(input),
+            extractors(3)(input)
+          )
         }
 
       case _ =>
-        throw new UnsupportedOperationException("Cannot build function with more than four arguments")
+        throw new UnsupportedOperationException(
+          "Cannot build function with more than four arguments"
+        )
     }
   }
 }

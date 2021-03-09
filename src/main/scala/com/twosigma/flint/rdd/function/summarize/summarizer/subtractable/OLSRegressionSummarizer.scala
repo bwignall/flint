@@ -17,7 +17,10 @@
 package com.twosigma.flint.rdd.function.summarize.summarizer.subtractable
 
 import breeze.linalg._
-import com.twosigma.flint.rdd.function.summarize.summarizer.{ RegressionRow, RegressionSummarizer }
+import com.twosigma.flint.rdd.function.summarize.summarizer.{
+  RegressionRow,
+  RegressionSummarizer
+}
 
 import scala.util.control.Exception._
 import scala.util.{ Failure, Success }
@@ -86,20 +89,26 @@ class OLSRegressionSummarizer(
     x < constantErrorBound && x > -constantErrorBound
 
   private def getPrimaryConstCoords(u: OLSRegressionState): Array[Int] =
-    u.variancesOfPrimaryX.zipWithIndex.filter{
-      case (momentState, i) => almostZero(u.count * varianceSummarizer.render(momentState).nthCentralMoment(2))
-    }.map(_._2)
+    u.variancesOfPrimaryX.zipWithIndex
+      .filter {
+        case (momentState, i) =>
+          almostZero(
+            u.count * varianceSummarizer.render(momentState).nthCentralMoment(2)
+          )
+      }
+      .map(_._2)
 
-  override def zero(): OLSRegressionState = OLSRegressionState(
-    count = 0L,
-    matrixOfXX = DenseMatrix.zeros[Double](k, k),
-    vectorOfXY = DenseVector.zeros[Double](k),
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    Array.fill[NthCentralMomentState](dimensionOfX)(varianceSummarizer.zero())
-  )
+  override def zero(): OLSRegressionState =
+    OLSRegressionState(
+      count = 0L,
+      matrixOfXX = DenseMatrix.zeros[Double](k, k),
+      vectorOfXY = DenseVector.zeros[Double](k),
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      Array.fill[NthCentralMomentState](dimensionOfX)(varianceSummarizer.zero())
+    )
 
   override def merge(
     u1: OLSRegressionState,
@@ -122,9 +131,10 @@ class OLSRegressionSummarizer(
       mergedU.sumOfY = u1.sumOfY + u2.sumOfY
 
       // Update variances
-      mergedU.variancesOfPrimaryX = u1.variancesOfPrimaryX.zip(u2.variancesOfPrimaryX).map {
-        case (u1Var, u2Var) => varianceSummarizer.merge(u1Var, u2Var)
-      }
+      mergedU.variancesOfPrimaryX =
+        u1.variancesOfPrimaryX.zip(u2.variancesOfPrimaryX).map {
+          case (u1Var, u2Var) => varianceSummarizer.merge(u1Var, u2Var)
+        }
 
       mergedU
     }
@@ -160,9 +170,18 @@ class OLSRegressionSummarizer(
   ): (OLSRegressionState, (Array[Double], Double) => Array[Double]) = {
     if (shouldIgnoreConstants) {
       val primCoordinates =
-        u.variancesOfPrimaryX.zipWithIndex.filterNot{
-          case (momentState, i) => almostZero(u.count * varianceSummarizer.render(momentState).nthCentralMoment(2))
-        }.map(_._2).toIndexedSeq.sorted
+        u.variancesOfPrimaryX.zipWithIndex
+          .filterNot {
+            case (momentState, i) =>
+              almostZero(
+                u.count * varianceSummarizer
+                  .render(momentState)
+                  .nthCentralMoment(2)
+              )
+          }
+          .map(_._2)
+          .toIndexedSeq
+          .sorted
       var coordinates = primCoordinates
       if (shouldIntercept) {
         coordinates = 0 +: primCoordinates.map(_ + 1)
@@ -198,12 +217,14 @@ class OLSRegressionSummarizer(
     val vectorOfTStat = vectorOfBeta :/ vectorOfStdErrs
     val tStat = vectorOfTStat.toArray
 
-    val (intercept,
+    val (
+      intercept,
       primeBeta,
       stdErrOfIntercept,
       stdErrOfPrimeBeta,
       tStatOfIntercept,
-      tStatOfPrimeBeta) =
+      tStatOfPrimeBeta
+      ) =
       if (shouldIntercept) {
         (beta(0), beta.tail, stdErrs(0), stdErrs.tail, tStat(0), tStat.tail)
       } else {
@@ -310,7 +331,8 @@ class OLSRegressionSummarizer(
     // Update variances
     i = 0
     while (i < t.x.length) {
-      u.variancesOfPrimaryX(i) = varianceSummarizer.add(u.variancesOfPrimaryX(i), t.x(i))
+      u.variancesOfPrimaryX(i) =
+        varianceSummarizer.add(u.variancesOfPrimaryX(i), t.x(i))
       i += 1
     }
 
@@ -356,7 +378,8 @@ class OLSRegressionSummarizer(
       // Update variances
       i = 0
       while (i < t.x.length) {
-        u.variancesOfPrimaryX(i) = varianceSummarizer.subtract(u.variancesOfPrimaryX(i), t.x(i))
+        u.variancesOfPrimaryX(i) =
+          varianceSummarizer.subtract(u.variancesOfPrimaryX(i), t.x(i))
         i += 1
       }
 

@@ -39,7 +39,9 @@ trait CycleColumnImplicits {
    * }}}
    *
    */
-  implicit def tupleMapToCycleColumn[D <: DataType, U](cycleColumn: CycleColumn.MapForm[D, U]): CycleColumn = {
+  implicit def tupleMapToCycleColumn[D <: DataType, U](
+    cycleColumn: CycleColumn.MapForm[D, U]
+  ): CycleColumn = {
     val ((name, dataType), f) = cycleColumn
     CycleColumn(name, dataType, CycleColumn.mapFormToSeqForm(f))
   }
@@ -55,7 +57,9 @@ trait CycleColumnImplicits {
    *   })
    * }}}
    */
-  implicit def tupleSeqToCycleColumn[D <: DataType, U](cycleColumn: CycleColumn.SeqForm[D, U]): CycleColumn = {
+  implicit def tupleSeqToCycleColumn[D <: DataType, U](
+    cycleColumn: CycleColumn.SeqForm[D, U]
+  ): CycleColumn = {
     val ((name, dataType), udf) = cycleColumn
     CycleColumn(name, dataType, udf)
   }
@@ -89,7 +93,9 @@ trait CycleColumnImplicits {
    *   tsRdd.addColumnsForCycle(Seq("newCol1" -> udf1, "newCol2" -> udf2))
    * }}}
    */
-  implicit def seqCycleColumn[T](seq: Seq[T])(implicit toCycleColumn: T => CycleColumn): Seq[CycleColumn] =
+  implicit def seqCycleColumn[T](
+    seq: Seq[T]
+  )(implicit toCycleColumn: T => CycleColumn): Seq[CycleColumn] =
     seq.map(toCycleColumn)
 
 }

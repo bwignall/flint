@@ -32,11 +32,12 @@ class WeightedCorrelationSummarizer
   private[this] val weightedCovarianceSummarizer =
     new WeightedCovarianceSummarizer()
 
-  override def zero(): WeightedCorrelationState = WeightedCorrelationState(
-    weightedCovarianceSummarizer.zero(),
-    weightedCovarianceSummarizer.zero(),
-    weightedCovarianceSummarizer.zero()
-  )
+  override def zero(): WeightedCorrelationState =
+    WeightedCorrelationState(
+      weightedCovarianceSummarizer.zero(),
+      weightedCovarianceSummarizer.zero(),
+      weightedCovarianceSummarizer.zero()
+    )
 
   override def add(
     u: WeightedCorrelationState,

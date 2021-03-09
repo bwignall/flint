@@ -38,14 +38,15 @@ case class WeightedCovarianceOutput(
 class WeightedCovarianceSummarizer
   extends FlippableSummarizer[(Double, Double, Double), WeightedCovarianceState, WeightedCovarianceOutput] {
 
-  override def zero(): WeightedCovarianceState = WeightedCovarianceState(
-    0L,
-    0d,
-    0d,
-    new Kahan(),
-    new Kahan(),
-    0d
-  )
+  override def zero(): WeightedCovarianceState =
+    WeightedCovarianceState(
+      0L,
+      0d,
+      0d,
+      new Kahan(),
+      new Kahan(),
+      0d
+    )
 
   override def add(
     u: WeightedCovarianceState,
@@ -95,7 +96,8 @@ class WeightedCovarianceSummarizer
 
   override def render(u: WeightedCovarianceState): WeightedCovarianceOutput =
     WeightedCovarianceOutput(
-      covariance = u.coMoment / (u.sumWeight.value() - u.sumWeightSquare.value() / u.sumWeight.value()),
+      covariance = u.coMoment / (u.sumWeight
+      .value() - u.sumWeightSquare.value() / u.sumWeight.value()),
       observationCount = u.count
     )
 

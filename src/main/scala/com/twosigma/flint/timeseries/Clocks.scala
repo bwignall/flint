@@ -50,7 +50,15 @@ object Clocks {
     timeZone: String = "UTC",
     endInclusive: Boolean = true
   ): TimeSeriesRDD = {
-    val clock = new UniformClock(sc, beginDateTime, endDateTime, frequency, offset, timeZone, endInclusive)
+    val clock = new UniformClock(
+      sc,
+      beginDateTime,
+      endDateTime,
+      frequency,
+      offset,
+      timeZone,
+      endInclusive
+    )
     clock.asTimeSeriesRDD(sc.defaultParallelism)
   }
 
@@ -84,7 +92,16 @@ object Clocks {
     seed: Long = System.currentTimeMillis(),
     endInclusive: Boolean = true
   ): TimeSeriesRDD = {
-    val clock = new RandomClock(sc, beginDateTime, endDateTime, frequency, offset, timeZone, seed, endInclusive)
+    val clock = new RandomClock(
+      sc,
+      beginDateTime,
+      endDateTime,
+      frequency,
+      offset,
+      timeZone,
+      seed,
+      endInclusive
+    )
     clock.asTimeSeriesRDD(sc.defaultParallelism)
   }
 }

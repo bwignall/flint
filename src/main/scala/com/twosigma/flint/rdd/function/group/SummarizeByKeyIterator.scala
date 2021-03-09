@@ -65,16 +65,24 @@ private[rdd] class SummarizeByKeyIterator[K, V, SK, U, V2](
     !intermediates.isEmpty || bufferedIter.hasNext
 
   // Update intermediates with next key if bufferedIter.hasNext.
-  private def nextKey(): Unit = if (bufferedIter.hasNext) {
-    currentKey = bufferedIter.head._1
-    // Iterates through all rows from the given iterator until seeing a different key.
-    do {
-      val v = bufferedIter.next._2
-      val sk = skFn(v)
-      val intermediate = SummarizeWindows.lazyGetOrDefault(intermediates, sk, summarizer.zero())
-      intermediates.put(sk, summarizer.add(intermediate, v))
-    } while (bufferedIter.hasNext && ord.equiv(bufferedIter.head._1, currentKey))
-  }
+  private def nextKey(): Unit =
+    if (bufferedIter.hasNext) {
+      currentKey = bufferedIter.head._1
+      // Iterates through all rows from the given iterator until seeing a different key.
+      do {
+        val v = bufferedIter.next._2
+        val sk = skFn(v)
+        val intermediate = SummarizeWindows.lazyGetOrDefault(
+          intermediates,
+          sk,
+          summarizer.zero()
+        )
+        intermediates.put(sk, summarizer.add(intermediate, v))
+      } while (bufferedIter.hasNext && ord.equiv(
+        bufferedIter.head._1,
+        currentKey
+      ))
+    }
 
   override def next(): (K, (SK, V2)) = {
     if (intermediates.isEmpty) {
@@ -91,8 +99,8 @@ private[rdd] class SummarizeByKeyIterator[K, V, SK, U, V2](
     }
   }
 
-  override def close(): Unit = intermediates.asScala.toMap.values.foreach {
-    u =>
+  override def close(): Unit =
+    intermediates.asScala.toMap.values.foreach { u =>
       summarizer.close(u)
-  }
+    }
 }

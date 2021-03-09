@@ -23,11 +23,16 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{ CatalystTypeConvertersWrapper, Row }
 
-private[rdd] case class SchemaColumnInfo(idx: Int, clazz: Class[_ <: Ordered[_]], dataType: DataType)
+private[rdd] case class SchemaColumnInfo(
+  idx: Int,
+  clazz: Class[_ <: Ordered[_]],
+  dataType: DataType
+)
 
 case class TimeSeriesRDDWithSchema(rdd: TimeSeriesRDDImpl, schema: StructType)
 
 object PythonUtils {
+
   /**
    * Add reference to the object (py4j won't do this)
    */
@@ -56,7 +61,10 @@ object PythonUtils {
     schema: StructType,
     keyColumn: String
   ): TimeSeriesRDDImpl = {
-    val ordd = OrderedRDD.fromRDD(formatRDD[Long](rdd, schema, keyColumn), KeyPartitioningType.Sorted)
+    val ordd = OrderedRDD.fromRDD(
+      formatRDD[Long](rdd, schema, keyColumn),
+      KeyPartitioningType.Sorted
+    )
     TimeSeriesRDD.fromOrderedRDD(ordd, schema).asInstanceOf[TimeSeriesRDDImpl]
   }
 
@@ -69,8 +77,13 @@ object PythonUtils {
     schema: StructType,
     keyColumn: String
   ): TimeSeriesRDDImpl = {
-    val orderedRdd = OrderedRDD.fromRDD(formatRDD[Long](rdd, schema, keyColumn), KeyPartitioningType.UnSorted)
-    TimeSeriesRDD.fromOrderedRDD(orderedRdd, schema).asInstanceOf[TimeSeriesRDDImpl]
+    val orderedRdd = OrderedRDD.fromRDD(
+      formatRDD[Long](rdd, schema, keyColumn),
+      KeyPartitioningType.UnSorted
+    )
+    TimeSeriesRDD
+      .fromOrderedRDD(orderedRdd, schema)
+      .asInstanceOf[TimeSeriesRDDImpl]
   }
 
   def toOrderedRDD(
@@ -81,6 +94,9 @@ object PythonUtils {
   ): OrderedRDD[Long, InternalRow] = {
     val keyIdx = schema.fieldIndex(keyColumn)
     val converter = CatalystTypeConvertersWrapper.toCatalystRowConverter(schema)
-    OrderedRDD.fromRDD(rdd.map(row => (row.getAs[Long](keyIdx), converter(row))), ranges)
+    OrderedRDD.fromRDD(
+      rdd.map(row => (row.getAs[Long](keyIdx), converter(row))),
+      ranges
+    )
   }
 }
