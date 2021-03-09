@@ -18,7 +18,7 @@ package com.twosigma.flint.timeseries.summarize.summarizer.subtractable
 
 import com.twosigma.flint.timeseries.row.Schema
 import com.twosigma.flint.timeseries.summarize.SummarizerSuite
-import com.twosigma.flint.timeseries.{ Summarizers, TimeSeriesRDD }
+import com.twosigma.flint.timeseries.{Summarizers, TimeSeriesRDD}
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types._
 
@@ -27,9 +27,9 @@ class CorrelationSummarizerSpec extends SummarizerSuite {
   override val defaultResourceDir: String =
     "/timeseries/summarize/summarizer/correlationsummarizer"
 
-  private var priceTSRdd: TimeSeriesRDD = null
-  private var forecastTSRdd: TimeSeriesRDD = null
-  private var input: TimeSeriesRDD = null
+  private var priceTSRdd: TimeSeriesRDD = _
+  private var forecastTSRdd: TimeSeriesRDD = _
+  private var input: TimeSeriesRDD = _
 
   private lazy val init: Unit = {
     priceTSRdd =

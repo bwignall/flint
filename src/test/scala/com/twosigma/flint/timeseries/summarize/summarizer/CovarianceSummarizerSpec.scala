@@ -24,7 +24,7 @@ import com.twosigma.flint.timeseries.{
   TimeSeriesSuite
 }
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.types.{ DoubleType, IntegerType }
+import org.apache.spark.sql.types.{DoubleType, IntegerType}
 
 class CovarianceSummarizerSpec extends SummarizerSuite {
 
@@ -32,9 +32,9 @@ class CovarianceSummarizerSpec extends SummarizerSuite {
   override val defaultResourceDir: String =
     "/timeseries/summarize/summarizer/correlationsummarizer"
 
-  private var priceTSRdd: TimeSeriesRDD = null
-  private var forecastTSRdd: TimeSeriesRDD = null
-  private var input: TimeSeriesRDD = null
+  private var priceTSRdd: TimeSeriesRDD = _
+  private var forecastTSRdd: TimeSeriesRDD = _
+  private var input: TimeSeriesRDD = _
 
   private lazy val init: Unit = {
     priceTSRdd =

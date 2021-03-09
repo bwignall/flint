@@ -62,8 +62,8 @@ protected[flint] class PartitionsIterator[T](
   }
 
   var curIdx = 0
-  var curPart: Partition = null
-  var curIter: BufferedIterator[T] = null
+  var curPart: Partition = _
+  var curIter: BufferedIterator[T] = _
 
   private[this] def nextIter() {
     if (curIdx < _partitions.size) {
