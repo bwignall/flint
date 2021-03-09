@@ -125,7 +125,7 @@ class SummarizationsSpec extends FlatSpec with SharedSparkContext {
 
   "Summarizations" should "apply correctly" in {
     val summarizer = KVSumSummarizer()
-    val key = { case (sk, v) => None }: ((Int, Double)) => Option[Nothing]
+    val key = { case (_, _) => None }: ((Int, Double)) => Option[Nothing]
     val ret = Summarizations(orderedRDD, summarizer, key)
     val ret1 = Summarizations(orderedRDD1, summarizer, key)
 
@@ -135,7 +135,7 @@ class SummarizationsSpec extends FlatSpec with SharedSparkContext {
 
   it should "apply perSecondaryKey == true correctly" in {
     val summarizer = KVSumSummarizer()
-    val key = { case (sk, v) => sk }: ((Int, Double)) => Int
+    val key = { case (sk, _) => sk }: ((Int, Double)) => Int
 
     val ret = Summarizations(orderedRDD, summarizer, key)
     val ret1 = Summarizations(orderedRDD1, summarizer, key)

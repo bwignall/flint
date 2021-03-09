@@ -121,7 +121,7 @@ case class QuantileSummarizer(
     // Using R-7 to be consistent with Pandas. See https://en.wikipedia.org/wiki/Quantile
     val percentileEstimator =
       new Percentile().withEstimationType(Percentile.EstimationType.R_7)
-    val (begin, end, values) = u.view()
+    val (begin, _, values) = u.view()
     percentileEstimator.setData(values, begin, u.size())
     // Convert scale from (0.0, 1.0] to (0.0, 100.0]
     p.map { x =>

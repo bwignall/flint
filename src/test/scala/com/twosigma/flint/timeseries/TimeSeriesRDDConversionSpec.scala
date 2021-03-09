@@ -55,28 +55,28 @@ class TimeSeriesRDDConversionSpec extends TimeSeriesSuite {
 
   "TimeSeriesRDD" should "convert from a sorted DataFrame correctly" taggedAs Slow in {
     implicit val _sqlContext = sqlContext
-    (1 to 10).foreach { i =>
+    (1 to 10).foreach { _ =>
       val tsRdd = TimeSeriesRDD.fromDF(createDataFrame(isSorted = true))(
         isSorted = true,
         TimeUnit.NANOSECONDS
       )
       assert(tsRdd.count() == defaultNumRows)
     }
-    (1 to 10).foreach { i =>
+    (1 to 10).foreach { _ =>
       val tsRdd = TimeSeriesRDD.fromDF(createDataFrame(isSorted = true))(
         isSorted = false,
         TimeUnit.NANOSECONDS
       )
       assert(tsRdd.count() == defaultNumRows)
     }
-    (1 to 10).foreach { i =>
+    (1 to 10).foreach { _ =>
       val tsRdd = TimeSeriesRDD.fromDF(createDataFrame(isSorted = false))(
         isSorted = false,
         TimeUnit.NANOSECONDS
       )
       assert(tsRdd.count() == defaultNumRows)
     }
-    (1 to 10).foreach { i =>
+    (1 to 10).foreach { _ =>
       val tsRdd = TimeSeriesRDD.fromDF(
         createDataFrame(isSorted = false).sort("time")
       )(

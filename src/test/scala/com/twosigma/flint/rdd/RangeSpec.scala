@@ -313,7 +313,7 @@ class RangeSpec extends FlatSpec {
     assert(
       range.intersectsWith(ranges, true).toArray.deep
         == ranges.zipWithIndex
-        .filter { case (r, i) => range.intersects(r) }
+        .filter { case (r, _) => range.intersects(r) }
         .map(_._2)
         .toArray
         .deep

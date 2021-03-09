@@ -35,7 +35,7 @@ class StandardDeviationSummarizerSpec extends SummarizerSuite {
         "price2" -> DoubleType -> { r: Row => r.getAs[Double]("price") },
         "price3" -> DoubleType -> { r: Row => -r.getAs[Double]("price") },
         "price4" -> DoubleType -> { r: Row => r.getAs[Double]("price") * 2 },
-        "price5" -> DoubleType -> { r: Row => 0d }
+        "price5" -> DoubleType -> { _: Row => 0d }
       )
 
     val result = priceTSRdd.summarize(Summarizers.stddev("price")).first()

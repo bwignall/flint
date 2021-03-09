@@ -61,7 +61,7 @@ class SummarizerSuite extends TimeSeriesSuite {
         "x3" -> { (_: Long, _: Int, rand: util.Random) =>
           rand.nextDouble()
         },
-        "w1" -> { (_: Long, _: Int, rand: util.Random) =>
+        "w1" -> { (_: Long, _: Int, _: util.Random) =>
           1.0
         },
         "w2" -> { (_: Long, _: Int, rand: util.Random) =>
@@ -93,7 +93,7 @@ class SummarizerSuite extends TimeSeriesSuite {
         "x3" -> { (_: Long, _: Int, rand: util.Random) =>
           rand.nextDouble() + 1.0
         },
-        "w1" -> { (_: Long, _: Int, rand: util.Random) =>
+        "w1" -> { (_: Long, _: Int, _: util.Random) =>
           1.0
         },
         "w2" -> { (_: Long, _: Int, rand: util.Random) =>

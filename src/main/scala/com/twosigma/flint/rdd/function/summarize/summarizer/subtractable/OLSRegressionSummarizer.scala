@@ -91,7 +91,7 @@ class OLSRegressionSummarizer(
   private def getPrimaryConstCoords(u: OLSRegressionState): Array[Int] =
     u.variancesOfPrimaryX.zipWithIndex
       .filter {
-        case (momentState, i) =>
+        case (momentState, _) =>
           almostZero(
             u.count * varianceSummarizer.render(momentState).nthCentralMoment(2)
           )
@@ -172,7 +172,7 @@ class OLSRegressionSummarizer(
       val primCoordinates =
         u.variancesOfPrimaryX.zipWithIndex
           .filterNot {
-            case (momentState, i) =>
+            case (momentState, _) =>
               almostZero(
                 u.count * varianceSummarizer
                   .render(momentState)
@@ -214,7 +214,7 @@ class OLSRegressionSummarizer(
       Math.sqrt(errorVariance * betaVar)
     }
     val stdErrs = vectorOfStdErrs.toArray
-    val vectorOfTStat = vectorOfBeta :/ vectorOfStdErrs
+    val vectorOfTStat = vectorOfBeta /:/ vectorOfStdErrs
     val tStat = vectorOfTStat.toArray
 
     val (

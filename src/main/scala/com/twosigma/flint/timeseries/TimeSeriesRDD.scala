@@ -186,7 +186,8 @@ object TimeSeriesRDD {
   ): TimeSeriesRDD = {
     requireSchema(schema)
 
-    val timeType = TimeType.get(SQLContext.getOrCreate(sc).sparkSession)
+    val timeType =
+      TimeType.get(SparkSession.builder.config(sc.getConf).getOrCreate)
     val timeIndex = schema.fieldIndex(timeColumnName)
     val rdd = sc.parallelize(
       rows.map { row =>
@@ -504,7 +505,7 @@ object TimeSeriesRDD {
     timeUnit: TimeUnit,
     timeColumn: String
   ): TimeSeriesRDD = {
-    val sqlContext = SQLContext.getOrCreate(sc)
+    val sqlContext = SparkSession.builder.config(sc.getConf).getOrCreate
     val df = sqlContext.read.parquet(paths: _*)
 
     val prunedDf = columns
@@ -1344,7 +1345,10 @@ trait TimeSeriesRDD extends Serializable {
    * val resultTimeSeriesRdd = timeSeriesRdd.lookBackwardClock("10h")
    * }}}
    */
-  @deprecated("Use shift(Windows.pastAbsoluteTime(shiftAmount)) instead")
+  @deprecated(
+    "Use shift(Windows.pastAbsoluteTime(shiftAmount)) instead",
+    since = "???"
+  )
   def lookBackwardClock(shiftAmount: String): TimeSeriesRDD
 
   /**
@@ -1359,7 +1363,10 @@ trait TimeSeriesRDD extends Serializable {
    * }}}
    *
    */
-  @deprecated("Use shift(Windows.futureAbsoluteTime(shiftAmount)) instead")
+  @deprecated(
+    "Use shift(Windows.futureAbsoluteTime(shiftAmount)) instead",
+    since = "???"
+  )
   def lookForwardClock(shiftAmount: String): TimeSeriesRDD
 
   /**
@@ -1836,7 +1843,7 @@ class TimeSeriesRDDImpl private[timeseries] (
         (sum, summarizer) match {
           case (s: OverlappableSummarizer, sf: OverlappableSummarizerFactory) =>
             orderedRdd.summarizeWindows(w.of, s, keyFn, sf.window.of)
-          case (s, sf: SummarizerFactory) =>
+          case (s, _: SummarizerFactory) =>
             orderedRdd.summarizeWindows(w.of, s, keyFn)
         }
       case _ => sys.error(s"Unsupported window type: $window")

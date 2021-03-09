@@ -52,7 +52,7 @@ protected[flint] class OrderedIterator[T, K: Ordering: ClassTag](
 
 protected[flint] class OrderedKeyValueIterator[K: Ordering: ClassTag, V](
   iterator: Iterator[(K, V)]
-) extends OrderedIterator[(K, V), K](iterator, { case (k, v) => k })
+) extends OrderedIterator[(K, V), K](iterator, { case (k, _) => k })
 
 protected[flint] object OrderedIterator {
 

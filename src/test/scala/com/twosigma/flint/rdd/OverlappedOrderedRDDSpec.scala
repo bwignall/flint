@@ -67,7 +67,7 @@ class OverlappedOrderedRDDSpec extends FlatSpec with SharedSparkContext {
 
   it should "`mapPartitionsWithIndexOverlapped` correctly" in {
     val mapped =
-      overlappedOrderedRdd.mapPartitionsWithIndexOverlapped((index, iterator) =>
+      overlappedOrderedRdd.mapPartitionsWithIndexOverlapped((_, iterator) =>
         iterator.map { case (k, v) => (k, v * 2) })
     val benchmark =
       Array(1, 2, 3, 4, 5, 4, 5, 6, 7, 8, 9, 8, 9, 10, 11, 12).map { x =>

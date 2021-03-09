@@ -132,7 +132,7 @@ object Summarizations {
     rdd.mapPartitionsWithIndexOrdered {
       case (idx, iter) =>
         scanLeft(iter, MHashMap.empty ++ prefixes(idx)) {
-          case (uPerSK: MMap[SK, U], (k, v)) =>
+          case (uPerSK: MMap[SK, U], (_, v)) =>
             val sk = skFn(v)
             val added =
               summarizer.add(uPerSK.getOrElse(sk, summarizer.zero()), v)

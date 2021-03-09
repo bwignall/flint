@@ -123,7 +123,7 @@ class SummarizeByKeySpec extends FlatSpec {
       case (k, (sk, v)) => (k, sk, v.toList)
     }
 
-    for (i <- 0 to 5) {
+    for (_ <- 0 to 5) {
       assert(iter.hasNext)
       iter.next()
     }

@@ -219,7 +219,7 @@ class OrderedRDDSpec extends FlatSpec with SharedSparkContext {
       unsortedData.sortBy(_._1).map { case (k, v) => (k, Math.sqrt(v._2)) }
     val test = orderedRDD1
       .mapValues {
-        case (k, v) => Math.sqrt(v._2)
+        case (_, v) => Math.sqrt(v._2)
       }
       .collect()
     assert(benchmark.sameElements(test))
@@ -234,7 +234,7 @@ class OrderedRDDSpec extends FlatSpec with SharedSparkContext {
     }
     val test = orderedRDD1
       .flatMapValues {
-        case (k, v) =>
+        case (_, v) =>
           Seq(0.001, 0.002, 0.003).map {
             _ + v._2
           }
@@ -250,7 +250,7 @@ class OrderedRDDSpec extends FlatSpec with SharedSparkContext {
     val benchmark =
       unsortedData.filter { case (_, (_, v)) => v > mean }.sortBy(_._1)
     val test =
-      orderedRDD1.filterOrdered { case (k, (_, v)) => v > mean }.collect()
+      orderedRDD1.filterOrdered { case (_, (_, v)) => v > mean }.collect()
     // Check there must be some rows filtered and some rows left.
     assert(benchmark.length < unsortedData.length)
     assert(benchmark.length > 0)
@@ -259,7 +259,7 @@ class OrderedRDDSpec extends FlatSpec with SharedSparkContext {
 
   it should "`collectOrdered` correctly" in {
     val pf: PartialFunction[(Long, (Int, Double)), Double] = {
-      case (k: Long, (sk: Int, v: Double)) if sk == 3 => v
+      case (_: Long, (sk: Int, v: Double)) if sk == 3 => v
     }
     val pf2: PartialFunction[(Long, (Int, Double)), (Long, Double)] = {
       case (k: Long, (sk: Int, v: Double)) if sk == 3 => (k, v)
@@ -318,7 +318,7 @@ class OrderedRDDSpec extends FlatSpec with SharedSparkContext {
             (sk1, v1),
             sortedData1
             .filter {
-              case (k2, (sk2, v2)) =>
+              case (k2, (sk2, _)) =>
                 k2 >= k1 - lookback && k2 <= k1 && sk1 == sk2
             }
             .sortBy(_._1)
