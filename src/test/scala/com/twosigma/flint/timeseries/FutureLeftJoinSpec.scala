@@ -22,7 +22,10 @@ import org.apache.spark.sql.Row
 import org.apache.spark.sql.types._
 import org.scalatest.tagobjects.Slow
 
-class FutureLeftJoinSpec extends MultiPartitionSuite with TimeSeriesTestData with TimeTypeSuite {
+class FutureLeftJoinSpec
+  extends MultiPartitionSuite
+  with TimeSeriesTestData
+  with TimeTypeSuite {
 
   override val defaultResourceDir: String = "/timeseries/futureleftjoin"
 
@@ -32,10 +35,15 @@ class FutureLeftJoinSpec extends MultiPartitionSuite with TimeSeriesTestData wit
   private var priceTSRddWithGroup: TimeSeriesRDD = _
   private var volumeTSRddWithGroup: TimeSeriesRDD = _
 
-  private def init: Unit = {
-    priceTSRdd = fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
-    volumeTSRdd = fromCSV("Volume.csv", Schema("id" -> IntegerType, "volume" -> LongType))
-    volumeTSRddRowFiltered = fromCSV("VolumeWithRowFiltered.csv", Schema("id" -> IntegerType, "volume" -> LongType))
+  private def init(): Unit = {
+    priceTSRdd =
+      fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
+    volumeTSRdd =
+      fromCSV("Volume.csv", Schema("id" -> IntegerType, "volume" -> LongType))
+    volumeTSRddRowFiltered = fromCSV(
+      "VolumeWithRowFiltered.csv",
+      Schema("id" -> IntegerType, "volume" -> LongType)
+    )
     priceTSRddWithGroup = fromCSV(
       "PriceWithIndustryGroup.csv",
       Schema("id" -> IntegerType, "group" -> IntegerType, "price" -> DoubleType)
@@ -178,15 +186,23 @@ class FutureLeftJoinSpec extends MultiPartitionSuite with TimeSeriesTestData wit
       init
       val resultsTSRdd = fromCSV(
         "JoinOnTimeAndMultipleKeys.results",
-        Schema("id" -> IntegerType, "group" -> IntegerType, "price" -> DoubleType, "volume" -> LongType)
+        Schema(
+          "id" -> IntegerType,
+          "group" -> IntegerType,
+          "price" -> DoubleType,
+          "volume" -> LongType
+        )
       )
 
       def test(priceTSRdd: TimeSeriesRDD, volumeTSRdd: TimeSeriesRDD): Unit = {
-        val joinedTSRdd = priceTSRdd.leftJoin(volumeTSRdd, "0ns", Seq("id", "group"))
+        val joinedTSRdd =
+          priceTSRdd.leftJoin(volumeTSRdd, "0ns", Seq("id", "group"))
         assertEquals(joinedTSRdd, resultsTSRdd)
       }
 
-      withPartitionStrategy(priceTSRddWithGroup, volumeTSRddWithGroup)(DEFAULT)(test)
+      withPartitionStrategy(priceTSRddWithGroup, volumeTSRddWithGroup)(DEFAULT)(
+        test
+      )
     }
   }
 
@@ -206,7 +222,8 @@ class FutureLeftJoinSpec extends MultiPartitionSuite with TimeSeriesTestData wit
         rdd2.shift(Windows.pastAbsoluteTime(rightShift)),
         tolerance = s"${tolerance}ns",
         key = key,
-        strictLookahead = strictLookahead, rightAlias = "right"
+        strictLookahead = strictLookahead,
+        rightAlias = "right"
       )
     }
 
@@ -218,7 +235,8 @@ class FutureLeftJoinSpec extends MultiPartitionSuite with TimeSeriesTestData wit
     ) {
       // Ideally we want to run DEFAULT partition strategies, but it's too freaking slow!
       withPartitionStrategyCompare(
-        testData1, testData2
+        testData1,
+        testData2
       )(
         NONE :+ MultiTimestampUnnormailzed
       )(

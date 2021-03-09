@@ -39,6 +39,7 @@ trait TimeWindow extends Window with rdd.Window[Long]
  */
 trait ShiftTimeWindow extends TimeWindow {
   protected val backward: Boolean
+
   /**
    * Given a time, return the length of the window
    */
@@ -63,17 +64,22 @@ trait ShiftTimeWindow extends TimeWindow {
   }
 
   final protected def of(time: Long, length: Long): (Long, Long) = {
-    if (backward) (safeMinus(time, length), time) else (time, safePlus(time, length))
+    if (backward) (safeMinus(time, length), time)
+    else (time, safePlus(time, length))
   }
 
   final override def of(time: Long): (Long, Long) = of(time, length(time))
-  final def shift(time: Long): Long = if (backward) of(time, length(time))._1 else of(time, length(time))._2
+  final def shift(time: Long): Long =
+    if (backward) of(time, length(time))._1 else of(time, length(time))._2
 }
 
 trait RowCountWindow extends Window with CountWindow
 
-case class AbsoluteTimeWindow(override val name: String, val length: Long, override val backward: Boolean = true)
-  extends ShiftTimeWindow {
+case class AbsoluteTimeWindow(
+  override val name: String,
+  length: Long,
+  override val backward: Boolean = true
+) extends ShiftTimeWindow {
   def length(t: Long): Long = length
 
   override def toString(): String = s"${this.getClass.getSimpleName}(${name})"

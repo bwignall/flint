@@ -26,7 +26,10 @@ import org.apache.arrow.memory.{ BufferAllocator, RootAllocator }
 import org.apache.arrow.vector.{ IntVector, VectorSchemaRoot }
 import org.apache.arrow.vector.ipc.ArrowFileWriter
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.expressions.{ GenericInternalRow, UnsafeProjection }
+import org.apache.spark.sql.catalyst.expressions.{
+  GenericInternalRow,
+  UnsafeProjection
+}
 import org.apache.spark.sql.catalyst.util.GenericArrayData
 import org.apache.spark.sql.types._
 
@@ -49,14 +52,14 @@ import scala.collection.JavaConverters._
  * @param currentEndIndices Similar to [[currentEndIndices]]
  */
 private[flint] case class WindowBatchSummarizerState(
-  val leftRows: util.ArrayList[InternalRow],
+  leftRows: util.ArrayList[InternalRow],
   var rightRows: util.ArrayList[InternalRow],
-  val rightRowsMap: util.LinkedHashMap[Any, util.ArrayList[InternalRow]],
-  val beginIndices: util.ArrayList[Int],
-  val endIndices: util.ArrayList[Int],
-  val sks: util.ArrayList[Any],
-  val currentBeginIndices: util.HashMap[Any, Int],
-  val currentEndIndices: util.HashMap[Any, Int]
+  rightRowsMap: util.LinkedHashMap[Any, util.ArrayList[InternalRow]],
+  beginIndices: util.ArrayList[Int],
+  endIndices: util.ArrayList[Int],
+  sks: util.ArrayList[Any],
+  currentBeginIndices: util.HashMap[Any, Int],
+  currentEndIndices: util.HashMap[Any, Int]
 ) {
   def this() {
     this(
@@ -72,10 +75,15 @@ private[flint] case class WindowBatchSummarizerState(
   }
 }
 
-private[flint] abstract class BaseWindowBatchSummarizer(val leftSchema: StructType, val rightSchema: StructType)
-  extends WindowBatchSummarizer[Long, Any, InternalRow, WindowBatchSummarizerState, InternalRow] {
+private[flint] abstract class BaseWindowBatchSummarizer(
+  val leftSchema: StructType,
+  val rightSchema: StructType
+) extends WindowBatchSummarizer[Long, Any, InternalRow, WindowBatchSummarizerState, InternalRow] {
 
-  private def initSk(u: WindowBatchSummarizerState, sk: Any): util.ArrayList[InternalRow] = {
+  private def initSk(
+    u: WindowBatchSummarizerState,
+    sk: Any
+  ): util.ArrayList[InternalRow] = {
     val rows = new util.ArrayList[InternalRow]()
     u.rightRowsMap.put(sk, rows)
     u.currentBeginIndices.put(sk, 0)
@@ -87,7 +95,11 @@ private[flint] abstract class BaseWindowBatchSummarizer(val leftSchema: StructTy
     new WindowBatchSummarizerState()
   }
 
-  override def addLeft(u: WindowBatchSummarizerState, sk: Any, row: InternalRow): Unit = {
+  override def addLeft(
+    u: WindowBatchSummarizerState,
+    sk: Any,
+    row: InternalRow
+  ): Unit = {
     require(u.leftRows.size() == u.sks.size())
     require(u.sks.size() == u.beginIndices.size())
     require(u.beginIndices.size() == u.endIndices.size())
@@ -96,7 +108,11 @@ private[flint] abstract class BaseWindowBatchSummarizer(val leftSchema: StructTy
     u.sks.add(sk)
   }
 
-  override def commitLeft(u: WindowBatchSummarizerState, sk: Any, v: InternalRow): Unit = {
+  override def commitLeft(
+    u: WindowBatchSummarizerState,
+    sk: Any,
+    v: InternalRow
+  ): Unit = {
     val begin = u.currentBeginIndices.getOrDefault(sk, 0)
     val end = u.currentEndIndices.getOrDefault(sk, 0)
 
@@ -104,7 +120,11 @@ private[flint] abstract class BaseWindowBatchSummarizer(val leftSchema: StructTy
     u.endIndices.add(end)
   }
 
-  override def addRight(u: WindowBatchSummarizerState, sk: Any, v: InternalRow): Unit = {
+  override def addRight(
+    u: WindowBatchSummarizerState,
+    sk: Any,
+    v: InternalRow
+  ): Unit = {
     var rows = u.rightRowsMap.get(sk)
     if (rows == null) {
       rows = initSk(u, sk)
@@ -114,7 +134,11 @@ private[flint] abstract class BaseWindowBatchSummarizer(val leftSchema: StructTy
     u.currentEndIndices.put(sk, u.currentEndIndices.get(sk) + 1)
   }
 
-  override def subtractRight(u: WindowBatchSummarizerState, sk: Any, v: InternalRow): Unit = {
+  override def subtractRight(
+    u: WindowBatchSummarizerState,
+    sk: Any,
+    v: InternalRow
+  ): Unit = {
     u.currentBeginIndices.put(sk, u.currentBeginIndices.get(sk) + 1)
   }
 
@@ -122,7 +146,9 @@ private[flint] abstract class BaseWindowBatchSummarizer(val leftSchema: StructTy
    * Concat right rows for secondary keys to a single array.
    * Also compute the base index for each secondary key and add base index to begin and end index for each row.
    */
-  private def finalizeRightRowsAndRebaseIndex(u: WindowBatchSummarizerState): Unit = {
+  private def finalizeRightRowsAndRebaseIndex(
+    u: WindowBatchSummarizerState
+  ): Unit = {
     require(u.rightRows == null)
     u.rightRows = new util.ArrayList[InternalRow]()
 
@@ -171,7 +197,14 @@ private[flint] case class ArrayWindowBatchSummarizer(
       StructField("__window_rightBatch", ArrayType(rightSchema)),
       StructField(
         "__window_indices",
-        ArrayType(StructType(Seq(StructField("begin", IntegerType), StructField("end", IntegerType))))
+        ArrayType(
+          StructType(
+            Seq(
+              StructField("begin", IntegerType),
+              StructField("end", IntegerType)
+            )
+          )
+        )
       )
     )
   )
@@ -315,12 +348,17 @@ private[flint] case class ArrowWindowBatchSummarizer(
 
     val allocator = new RootAllocator(Int.MaxValue)
     val (leftLength, leftBatch) = if (leftPrunedSchema.length > 0) {
-      (u.leftRows.size, serializeRows(u.leftRows, leftSchema, leftPrunedSchema, allocator))
+      (
+        u.leftRows.size,
+        serializeRows(u.leftRows, leftSchema, leftPrunedSchema, allocator)
+      )
     } else {
       (0, null)
     }
-    val rightBatch = serializeRows(u.rightRows, rightSchema, rightPrunedSchema, allocator)
-    val indicesArrowBytes = serializeIndices(u.beginIndices, u.endIndices, allocator)
+    val rightBatch =
+      serializeRows(u.rightRows, rightSchema, rightPrunedSchema, allocator)
+    val indicesArrowBytes =
+      serializeIndices(u.beginIndices, u.endIndices, allocator)
     allocator.close()
 
     val values: Array[Any] = Array(
