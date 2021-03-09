@@ -63,7 +63,7 @@ class SummarizeSpec extends FlintSuite {
     (1045L, (2, 0.01))
   )
 
-  val summarizer = new KVSumSummarizer()
+  val summarizer = KVSumSummarizer()
 
   var orderedRDD: OrderedRDD[Long, (Int, Double)] = _
 

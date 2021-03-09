@@ -435,7 +435,7 @@ class OrderedRDDSpec extends FlatSpec with SharedSparkContext {
     }
     val result1 = orderedRDD
       .summarizeWindows(window1, sum, skFn)
-      .map(flattenFn(_))
+      .map(flattenFn)
       .collect()
     val expected1 = Array(
       (1000L, ((7, 9.90), Array((7, 9.90)))),
@@ -446,7 +446,7 @@ class OrderedRDDSpec extends FlatSpec with SharedSparkContext {
       (1100L, ((7, 9.95), Array((7, 9.95)))),
       (1130L, ((3, 9.96), Array((3, 9.94), (3, 9.96)))),
       (1130L, ((7, 9.97), Array((7, 9.95), (7, 9.97))))
-    ).map(flattenFn(_))
+    ).map(flattenFn)
     assert(result1.deep == expected1.deep)
 
     val window2 = { t: Long =>
@@ -454,7 +454,7 @@ class OrderedRDDSpec extends FlatSpec with SharedSparkContext {
     }
     val result2 = orderedRDD
       .summarizeWindows(window2, sum, skFn)
-      .map(flattenFn(_))
+      .map(flattenFn)
       .collect()
     val expected2 = Array(
       (1000L, ((7, 9.90), Array((7, 9.90), (7, 9.93)))),
@@ -465,7 +465,7 @@ class OrderedRDDSpec extends FlatSpec with SharedSparkContext {
       (1100L, ((7, 9.95), Array((7, 9.95), (7, 9.97)))),
       (1130L, ((3, 9.96), Array((3, 9.96)))),
       (1130L, ((7, 9.97), Array((7, 9.97))))
-    ).map(flattenFn(_))
+    ).map(flattenFn)
     assert(result2.deep == expected2.deep)
 
     val window3 = { t: Long =>
@@ -473,7 +473,7 @@ class OrderedRDDSpec extends FlatSpec with SharedSparkContext {
     }
     val result3 = orderedRDD
       .summarizeWindows(window3, sum, skFn)
-      .map(flattenFn(_))
+      .map(flattenFn)
       .collect()
     val expected3 = Array(
       (1000L, ((7, 9.90), Array((7, 9.90), (7, 9.93)))),
@@ -484,7 +484,7 @@ class OrderedRDDSpec extends FlatSpec with SharedSparkContext {
       (1100L, ((7, 9.95), Array((7, 9.95), (7, 9.97)))),
       (1130L, ((3, 9.96), Array((3, 9.94), (3, 9.96)))),
       (1130L, ((7, 9.97), Array((7, 9.95), (7, 9.97))))
-    ).map(flattenFn(_))
+    ).map(flattenFn)
     assert(result3.deep == expected3.deep)
 
     val window4 = { t: Long =>
@@ -492,7 +492,7 @@ class OrderedRDDSpec extends FlatSpec with SharedSparkContext {
     }
     val result4 = orderedRDD
       .summarizeWindows(window4, sum, noneSkFn)
-      .map(flattenFn(_))
+      .map(flattenFn)
       .collect()
     val expected4 = Array(
       (1000L, ((7, 9.90), Array((7, 9.90), (3, 9.91)))),
@@ -503,7 +503,7 @@ class OrderedRDDSpec extends FlatSpec with SharedSparkContext {
       (1100L, ((7, 9.95), Array((3, 9.94), (7, 9.95)))),
       (1130L, ((3, 9.96), Array((3, 9.94), (7, 9.95), (3, 9.96), (7, 9.97)))),
       (1130L, ((7, 9.97), Array((3, 9.94), (7, 9.95), (3, 9.96), (7, 9.97))))
-    ).map(flattenFn(_))
+    ).map(flattenFn)
     assert(result4.deep == expected4.deep)
 
     val window5 = { t: Long =>
@@ -511,7 +511,7 @@ class OrderedRDDSpec extends FlatSpec with SharedSparkContext {
     }
     val result5 = orderedRDD
       .summarizeWindows(window5, sum, noneSkFn)
-      .map(flattenFn(_))
+      .map(flattenFn)
       .collect()
     val expected5 = Array(
       (1000L, ((7, 9.90), Array((7, 9.90), (3, 9.91), (3, 9.92), (7, 9.93)))),
@@ -522,7 +522,7 @@ class OrderedRDDSpec extends FlatSpec with SharedSparkContext {
       (1100L, ((7, 9.95), Array((3, 9.94), (7, 9.95), (3, 9.96), (7, 9.97)))),
       (1130L, ((3, 9.96), Array((3, 9.96), (7, 9.97)))),
       (1130L, ((7, 9.97), Array((3, 9.96), (7, 9.97))))
-    ).map(flattenFn(_))
+    ).map(flattenFn)
     assert(result5.deep == expected5.deep)
 
     val window6 = { t: Long =>
@@ -530,7 +530,7 @@ class OrderedRDDSpec extends FlatSpec with SharedSparkContext {
     }
     val result6 = orderedRDD
       .summarizeWindows(window6, sum, noneSkFn)
-      .map(flattenFn(_))
+      .map(flattenFn)
       .collect()
     val expected6 = Array(
       (1000L, ((7, 9.90), Array((7, 9.90), (3, 9.91), (3, 9.92), (7, 9.93)))),
@@ -541,7 +541,7 @@ class OrderedRDDSpec extends FlatSpec with SharedSparkContext {
       (1100L, ((7, 9.95), Array((3, 9.94), (7, 9.95), (3, 9.96), (7, 9.97)))),
       (1130L, ((3, 9.96), Array((3, 9.94), (7, 9.95), (3, 9.96), (7, 9.97)))),
       (1130L, ((7, 9.97), Array((3, 9.94), (7, 9.95), (3, 9.96), (7, 9.97))))
-    ).map(flattenFn(_))
+    ).map(flattenFn)
     assert(result6.deep == expected6.deep)
   }
 

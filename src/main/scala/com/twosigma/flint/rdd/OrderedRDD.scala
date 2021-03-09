@@ -248,7 +248,7 @@ class OrderedRDD[K: ClassTag, V: ClassTag](
     // Do nothing if trying to coalescing to a greater number than the current partitions.
     // This is consistent with DataFrame behavior.
     if (numPartitions >= getNumPartitions) {
-      return this
+      this
     } else {
       // table of ranges and partitions from coalescing
       val coalesced = (0 until numPartitions).map { i =>

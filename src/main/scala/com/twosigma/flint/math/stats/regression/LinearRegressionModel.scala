@@ -294,7 +294,7 @@ case class LinearRegressionModel(
    * @return the White's (1980) heteroskedasticity robust standard errors.
    */
   def calculateStandardErrorsOfHC0(): DenseVector[Double] =
-    diag(hc0).map(Math.sqrt _)
+    diag(hc0).map(Math.sqrt)
 
   /**
    * Calculate the MacKinnon and White's (1985) heteroskedasticity robust standard errors which
