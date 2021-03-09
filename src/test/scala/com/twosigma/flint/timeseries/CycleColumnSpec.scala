@@ -117,7 +117,7 @@ class CycleColumnSpec extends MultiPartitionSuite with TimeSeriesTestData {
     )(isSorted = true, NANOSECONDS)
 
     // A cycle function that returns only a single row
-    val udf = CycleColumn.unnamed(DoubleType, { rows: Seq[Row] => Seq(1.0) })
+    val udf = CycleColumn.unnamed(DoubleType, { _: Seq[Row] => Seq(1.0) })
     val actualDf = df.addColumnsForCycle("newColumn" -> udf)
     val actualValues =
       actualDf.collect().map(_.getAs[java.lang.Double]("newColumn"))

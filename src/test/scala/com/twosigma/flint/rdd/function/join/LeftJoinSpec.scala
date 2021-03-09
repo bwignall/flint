@@ -89,7 +89,7 @@ class LeftJoinSpec extends FlatSpec with SharedSparkContext {
       (1035, ((1, 0.17), None))
     )
 
-    val skFn = { case (sk, v) => sk }: ((Int, Double)) => Int
+    val skFn = { case (sk, _) => sk }: ((Int, Double)) => Int
     val joined = FutureLeftJoin
       .apply(
         leftRdd,
@@ -122,7 +122,7 @@ class LeftJoinSpec extends FlatSpec with SharedSparkContext {
       (1035, ((1, 0.17), Some((1035, (1, 0.171)))))
     )
 
-    val skFn = { case (sk, v) => sk }: ((Int, Double)) => Int
+    val skFn = { case (sk, _) => sk }: ((Int, Double)) => Int
     val joined = FutureLeftJoin
       .apply(
         leftRdd,
@@ -155,7 +155,7 @@ class LeftJoinSpec extends FlatSpec with SharedSparkContext {
       (1035, ((1, 0.17), Some((1035, (1, 0.171)))))
     )
 
-    val skFn = { case (sk, v) => None }: ((Int, Double)) => Option[Nothing]
+    val skFn = { case (_, _) => None }: ((Int, Double)) => Option[Nothing]
     val joined = FutureLeftJoin
       .apply(
         leftRdd,
@@ -188,7 +188,7 @@ class LeftJoinSpec extends FlatSpec with SharedSparkContext {
       (1035, ((1, 0.17), None))
     )
 
-    val skFn = { case (sk, v) => None }: ((Int, Double)) => Option[Nothing]
+    val skFn = { case (_, _) => None }: ((Int, Double)) => Option[Nothing]
     val joined = FutureLeftJoin
       .apply(
         leftRdd,

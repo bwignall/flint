@@ -183,9 +183,9 @@ class ExponentialSmoothingSummarizerSpec
         beginDateTime = "1960-01-01",
         endDateTime = "2030-01-01"
       )
-      rdd = rdd.addColumns("value" -> DoubleType -> { (row: Row) => constant })
-      rdd = rdd.addColumns("id" -> IntegerType -> { (row: Row) => id })
-      rdd.addColumns("expected" -> DoubleType -> { (row: Row) => constant })
+      rdd = rdd.addColumns("value" -> DoubleType -> { (_: Row) => constant })
+      rdd = rdd.addColumns("id" -> IntegerType -> { (_: Row) => id })
+      rdd.addColumns("expected" -> DoubleType -> { (_: Row) => constant })
     }
 
     var rdd = getSinRDDWithID(1, 1.0)

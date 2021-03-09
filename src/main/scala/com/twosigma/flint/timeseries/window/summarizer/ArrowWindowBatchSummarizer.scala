@@ -259,8 +259,7 @@ private[flint] case class ArrowWindowBatchSummarizer(
   private def serializeRows(
     rows: util.ArrayList[InternalRow],
     originalSchema: StructType,
-    prunedSchema: StructType,
-    allocator: BufferAllocator
+    prunedSchema: StructType
   ): Array[Byte] = {
     val allocator = new RootAllocator(Long.MaxValue)
     val arrowSchema = ArrowUtils.toArrowSchema(prunedSchema)
@@ -346,13 +345,13 @@ private[flint] case class ArrowWindowBatchSummarizer(
     val (leftLength, leftBatch) = if (leftPrunedSchema.length > 0) {
       (
         u.leftRows.size,
-        serializeRows(u.leftRows, leftSchema, leftPrunedSchema, allocator)
+        serializeRows(u.leftRows, leftSchema, leftPrunedSchema)
       )
     } else {
       (0, null)
     }
     val rightBatch =
-      serializeRows(u.rightRows, rightSchema, rightPrunedSchema, allocator)
+      serializeRows(u.rightRows, rightSchema, rightPrunedSchema)
     val indicesArrowBytes =
       serializeIndices(u.beginIndices, u.endIndices, allocator)
     allocator.close()

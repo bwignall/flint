@@ -106,7 +106,7 @@ class InternalRowUtilsSpec extends FlatSpec with TableDrivenPropertyChecks {
   }
 
   it should "prepend values correctly" in {
-    testTemplate { (data: Row, schema: StructType, row: InternalRow) =>
+    testTemplate { (_: Row, schema: StructType, row: InternalRow) =>
       val values = Seq(123.0, 456, UTF8String.fromString("789"))
 
       val newRow = InternalRowUtils.prepend(row, schema, values: _*)
