@@ -58,7 +58,9 @@ trait TimeSeriesSuite extends FlintSuite {
     thisArray: Array[Double],
     thatArray: Array[Double]
   ): Unit =
-    (thisArray zip thatArray).map { case (x, y) => assertAlmostEquals(x, y) }
+    (thisArray zip thatArray).foreach {
+      case (x, y) => assertAlmostEquals(x, y)
+    }
 
   /**
    * Assert if two doubles are equal within additive precision `defaultAdditivePrecision`.

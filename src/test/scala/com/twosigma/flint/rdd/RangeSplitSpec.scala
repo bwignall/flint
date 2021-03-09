@@ -29,9 +29,9 @@ class RangeSplitSpec extends FlatSpec {
 
   "The RangeSplit" should "getNextBegin correctly" in {
     val begins = rangeSplits.map(_.range.begin)
-    assert(RangeSplit.getNextBegin(2, begins) == Some(3))
-    assert(RangeSplit.getNextBegin(4, begins) == Some(5))
-    assert(RangeSplit.getNextBegin(6, begins) == Some(7))
+    assert(RangeSplit.getNextBegin(2, begins).contains(3))
+    assert(RangeSplit.getNextBegin(4, begins).contains(5))
+    assert(RangeSplit.getNextBegin(6, begins).contains(7))
     assert(RangeSplit.getNextBegin(8, begins).isEmpty)
     assert(RangeSplit.getNextBegin(1, Vector[Int]()).isEmpty)
   }

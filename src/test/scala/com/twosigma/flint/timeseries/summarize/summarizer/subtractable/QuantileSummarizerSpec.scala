@@ -37,7 +37,7 @@ class QuantileSummarizerSpec extends SummarizerSuite {
 
   "SequentialArrayQueue" should "resize up correctly" in {
     val queue = new SequentialArrayQueue[Double]()
-    (1 to 32).map { i =>
+    (1 to 32).foreach { i =>
       queue.add(i.toDouble)
     }
     assert(queue.view()._3.length == 32)
@@ -47,11 +47,11 @@ class QuantileSummarizerSpec extends SummarizerSuite {
 
   it should "shift down correctly" in {
     val queue = new SequentialArrayQueue[Double]()
-    (1 to 64).map { i =>
+    (1 to 64).foreach { i =>
       queue.add(i.toDouble)
     }
     assert(queue.view()._3.length == 64)
-    (1 to 32).map { _ =>
+    (1 to 32).foreach { _ =>
       queue.remove()
     }
     assert(queue.view()._1 == 0)
@@ -62,15 +62,15 @@ class QuantileSummarizerSpec extends SummarizerSuite {
     val queue2 = new SequentialArrayQueue[Double]()
 
     // Move the begin index
-    (1 to 5).map { i =>
+    (1 to 5).foreach { i =>
       queue1.add(i.toDouble)
       queue1.remove()
     }
-    (1 to 3).map { i =>
+    (1 to 3).foreach { i =>
       queue1.add(i.toDouble)
     }
 
-    (4 to 10).map { i =>
+    (4 to 10).foreach { i =>
       queue2.add(i.toDouble)
     }
     queue1.addAll(queue2)
