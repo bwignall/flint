@@ -127,7 +127,7 @@ class TimeSeriesGenerator(
               InternalRow.fromSeq(time +: id +: values)
             }
           }
-          iter.map(_._2).flatMap { case t => getCycle(t).map((t, _)) }
+          iter.map(_._2).flatMap(t => getCycle(t).map((t, _)))
       }
 
     val df = DFConverter.toDataFrame(orderedRdd, schema)

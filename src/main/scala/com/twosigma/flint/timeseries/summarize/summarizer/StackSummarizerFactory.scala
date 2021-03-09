@@ -24,12 +24,11 @@ import org.apache.spark.sql.types.{ ArrayType, StructField, StructType }
 case class StackSummarizerFactory(factories: Seq[SummarizerFactory])
   extends SummarizerFactory {
 
-  factories.foreach {
-    case factory =>
-      require(
-        !factory.isInstanceOf[OverlappableSummarizerFactory],
-        "Stacking overlappable summarizers are not supported"
-      )
+  factories.foreach { factory =>
+    require(
+      !factory.isInstanceOf[OverlappableSummarizerFactory],
+      "Stacking overlappable summarizers are not supported"
+    )
   }
 
   /**

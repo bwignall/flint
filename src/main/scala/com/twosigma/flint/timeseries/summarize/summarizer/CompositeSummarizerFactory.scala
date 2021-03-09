@@ -27,12 +27,11 @@ case class CompositeSummarizerFactory(
   factory2: SummarizerFactory
 ) extends SummarizerFactory {
 
-  Seq(factory1, factory2).foreach {
-    case factory =>
-      require(
-        !factory.isInstanceOf[OverlappableSummarizerFactory],
-        "Composition of overlappable summarizers are not supported"
-      )
+  Seq(factory1, factory2).foreach { factory =>
+    require(
+      !factory.isInstanceOf[OverlappableSummarizerFactory],
+      "Composition of overlappable summarizers are not supported"
+    )
   }
 
   /**

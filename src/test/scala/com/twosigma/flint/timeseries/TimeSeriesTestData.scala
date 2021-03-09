@@ -159,10 +159,13 @@ private[flint] trait TimeSeriesTestData {
       groupedRows
     )
     val ranges =
-      df.select("index").distinct().collect().map(_.getInt(0)).sorted.map {
-        case index =>
-          CloseOpen(index * intervalWitdh, Some((index + 1) * intervalWitdh))
-      }
+      df.select("index")
+        .distinct()
+        .collect()
+        .map(_.getInt(0))
+        .sorted
+        .map(index =>
+          CloseOpen(index * intervalWitdh, Some((index + 1) * intervalWitdh)))
     TimeSeriesRDD.fromDFWithRanges(
       DFConverter.toDataFrame(rdd, df.schema),
       ranges

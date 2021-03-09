@@ -102,14 +102,13 @@ class SummarizeWindowBatchesSpec
     val leftRows = left.collect().toList
     val rightRows = right.collect().toList
 
-    val expected = leftRows.map {
-      case leftRow =>
-        val sum = leftRow.getAs[Int]("v1") + rightRows
-          .filter(rightRow => inWindowWithSk(leftRow, rightRow))
-          .map(_.getAs[Int]("v2"))
-          .sum
+    val expected = leftRows.map { leftRow =>
+      val sum = leftRow.getAs[Int]("v1") + rightRows
+        .filter(rightRow => inWindowWithSk(leftRow, rightRow))
+        .map(_.getAs[Int]("v2"))
+        .sum
 
-        new GenericRowWithSchema((leftRow.toSeq :+ sum).toArray, schema)
+      new GenericRowWithSchema((leftRow.toSeq :+ sum).toArray, schema)
     }
 
     expected
@@ -138,30 +137,29 @@ class SummarizeWindowBatchesSpec
 
       val result = summarizedTSRdd
         .collect()
-        .flatMap {
-          case row =>
-            val originLeftRows = row.getAs[Seq[Row]](baseRowsColumnName)
-            val leftRows =
-              fileFormatToRows(row.getAs[Array[Byte]](leftBatchColumnName))
+        .flatMap { row =>
+          val originLeftRows = row.getAs[Seq[Row]](baseRowsColumnName)
+          val leftRows =
+            fileFormatToRows(row.getAs[Array[Byte]](leftBatchColumnName))
 
-            assert(originLeftRows == leftRows)
+          assert(originLeftRows == leftRows)
 
-            val rightRows =
-              fileFormatToRows(row.getAs[Array[Byte]](rightBatchColumnName))
-            val indexRows =
-              fileFormatToRows(row.getAs[Array[Byte]](indicesColumnName))
+          val rightRows =
+            fileFormatToRows(row.getAs[Array[Byte]](rightBatchColumnName))
+          val indexRows =
+            fileFormatToRows(row.getAs[Array[Byte]](indicesColumnName))
 
-            val resultRows = (leftRows zip indexRows).map {
-              case (leftRow, indexRow) =>
-                val sum = leftRow.getAs[Int]("v1") +
-                  rightRows
-                  .slice(indexRow.getInt(0), indexRow.getInt(1))
-                  .map(_.getAs[Int]("v1"))
-                  .sum
-                new GenericRowWithSchema((leftRow.toSeq :+ sum).toArray, schema)
-            }
+          val resultRows = (leftRows zip indexRows).map {
+            case (leftRow, indexRow) =>
+              val sum = leftRow.getAs[Int]("v1") +
+                rightRows
+                .slice(indexRow.getInt(0), indexRow.getInt(1))
+                .map(_.getAs[Int]("v1"))
+                .sum
+              new GenericRowWithSchema((leftRow.toSeq :+ sum).toArray, schema)
+          }
 
-            resultRows
+          resultRows
         }
         .toList
 
