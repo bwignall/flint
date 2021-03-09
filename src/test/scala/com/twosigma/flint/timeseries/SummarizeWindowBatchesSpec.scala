@@ -29,7 +29,6 @@ import org.apache.spark.sql.{ Row, SparkSession }
 import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.types._
-import org.scalacheck.Prop.False
 import org.scalatest.prop.PropertyChecks
 
 import scala.collection.JavaConverters._
