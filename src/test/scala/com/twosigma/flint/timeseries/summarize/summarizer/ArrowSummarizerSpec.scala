@@ -212,8 +212,7 @@ class ArrowSummarizerSpec extends SummarizerSuite with FlintTestData {
     assert(
       result
         .collect()(0)
-        .getAs[Seq[Row]](baseRowsColumnName)
-        .sameElements(tsrdd.collect())
+        .getAs[Seq[Row]](baseRowsColumnName) == tsrdd.collect()
     )
   }
 

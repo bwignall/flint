@@ -28,6 +28,7 @@ import com.twosigma.flint.timeseries.{
   TimeSeriesRDD,
   TimeSeriesSuite
 }
+import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.{
   DataType,
   DoubleType,
@@ -36,9 +37,8 @@ import org.apache.spark.sql.types.{
   LongType,
   StructType
 }
-import java.util.Random
 
-import org.apache.spark.sql.Row
+import java.util.Random
 
 class ExtremeSummarizerSpec extends SummarizerSuite {
 
