@@ -307,11 +307,11 @@ class RangeSpec extends FlatSpec {
     ranges: IndexedSeq[Range[Int]]
   ): Unit = {
     assert(
-      range.intersectsWith(ranges, true).toArray.deep
-        == range.intersectsWith(ranges, false).toArray.deep
+      range.intersectsWith(ranges, isSorted = true).toArray.deep
+        == range.intersectsWith(ranges, isSorted = false).toArray.deep
     )
     assert(
-      range.intersectsWith(ranges, true).toArray.deep
+      range.intersectsWith(ranges, isSorted = true).toArray.deep
         == ranges.zipWithIndex
         .filter { case (r, _) => range.intersects(r) }
         .map(_._2)
@@ -323,8 +323,8 @@ class RangeSpec extends FlatSpec {
   it should "intersectsWith correctly" in {
     var ranges: IndexedSeq[Range[Int]] = Array[Range[Int]]()
     var range = Range.closeOpen(1, Some(4))
-    assert(range.intersectsWith(ranges, true).isEmpty)
-    assert(range.intersectsWith(ranges, false).isEmpty)
+    assert(range.intersectsWith(ranges, isSorted = true).isEmpty)
+    assert(range.intersectsWith(ranges, isSorted = false).isEmpty)
 
     ranges = Array(
       Range.closeOpen(1, Some(5)),
@@ -337,7 +337,7 @@ class RangeSpec extends FlatSpec {
     range = Range.closeOpen(1, Some(8))
     assert(Range.isSorted(ranges))
     assert(
-      range.intersectsWith(ranges, true).toArray.deep
+      range.intersectsWith(ranges, isSorted = true).toArray.deep
         == Array(0, 1, 2, 3, 4).deep
     )
     assertIntersectsWith(range, ranges)

@@ -308,7 +308,7 @@ trait TimeSeriesSuite extends FlintSuite {
       row +: nullRows
     }
     TimeSeriesRDD.fromRDD(newRdd, schema)(
-      true,
+      isSorted = true,
       scala.concurrent.duration.NANOSECONDS
     )
   }

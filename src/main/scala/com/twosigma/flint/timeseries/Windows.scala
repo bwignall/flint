@@ -35,7 +35,7 @@ object Windows {
   def pastAbsoluteTime(length: String): ShiftTimeWindow = {
     val ns = Duration(length).toNanos
     require(ns >= 0)
-    AbsoluteTimeWindow(s"past_$length", ns, true)
+    AbsoluteTimeWindow(s"past_$length", ns, backward = true)
   }
 
   /**
@@ -49,6 +49,6 @@ object Windows {
   def futureAbsoluteTime(length: String): ShiftTimeWindow = {
     val ns = Duration(length).toNanos
     require(ns >= 0)
-    AbsoluteTimeWindow(s"future_$length", ns, false)
+    AbsoluteTimeWindow(s"future_$length", ns, backward = false)
   }
 }

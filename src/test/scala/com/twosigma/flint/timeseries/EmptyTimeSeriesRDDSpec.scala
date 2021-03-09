@@ -75,7 +75,7 @@ class EmptyTimeSeriesRDDSpec extends TimeSeriesSuite {
       Summarizers.stddev("v1"),
       Summarizers.variance("v1"),
       Summarizers.covariance("v1", "v2"),
-      Summarizers.zScore("v1", true),
+      Summarizers.zScore("v1", includeCurrentObservation = true),
       Summarizers.nthMoment("v1", 1),
       Summarizers.nthCentralMoment("v1", 1),
       Summarizers.correlation("v1", "v2"),

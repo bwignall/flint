@@ -57,51 +57,51 @@ class OrderPreservingOperationSpec extends FlintSuite with FlintTestData {
   }
 
   it should "test select('col')" in {
-    assertOrderPreserving(selectV, true)
+    assertOrderPreserving(selectV, isOrderPreserving = true)
   }
 
   it should "test selectExpr('col + 1 as col')" in {
-    assertOrderPreserving(selectExprVPlusOne, true)
+    assertOrderPreserving(selectExprVPlusOne, isOrderPreserving = true)
   }
 
   it should "test selectExpr('sum(col)')" in {
-    assertOrderPreserving(selectExprSumV, false)
+    assertOrderPreserving(selectExprSumV, isOrderPreserving = false)
   }
 
   it should "test filter" in {
-    assertOrderPreserving(filterV, true)
+    assertOrderPreserving(filterV, isOrderPreserving = true)
   }
 
   it should "test withColumn simple column expression" in {
-    assertOrderPreserving(withTime2Column, true)
+    assertOrderPreserving(withTime2Column, isOrderPreserving = true)
   }
 
   it should "test withColumn udf" in {
-    assertOrderPreserving(withTime3ColumnUdf, true)
+    assertOrderPreserving(withTime3ColumnUdf, isOrderPreserving = true)
   }
 
   it should "test orderBy" in {
-    assertOrderPreserving(orderByTime, false)
+    assertOrderPreserving(orderByTime, isOrderPreserving = false)
   }
 
   it should "test withColumn window expression" in {
-    assertOrderPreserving(addRankColumn, false)
+    assertOrderPreserving(addRankColumn, isOrderPreserving = false)
   }
 
   it should "test select aggregation" in {
-    assertOrderPreserving(selectSumV, false)
+    assertOrderPreserving(selectSumV, isOrderPreserving = false)
   }
 
   it should "test groupBy aggregation" in {
-    assertOrderPreserving(groupByTimeSumV, false)
+    assertOrderPreserving(groupByTimeSumV, isOrderPreserving = false)
   }
 
   it should "test repartition" in {
-    assertOrderPreserving(repartition, false)
+    assertOrderPreserving(repartition, isOrderPreserving = false)
   }
 
   it should "test coalesce" in {
-    assertOrderPreserving(coalesce, false)
+    assertOrderPreserving(coalesce, isOrderPreserving = false)
   }
 
   it should "test cache" in {

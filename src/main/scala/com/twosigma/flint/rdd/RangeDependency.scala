@@ -73,7 +73,7 @@ private[rdd] object RangeDependency {
     normalizedRanges.sortBy(_.begin).zipWithIndex.map {
       case (normalizedRange, idx) =>
         val parents = normalizedRange
-          .intersectsWith(nonNormalizedRanges, true)
+          .intersectsWith(nonNormalizedRanges, isSorted = true)
           .map(nonNormalizedPartitions(_))
         RangeDependency[K, P](idx, normalizedRange, parents)
     }

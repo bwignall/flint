@@ -1409,7 +1409,8 @@ class TimeSeriesRDDSpec extends TimeSeriesSuite with TimeTypeSuite {
 
   it should "shiftTime correctly with timestamp type" in {
     withTimeType("timestamp") {
-      val data = TimeSeriesRDD.fromDF(priceTSRdd.toDF)(true, NANOSECONDS)
+      val data =
+        TimeSeriesRDD.fromDF(priceTSRdd.toDF)(isSorted = true, NANOSECONDS)
       val result =
         data.shift(Windows.futureAbsoluteTime("1ns")) // This should be no-op
       val expected = data
@@ -1419,7 +1420,7 @@ class TimeSeriesRDDSpec extends TimeSeriesSuite with TimeTypeSuite {
       val expected2 = TimeSeriesRDD.fromDF(
         data.toDF
           .withColumn("time", (col("time").cast("long") + 1).cast("timestamp"))
-      )(true, NANOSECONDS)
+      )(isSorted = true, NANOSECONDS)
       assertIdentical(expected2, result2)
 
       val result3 =
@@ -1434,24 +1435,25 @@ class TimeSeriesRDDSpec extends TimeSeriesSuite with TimeTypeSuite {
 
   it should "shiftTime correctly with long type" in {
     withTimeType("long") {
-      val data = TimeSeriesRDD.fromDF(priceTSRdd.toDF)(true, NANOSECONDS)
+      val data =
+        TimeSeriesRDD.fromDF(priceTSRdd.toDF)(isSorted = true, NANOSECONDS)
       val result = data.shift(Windows.futureAbsoluteTime("1ns"))
       val expected = TimeSeriesRDD.fromDF(
         data.toDF.withColumn("time", col("time") + 1)
-      )(true, NANOSECONDS)
+      )(isSorted = true, NANOSECONDS)
       assertIdentical(expected, result)
 
       val result2 = data.shift(Windows.futureAbsoluteTime("1s"))
       val expected2 = TimeSeriesRDD.fromDF(
         data.toDF.withColumn("time", col("time") + 1000000000)
-      )(true, NANOSECONDS)
+      )(isSorted = true, NANOSECONDS)
 
       assertIdentical(expected2, result2)
 
       val result3 = data.shift(Windows.pastAbsoluteTime("1ns"))
       val expected3 = TimeSeriesRDD.fromDF(
         data.toDF.withColumn("time", col("time") - 1)
-      )(true, NANOSECONDS)
+      )(isSorted = true, NANOSECONDS)
 
       assertIdentical(expected3, result3)
     }
@@ -1531,7 +1533,10 @@ class TimeSeriesRDDSpec extends TimeSeriesSuite with TimeTypeSuite {
       val expectedSchema =
         Schema("id" -> IntegerType, "price" -> DoubleType, "info" -> StringType)
       val tsrdd =
-        TimeSeriesRDD.fromParquet(sc, "file://" + source)(true, NANOSECONDS)
+        TimeSeriesRDD.fromParquet(sc, "file://" + source)(
+          isSorted = true,
+          NANOSECONDS
+        )
       val rows = tsrdd.collect()
 
       assert(tsrdd.schema == expectedSchema)
@@ -1547,7 +1552,10 @@ class TimeSeriesRDDSpec extends TimeSeriesSuite with TimeTypeSuite {
   it should "not modify original rows during conversions/modifications" taggedAs Slow in {
     withResource("/timeseries/parquet/PriceWithHeader.parquet") { source =>
       val tsrdd =
-        TimeSeriesRDD.fromParquet(sc, "file://" + source)(true, NANOSECONDS)
+        TimeSeriesRDD.fromParquet(sc, "file://" + source)(
+          isSorted = true,
+          NANOSECONDS
+        )
       // fromParquet outputs UnsafeRows. Recording the initial state.
       val rows = tsrdd.collect()
 

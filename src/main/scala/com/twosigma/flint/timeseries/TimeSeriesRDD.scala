@@ -2025,7 +2025,13 @@ class TimeSeriesRDDImpl private[timeseries] (
       key.map(pruned.schema(_)),
       timeType
     )
-    TimeSeriesRDD.fromSeq(pruned.orderedRdd.sc, rows.toSeq, newSchema, true, 1)
+    TimeSeriesRDD.fromSeq(
+      pruned.orderedRdd.sc,
+      rows.toSeq,
+      newSchema,
+      isSorted = true,
+      1
+    )
   }
 
   def summarize(

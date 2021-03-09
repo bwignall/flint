@@ -36,7 +36,10 @@ class OLSRegressionSummarizerSpec extends SummarizerSuite {
     val tsRdd = fromCSV("data.csv", dateFormat = dateFormat)
     val count = tsRdd.count()
     var result = tsRdd
-      .summarize(Summarizers.OLSRegression("y", Seq("x1", "x2"), "w", true))
+      .summarize(
+        Summarizers
+          .OLSRegression("y", Seq("x1", "x2"), "w", shouldIntercept = true)
+      )
       .first()
     assert(
       result.getAs[Double](
@@ -107,7 +110,10 @@ class OLSRegressionSummarizerSpec extends SummarizerSuite {
     )
 
     result = tsRdd
-      .summarize(Summarizers.OLSRegression("y", Seq("x1", "x2"), "w", false))
+      .summarize(
+        Summarizers
+          .OLSRegression("y", Seq("x1", "x2"), "w", shouldIntercept = false)
+      )
       .first()
     assert(
       result.getAs[Double](OLSRegressionSummarizer.interceptColumn) === 0.0

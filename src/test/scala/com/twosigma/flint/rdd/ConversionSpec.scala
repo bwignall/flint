@@ -186,7 +186,10 @@ class ConversionSpec extends FlatSpec with SharedSparkContext with TimeLimits {
 
     future onComplete {
       case Success(_) =>
-        assert(false, "Should not completed as the job has been killed.")
+        assert(
+          false,
+          "Should not completed as the job has been killed."
+        )
       case Failure(_) =>
     }
 

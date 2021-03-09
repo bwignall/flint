@@ -35,7 +35,9 @@ class ZScoreSummarizerSpec extends SummarizerSuite {
     val expectedResults = Array[Row](
       new GenericRowWithSchema(Array(0L, 1.5254255396193801), expectedSchema)
     )
-    val results = priceTSRdd.summarize(Summarizers.zScore("price", true))
+    val results = priceTSRdd.summarize(
+      Summarizers.zScore("price", includeCurrentObservation = true)
+    )
     assert(results.schema == expectedSchema)
     assert(results.collect().deep == expectedResults.deep)
   }
@@ -47,7 +49,9 @@ class ZScoreSummarizerSpec extends SummarizerSuite {
     val expectedResults = Array[Row](
       new GenericRowWithSchema(Array(0L, 1.8090680674665818), expectedSchema)
     )
-    val results = priceTSRdd.summarize(Summarizers.zScore("price", false))
+    val results = priceTSRdd.summarize(
+      Summarizers.zScore("price", includeCurrentObservation = false)
+    )
     assert(results.schema == expectedSchema)
     assert(results.collect().deep == expectedResults.deep)
   }
@@ -56,19 +60,21 @@ class ZScoreSummarizerSpec extends SummarizerSuite {
     val priceTSRdd =
       fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
     assertEquals(
-      priceTSRdd.summarize(Summarizers.zScore("price", true)),
+      priceTSRdd.summarize(
+        Summarizers.zScore("price", includeCurrentObservation = true)
+      ),
       insertNullRows(priceTSRdd, "price").summarize(
-        Summarizers.zScore("price", true)
+        Summarizers.zScore("price", includeCurrentObservation = true)
       )
     )
   }
 
   it should "pass summarizer property test" in {
     summarizerPropertyTest(AllPropertiesAndSubtractable)(
-      Summarizers.zScore("x1", true)
+      Summarizers.zScore("x1", includeCurrentObservation = true)
     )
     summarizerPropertyTest(AllPropertiesAndSubtractable)(
-      Summarizers.zScore("x2", false)
+      Summarizers.zScore("x2", includeCurrentObservation = false)
     )
   }
 }

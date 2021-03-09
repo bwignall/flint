@@ -59,13 +59,13 @@ class LinearRegressionModelSpec extends FlintSuite {
       // Build the model expected to test.
       modelWithIntercept = OLSMultipleLinearRegression.regression(data)
       modelWithoutIntercept =
-        OLSMultipleLinearRegression.regression(data, false)
+        OLSMultipleLinearRegression.regression(data, intercept = false)
 
       // Build the models expected to serve as benchmarks.
-      val (x1, y1) = WeightedLabeledPoint.toArrays(data, true)
+      val (x1, y1) = WeightedLabeledPoint.toArrays(data, intercept = true)
       benchmarkModelWithIntercept.setNoIntercept(true)
       benchmarkModelWithIntercept.newSampleData(y1, x1)
-      val (x2, y2) = WeightedLabeledPoint.toArrays(data, false)
+      val (x2, y2) = WeightedLabeledPoint.toArrays(data, intercept = false)
       benchmarkModelWithoutIntercept.setNoIntercept(true)
       benchmarkModelWithoutIntercept.newSampleData(y2, x2)
     }
