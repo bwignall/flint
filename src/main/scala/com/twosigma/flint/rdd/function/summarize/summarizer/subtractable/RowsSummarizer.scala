@@ -19,7 +19,6 @@ package com.twosigma.flint.rdd.function.summarize.summarizer.subtractable
 import org.apache.spark.sql.catalyst.InternalRow
 
 import java.util
-import java.util.ArrayDeque
 import scala.reflect.ClassTag
 
 /**

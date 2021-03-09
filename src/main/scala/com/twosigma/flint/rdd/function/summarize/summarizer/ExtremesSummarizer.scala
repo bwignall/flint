@@ -17,7 +17,6 @@
 package com.twosigma.flint.rdd.function.summarize.summarizer
 
 import scala.collection.mutable
-import scala.collection.mutable.PriorityQueue
 import scala.reflect.ClassTag
 
 /**

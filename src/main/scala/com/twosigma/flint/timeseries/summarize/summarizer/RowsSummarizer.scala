@@ -29,7 +29,6 @@ import org.apache.spark.sql.catalyst.util.GenericArrayData
 import org.apache.spark.sql.types._
 
 import java.util
-import java.util.ArrayDeque
 
 case class RowsSummarizerFactory(column: String) extends SummarizerFactory {
   override val requiredColumns: ColumnList = ColumnList.All

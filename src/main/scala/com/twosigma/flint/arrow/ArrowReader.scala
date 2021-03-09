@@ -16,13 +16,13 @@
 
 package com.twosigma.flint.arrow
 
-import org.apache.arrow.vector.{ BaseValueVector, _ }
 import org.apache.arrow.vector.types.pojo.{ ArrowType, Schema }
 import org.apache.arrow.vector.types.{
   DateUnit,
   FloatingPointPrecision,
   TimeUnit => ArrowTimeUnit
 }
+import org.apache.arrow.vector.{ BaseValueVector, _ }
 import org.apache.spark.sql.catalyst.expressions.UnsafeRow
 import org.apache.spark.sql.catalyst.expressions.codegen.UnsafeRowWriter
 import org.apache.spark.unsafe.types.UTF8String

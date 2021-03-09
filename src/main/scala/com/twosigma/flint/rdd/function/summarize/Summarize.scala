@@ -16,9 +16,9 @@
 
 package com.twosigma.flint.rdd.function.summarize
 
-import com.twosigma.flint.rdd.{ OverlappedOrderedRDD, _ }
 import com.twosigma.flint.rdd.function.summarize.summarizer.Summarizer
 import com.twosigma.flint.rdd.function.summarize.summarizer.overlappable.OverlappableSummarizer
+import com.twosigma.flint.rdd.{ OverlappedOrderedRDD, _ }
 import org.apache.spark.rdd.RDD
 
 import scala.collection.mutable
