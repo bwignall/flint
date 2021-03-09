@@ -16,26 +16,20 @@
 
 package com.twosigma.flint.timeseries.summarize.summarizer
 
-import com.twosigma.flint.rdd.function.summarize.summarizer.Summarizer
 import com.twosigma.flint.timeseries.row.Schema
 import com.twosigma.flint.timeseries.summarize.{
   SummarizerFactory,
   SummarizerSuite
 }
-import com.twosigma.flint.timeseries.{
-  CSV,
-  Summarizers,
-  TimeSeriesRDD,
-  TimeSeriesSuite
-}
+import com.twosigma.flint.timeseries.Summarizers
+
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.{
   DataType,
   DoubleType,
   FloatType,
   IntegerType,
-  LongType,
-  StructType
+  LongType
 }
 
 import java.util.Random

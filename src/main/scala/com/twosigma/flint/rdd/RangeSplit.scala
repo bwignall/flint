@@ -34,11 +34,7 @@ object RangeSplit {
     while (i < begins.length && !ord.gt(begins(i), begin)) {
       i = i + 1
     }
-    if (i < begins.length) {
-      Some(begins(i))
-    } else {
-      None
-    }
+    begins.lift(i)
   }
 
   /**

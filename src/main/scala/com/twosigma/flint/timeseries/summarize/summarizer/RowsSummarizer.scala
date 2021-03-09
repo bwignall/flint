@@ -28,6 +28,7 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.util.GenericArrayData
 import org.apache.spark.sql.types._
 
+import java.util
 import java.util.ArrayDeque
 
 case class RowsSummarizerFactory(column: String) extends SummarizerFactory {
@@ -44,7 +45,7 @@ case class RowsSummarizer(
 ) extends LeftSubtractableSummarizer
   with InputAlwaysValid {
   override type T = InternalRow
-  override type U = ArrayDeque[InternalRow]
+  override type U = util.ArrayDeque[InternalRow]
   override type V = Array[InternalRow]
   override val summarizer = subtractable.InternalRowsSummarizer()
   override val schema = Schema.of(column -> ArrayType(inputSchema))

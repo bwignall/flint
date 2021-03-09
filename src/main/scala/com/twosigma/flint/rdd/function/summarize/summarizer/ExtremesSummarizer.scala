@@ -16,6 +16,7 @@
 
 package com.twosigma.flint.rdd.function.summarize.summarizer
 
+import scala.collection.mutable
 import scala.collection.mutable.PriorityQueue
 import scala.reflect.ClassTag
 
@@ -26,12 +27,16 @@ case class ExtremesSummarizer[T](
   k: Int,
   implicit val tag: ClassTag[T],
   ordering: Ordering[T]
-) extends FlippableSummarizer[T, PriorityQueue[T], Array[T]] {
+) extends FlippableSummarizer[T, mutable.PriorityQueue[T], Array[T]] {
 
   // To find the k largest, we use a min heap, so the order needs to be reversed.
-  override def zero(): PriorityQueue[T] = PriorityQueue.empty(ordering.reverse)
+  override def zero(): mutable.PriorityQueue[T] =
+    mutable.PriorityQueue.empty(ordering.reverse)
 
-  override def add(u: PriorityQueue[T], t: T): PriorityQueue[T] = {
+  override def add(
+    u: mutable.PriorityQueue[T],
+    t: T
+  ): mutable.PriorityQueue[T] = {
     if (u.isEmpty || ordering.gt(t, u.head)) {
       u.enqueue(t)
       while (u.size > k) {
@@ -43,9 +48,9 @@ case class ExtremesSummarizer[T](
   }
 
   override def merge(
-    u1: PriorityQueue[T],
-    u2: PriorityQueue[T]
-  ): PriorityQueue[T] = {
+    u1: mutable.PriorityQueue[T],
+    u2: mutable.PriorityQueue[T]
+  ): mutable.PriorityQueue[T] = {
     val u = u1 ++ u2
     // If there are more than n items after merge, keep the top k items
     while (u.size > k) {
@@ -56,7 +61,7 @@ case class ExtremesSummarizer[T](
   }
 
   // Output elements in order defined by ordering
-  override def render(u: PriorityQueue[T]): Array[T] =
+  override def render(u: mutable.PriorityQueue[T]): Array[T] =
     u.toArray.sorted(ordering)
 
 }
