@@ -23,12 +23,12 @@ import com.twosigma.flint.SharedSparkContext
 import org.apache.spark.NarrowDependency
 import org.apache.spark.rdd.RDD
 import org.scalatest.FlatSpec
-import org.scalatest.concurrent.Timeouts
+import org.scalatest.concurrent.TimeLimits
 import org.scalatest.time.{ Seconds, Span }
 
 import scala.concurrent.Future
 
-class ConversionSpec extends FlatSpec with SharedSparkContext with Timeouts {
+class ConversionSpec extends FlatSpec with SharedSparkContext with TimeLimits {
 
   var sortedRDDWithEmptyPartitions: RDD[(Long, (Int, Double))] = _
   var sortedNonNormalizedRDD: RDD[(Long, (Int, Double))] = _
@@ -176,7 +176,7 @@ class ConversionSpec extends FlatSpec with SharedSparkContext with Timeouts {
     // Cancel the slow computation.
     sc.cancelStage(stageId, "Manual cancellation")
 
-    failAfter(Span(10 * elapse, Seconds)) {
+    failAfter(Span(10 * elapse.toLong, Seconds)) {
       while (sc.statusTracker.getExecutorInfos
         .map(info => info.numRunningTasks())
         .sum > 0) {

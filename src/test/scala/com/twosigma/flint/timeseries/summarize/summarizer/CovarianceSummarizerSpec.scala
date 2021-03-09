@@ -24,7 +24,7 @@ import com.twosigma.flint.timeseries.{
   TimeSeriesSuite
 }
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.types.{DoubleType, IntegerType}
+import org.apache.spark.sql.types.{ DoubleType, IntegerType }
 
 class CovarianceSummarizerSpec extends SummarizerSuite {
 

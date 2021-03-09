@@ -18,7 +18,7 @@ package com.twosigma.flint.timeseries.summarize.summarizer.subtractable
 
 import com.twosigma.flint.timeseries.row.Schema
 import com.twosigma.flint.timeseries.summarize.SummarizerSuite
-import com.twosigma.flint.timeseries.{Summarizers, TimeSeriesRDD}
+import com.twosigma.flint.timeseries.{ Summarizers, TimeSeriesRDD }
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types._
 
