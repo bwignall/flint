@@ -22,22 +22,24 @@ import BuildUtil._
 
 lazy val formattingPreferences = {
   import scalariform.formatter.preferences._
-  FormattingPreferences().
-    setPreference(AlignParameters, false).
-    setPreference(PreserveSpaceBeforeArguments, true).
-    setPreference(SpacesAroundMultiImports, true)
+  FormattingPreferences()
+    .setPreference(AlignParameters, false)
+    .setPreference(PreserveSpaceBeforeArguments, true)
+    .setPreference(SpacesAroundMultiImports, true)
 }
 
 lazy val compilationSettings = scalariformSettings ++ Seq(
   version := "0.6.0-SNAPSHOT",
   organization := "com.twosigma",
   scalaVersion := "2.12.8",
-  assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeScala = false),
+  assemblyOption in assembly := (assemblyOption in assembly).value
+    .copy(includeScala = false),
   javacOptions ++= Seq("-source", "1.7", "-target", "1.7"),
   compileOrder in Compile := CompileOrder.JavaThenScala,
   scalacOptions ++= Seq(
     "-deprecation",
-    "-encoding", "UTF-8",
+    "-encoding",
+    "UTF-8",
     "-feature",
     "-language:existentials",
     "-language:higherKinds",
@@ -67,8 +69,10 @@ lazy val versions = new {
 }
 
 lazy val lazyDependencies = new {
-  val sparkCore = "org.apache.spark" %% "spark-core" % versions.spark % "provided"
-  val sparkML = "org.apache.spark" %% "spark-mllib" % versions.spark % "provided"
+  val sparkCore =
+    "org.apache.spark" %% "spark-core" % versions.spark % "provided"
+  val sparkML =
+    "org.apache.spark" %% "spark-mllib" % versions.spark % "provided"
   val sparkSQL = "org.apache.spark" %% "spark-sql" % versions.spark % "provided"
 }
 
@@ -98,21 +102,27 @@ lazy val flint = project
   .settings(dependencySettings)
   .settings(parallelExecution in Test := false)
   .settings(testOptions in Test += Tests.Argument("-oDF"))
-  .settings(apiMappings ++= DocumentationMapping.mapJarToDocURL(
-    (managedClasspath in (Compile, doc)).value,
-    Seq(
-      DocumentationMapping(url(s"http://spark.apache.org/docs/${versions.spark}/api/scala/"),
-        lazyDependencies.sparkCore, lazyDependencies.sparkML, lazyDependencies.sparkSQL
+  .settings(
+    apiMappings ++= DocumentationMapping.mapJarToDocURL(
+      (managedClasspath in (Compile, doc)).value,
+      Seq(
+        DocumentationMapping(
+          url(s"http://spark.apache.org/docs/${versions.spark}/api/scala/"),
+          lazyDependencies.sparkCore,
+          lazyDependencies.sparkML,
+          lazyDependencies.sparkSQL
+        )
       )
     )
-  ))
+  )
 
 mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
   {
-    case m if m.startsWith("META-INF/services") => MergeStrategy.filterDistinctLines
-    case m if m.startsWith("META-INF") => MergeStrategy.discard
+    case m if m.startsWith("META-INF/services") =>
+      MergeStrategy.filterDistinctLines
+    case m if m.startsWith("META-INF")       => MergeStrategy.discard
     case m if m.startsWith("git.properties") => MergeStrategy.discard
-    case _ => MergeStrategy.deduplicate
+    case _                                   => MergeStrategy.deduplicate
   }
 }
 

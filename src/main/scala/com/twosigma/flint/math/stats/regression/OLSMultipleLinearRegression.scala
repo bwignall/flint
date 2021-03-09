@@ -100,7 +100,7 @@ object OLSMultipleLinearRegression {
       input,
       intercept,
       n,
-      (xx + xx.t) :/ 2.0,
+      (xx + xx.t) /:/ 2.0,
       xy,
       swx,
       srwsl,

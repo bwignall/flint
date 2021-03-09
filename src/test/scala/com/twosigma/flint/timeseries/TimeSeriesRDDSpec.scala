@@ -1388,7 +1388,7 @@ class TimeSeriesRDDSpec extends TimeSeriesSuite with TimeTypeSuite {
   }
 
   it should "`lookBackwardClock` correctly" in {
-    val result = priceTSRdd.lookBackwardClock("1000s")
+    val result = priceTSRdd.shift(Windows.pastAbsoluteTime("1000s"))
     val expectedData = priceTSRdd.collect().map { r =>
       val values = r.toSeq.toArray
       values(0) = r.getLong(0) - 1000000000000L
@@ -1398,7 +1398,7 @@ class TimeSeriesRDDSpec extends TimeSeriesSuite with TimeTypeSuite {
   }
 
   it should "`lookForwardClock` correctly" in {
-    val result = priceTSRdd.lookForwardClock("1000s")
+    val result = priceTSRdd.shift(Windows.futureAbsoluteTime("1000s"))
     val expectedData = priceTSRdd.collect().map { r =>
       val values = r.toSeq.toArray
       values(0) = r.getLong(0) + 1000000000000L

@@ -19,11 +19,11 @@ package com.twosigma.flint.timeseries
 import com.twosigma.flint.timeseries.row.Schema
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.{ DoubleType, IntegerType }
-import org.scalatest.concurrent.Timeouts
+import org.scalatest.concurrent.TimeLimits
 import org.scalatest.tagobjects.Slow
 import org.scalatest.time.{ Second, Span }
 
-class TimeSeriesRDDCacheSpec extends TimeSeriesSuite with Timeouts {
+class TimeSeriesRDDCacheSpec extends TimeSeriesSuite with TimeLimits {
 
   "TimeSeriesRDD" should "correctly cache data" taggedAs Slow in {
     withResource("/timeseries/csv/Price.csv") { source =>
