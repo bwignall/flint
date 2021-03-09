@@ -23,7 +23,8 @@ package com.twosigma.flint.rdd
 case class MergeIterator[K, A, B](
   leftIter: PeekableIterator[(K, A)],
   rightIter: PeekableIterator[(K, B)]
-)(implicit ord: Ordering[K]) extends Iterator[(K, Either[A, B])] {
+)(implicit ord: Ordering[K])
+  extends Iterator[(K, Either[A, B])] {
 
   def e(t: (K, A)): (K, Either[A, B]) = (t._1, Left(t._2))
 

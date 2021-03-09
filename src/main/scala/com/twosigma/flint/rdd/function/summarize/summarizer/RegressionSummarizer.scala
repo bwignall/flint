@@ -16,7 +16,7 @@
 
 package com.twosigma.flint.rdd.function.summarize.summarizer
 
-import breeze.linalg.{ DenseVector, DenseMatrix }
+import breeze.linalg.{ DenseMatrix, DenseVector }
 
 case class RegressionRow(
   time: Long,

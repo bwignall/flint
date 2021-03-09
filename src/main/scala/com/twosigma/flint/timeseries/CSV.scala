@@ -16,15 +16,14 @@
 
 package com.twosigma.flint.timeseries
 
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types._
+import org.apache.spark.sql.{ DataFrame, SQLContext }
+
 import java.nio.charset.Charset
 import java.sql.Timestamp
-
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{ DataFrame, SQLContext }
-import org.apache.spark.sql.types._
-
-import scala.concurrent.duration._
 import java.util.concurrent.TimeUnit
+import scala.concurrent.duration._
 
 /**
  * Parse a CSV file into a [[TimeSeriesRDD]].

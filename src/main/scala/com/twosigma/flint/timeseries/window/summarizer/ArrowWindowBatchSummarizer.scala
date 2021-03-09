@@ -16,23 +16,19 @@
 
 package com.twosigma.flint.timeseries.window.summarizer
 
-import java.io.ByteArrayOutputStream
-import java.nio.channels.Channels
-import java.util
-
 import com.twosigma.flint.arrow.{ ArrowUtils, ArrowWriter }
 import com.twosigma.flint.rdd.function.window.summarizer.WindowBatchSummarizer
 import org.apache.arrow.memory.{ BufferAllocator, RootAllocator }
-import org.apache.arrow.vector.{ IntVector, VectorSchemaRoot }
 import org.apache.arrow.vector.ipc.ArrowFileWriter
+import org.apache.arrow.vector.{ IntVector, VectorSchemaRoot }
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.expressions.{
-  GenericInternalRow,
-  UnsafeProjection
-}
+import org.apache.spark.sql.catalyst.expressions.GenericInternalRow
 import org.apache.spark.sql.catalyst.util.GenericArrayData
 import org.apache.spark.sql.types._
 
+import java.io.ByteArrayOutputStream
+import java.nio.channels.Channels
+import java.util
 import scala.collection.JavaConverters._
 
 /**

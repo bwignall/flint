@@ -16,8 +16,6 @@
 
 package com.twosigma.flint.rdd.function.window
 
-import java.util.{ HashMap => JHashMap, LinkedList => JLinkedList }
-
 import com.twosigma.flint.rdd._
 import com.twosigma.flint.rdd.function.summarize.summarizer.overlappable.OverlappableSummarizer
 import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.{
@@ -33,6 +31,7 @@ import com.twosigma.flint.util.collection.Implicits._
 import grizzled.slf4j.Logger
 import org.apache.spark.OneToOneDependency
 
+import java.util.{ HashMap => JHashMap, LinkedList => JLinkedList }
 import scala.reflect.ClassTag
 
 object SummarizeWindows {

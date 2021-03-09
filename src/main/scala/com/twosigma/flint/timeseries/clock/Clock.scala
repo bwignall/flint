@@ -16,17 +16,16 @@
 
 package com.twosigma.flint.timeseries.clock
 
-import java.util.concurrent.TimeUnit
-
 import com.twosigma.flint.rdd.{ CloseOpen, OrderedRDD }
 import com.twosigma.flint.timeseries.TimeSeriesRDD
 import com.twosigma.flint.timeseries.row.Schema
 import com.twosigma.flint.timeseries.time.TimeFormat
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.{ DFConverter, SQLContext }
+import org.apache.spark.sql.DFConverter
 import org.apache.spark.sql.catalyst.InternalRow
 import org.joda.time.DateTimeZone
 
+import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.Duration
 import scala.util.Random
 

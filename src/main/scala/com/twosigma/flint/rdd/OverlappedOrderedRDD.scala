@@ -17,9 +17,9 @@
 package com.twosigma.flint.rdd
 
 import com.twosigma.flint.rdd.function.join.RangeMergeJoin
+import org.apache.spark._
 import org.apache.spark.annotation.DeveloperApi
 import org.apache.spark.rdd.RDD
-import org.apache.spark._
 
 import scala.collection.immutable.TreeMap
 import scala.reflect.ClassTag

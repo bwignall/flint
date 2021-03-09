@@ -16,12 +16,13 @@
 
 package com.twosigma.flint.sql.function.aggregate
 
+import org.apache.spark.sql.Row
 import org.apache.spark.sql.expressions.{
   MutableAggregationBuffer,
   UserDefinedAggregateFunction
 }
-import org.apache.spark.sql.Row
 import org.apache.spark.sql.types._
+
 import scala.math.{ abs, signum, sqrt }
 
 /**

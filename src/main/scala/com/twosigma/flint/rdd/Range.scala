@@ -304,7 +304,8 @@ case class CloseClose[K](begin: K, end: Some[K])(implicit val ord: Ordering[K])
  * @param end   The end of the range. If it is None, it will be treated as the greatest possible
  *              value of type K.
  */
-case class CloseOpen[K](begin: K, end: Option[K])(implicit val ord: Ordering[K]) extends Range[K] {
+case class CloseOpen[K](begin: K, end: Option[K])(implicit val ord: Ordering[K])
+  extends Range[K] {
   require(
     end.forall(ord.gt(_, begin)),
     s"end $end is not strictly greater than begin $begin"

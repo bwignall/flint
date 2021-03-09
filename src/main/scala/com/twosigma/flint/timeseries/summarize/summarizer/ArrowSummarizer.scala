@@ -22,7 +22,6 @@ import com.twosigma.flint.rdd.function.summarize.summarizer.{
   ArrowSummarizer => ArrowSum
 }
 import com.twosigma.flint.timeseries.row.Schema
-import com.twosigma.flint.timeseries.summarize.ColumnList
 import com.twosigma.flint.timeseries.summarize.{
   ColumnList,
   InputAlwaysValid,
@@ -30,7 +29,6 @@ import com.twosigma.flint.timeseries.summarize.{
   SummarizerFactory
 }
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.expressions.GenericInternalRow
 import org.apache.spark.sql.catalyst.util.GenericArrayData
 import org.apache.spark.sql.types.{ ArrayType, BinaryType, StructType }
 

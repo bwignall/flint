@@ -17,8 +17,7 @@
 package com.twosigma.flint.timeseries.time.types
 
 import com.twosigma.flint.FlintConf
-import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.{ SQLContext, SparkSession, types }
+import org.apache.spark.sql.{ SparkSession, types }
 
 trait TimeType {
 

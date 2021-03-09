@@ -17,6 +17,7 @@
 package com.twosigma.flint.rdd
 
 import org.apache.spark.Partition
+
 import scala.reflect.ClassTag
 
 /**

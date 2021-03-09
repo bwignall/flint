@@ -19,9 +19,9 @@ package com.twosigma.flint.hadoop
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.{
   Counter,
-  TaskAttemptID,
   Job,
-  TaskAttemptContext
+  TaskAttemptContext,
+  TaskAttemptID
 }
 
 // This exists just because of a quirk of the record reader api.

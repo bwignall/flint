@@ -17,10 +17,9 @@
 package com.twosigma.flint.math.stats.regression
 
 import breeze.linalg.DenseVector
+import org.apache.spark.SparkContext
 import org.apache.spark.mllib.random.RandomRDDs
 import org.apache.spark.rdd.RDD
-import org.apache.spark.rdd.RDD
-import org.apache.spark.SparkContext
 
 case class WeightedLabeledPoint(
   label: Double,

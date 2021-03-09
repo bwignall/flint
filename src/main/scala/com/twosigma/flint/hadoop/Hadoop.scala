@@ -16,11 +16,10 @@
 
 package com.twosigma.flint.hadoop
 
-import org.apache.hadoop.conf.Configuration
-import org.apache.spark.SparkContext
-
 import com.twosigma.flint.rdd.Range
 import grizzled.slf4j.Logger
+import org.apache.hadoop.conf.Configuration
+import org.apache.spark.SparkContext
 
 object Hadoop {
 

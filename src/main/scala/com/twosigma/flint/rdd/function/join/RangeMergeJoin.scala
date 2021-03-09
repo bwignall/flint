@@ -16,7 +16,7 @@
 
 package com.twosigma.flint.rdd.function.join
 
-import com.twosigma.flint.rdd.{ Range, CloseOpen, RangeSplit }
+import com.twosigma.flint.rdd.{ CloseOpen, Range, RangeSplit }
 import org.apache.spark.Partition
 
 protected[flint] object RangeMergeJoin {

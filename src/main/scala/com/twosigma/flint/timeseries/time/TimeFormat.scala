@@ -16,8 +16,6 @@
 
 package com.twosigma.flint.timeseries.time
 
-import java.util.concurrent.TimeUnit
-
 import org.joda.time.format.{
   DateTimeFormat,
   DateTimeFormatter,
@@ -25,6 +23,7 @@ import org.joda.time.format.{
 }
 import org.joda.time.{ DateTime, DateTimeZone }
 
+import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.TimeUnit
 import scala.util.Try
 

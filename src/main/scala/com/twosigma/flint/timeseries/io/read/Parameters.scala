@@ -16,12 +16,9 @@
 
 package com.twosigma.flint.timeseries.io.read
 
-import java.time.{ Instant, ZonedDateTime, ZoneOffset }
-import javax.annotation.Nullable
+import com.twosigma.flint.annotation.PythonApi
 
 import scala.collection.mutable
-
-import com.twosigma.flint.annotation.PythonApi
 
 private[read] class Parameters private (
   val extraOptions: mutable.Map[String, String],

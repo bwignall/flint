@@ -26,7 +26,7 @@ import org.apache.spark.sql.catalyst.expressions.GenericInternalRow
 import org.apache.spark.sql.catalyst.util.ArrayData
 import org.apache.spark.sql.types._
 
-import collection.JavaConverters._
+import scala.collection.JavaConverters._
 
 /**
  * A set of functions to manipulate Catalyst InternalRow objects.

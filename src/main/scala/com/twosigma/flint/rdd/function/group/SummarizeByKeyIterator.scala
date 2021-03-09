@@ -16,14 +16,12 @@
 
 package com.twosigma.flint.rdd.function.group
 
-import java.util
-
 import com.twosigma.flint.rdd.function.summarize.summarizer.Summarizer
 import com.twosigma.flint.rdd.function.window.SummarizeWindows
-import org.apache.spark.TaskContext
 
-import scala.reflect.ClassTag
+import java.util
 import scala.collection.JavaConverters._
+import scala.reflect.ClassTag
 
 /**
  * Summarizes rows for each key and secondary key using a constant

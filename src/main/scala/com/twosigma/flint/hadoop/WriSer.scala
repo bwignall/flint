@@ -16,17 +16,10 @@
 
 package com.twosigma.flint.hadoop
 
-import java.io.{
-  DataInputStream,
-  DataOutputStream,
-  ObjectInputStream,
-  ObjectOutputStream
-}
-import java.io.IOException
-
-import scala.reflect.{ classTag, ClassTag }
-
 import org.apache.hadoop.io.Writable
+
+import java.io._
+import scala.reflect.{ ClassTag, classTag }
 
 // Note: we could make this implement InputSplit, but we do not because many input splits do a
 // cast to their specific InputSplit, so we do not want to risk it. Further, this currently works

@@ -16,15 +16,13 @@
 
 package com.twosigma.flint.arrow
 
-import com.twosigma.flint.arrow.ArrowUtils
-
-import scala.collection.JavaConverters._
 import org.apache.arrow.vector._
 import org.apache.arrow.vector.complex._
-import org.apache.arrow.vector.util.DecimalUtility
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.SpecializedGetters
 import org.apache.spark.sql.types._
+
+import scala.collection.JavaConverters._
 
 object ArrowWriter {
 

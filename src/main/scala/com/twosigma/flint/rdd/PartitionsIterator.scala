@@ -17,7 +17,6 @@
 package com.twosigma.flint.rdd
 
 import grizzled.slf4j.Logger
-
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{ Partition, TaskContext }
 

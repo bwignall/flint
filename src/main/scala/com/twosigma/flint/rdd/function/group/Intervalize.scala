@@ -17,14 +17,12 @@
 package com.twosigma.flint.rdd.function.group
 
 import com.twosigma.flint.rdd._
+import grizzled.slf4j.Logger
+import org.apache.spark._
+import org.apache.spark.broadcast.Broadcast
 
 import scala.collection.Searching._
-import org.apache.spark.rdd.RDD
-import org.apache.spark._
-
 import scala.reflect.ClassTag
-import grizzled.slf4j.Logger
-import org.apache.spark.broadcast.Broadcast
 
 object Intervalize {
 

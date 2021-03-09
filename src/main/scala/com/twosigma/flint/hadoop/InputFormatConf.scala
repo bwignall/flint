@@ -19,12 +19,12 @@ package com.twosigma.flint.hadoop
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{ FileSystem, Path }
 import org.apache.hadoop.io.{ LongWritable, Text, Writable }
-import org.apache.hadoop.mapreduce.{ InputFormat, InputSplit, Job, RecordReader }
 import org.apache.hadoop.mapreduce.lib.input.{
   FileInputFormat,
   FileSplit,
   TextInputFormat
 }
+import org.apache.hadoop.mapreduce.{ InputFormat, InputSplit, Job, RecordReader }
 
 import scala.collection.immutable
 

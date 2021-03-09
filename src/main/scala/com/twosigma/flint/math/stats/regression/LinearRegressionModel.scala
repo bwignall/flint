@@ -16,7 +16,7 @@
 
 package com.twosigma.flint.math.stats.regression
 
-import breeze.linalg.{ DenseVector, DenseMatrix, inv, diag, eigSym }
+import breeze.linalg.{ DenseMatrix, DenseVector, diag, eigSym, inv }
 import org.apache.commons.math3.distribution.TDistribution
 import org.apache.spark.rdd.RDD
 

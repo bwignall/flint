@@ -16,11 +16,10 @@
 
 package com.twosigma.flint.rdd.function.join
 
-import java.util.{ HashMap => JHashMap }
-
 import com.twosigma.flint.rdd._
 import org.apache.spark.NarrowDependency
 
+import java.util.{ HashMap => JHashMap }
 import scala.reflect.ClassTag
 
 protected[flint] object SymmetricJoin {

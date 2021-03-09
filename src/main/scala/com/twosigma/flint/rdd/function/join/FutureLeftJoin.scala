@@ -16,13 +16,12 @@
 
 package com.twosigma.flint.rdd.function.join
 
-import com.twosigma.flint.rdd.{ PartitionsIterator, PeekableIterator }
-import org.apache.spark.{ NarrowDependency, OneToOneDependency, TaskContext }
-import com.twosigma.flint.rdd.OrderedRDD
+import com.twosigma.flint.rdd.{ OrderedRDD, PartitionsIterator, PeekableIterator }
+import org.apache.spark.{ NarrowDependency, OneToOneDependency }
 
+import java.util
 import scala.collection.immutable.TreeMap
 import scala.reflect.ClassTag
-import java.util
 
 protected[flint] object FutureLeftJoin {
 

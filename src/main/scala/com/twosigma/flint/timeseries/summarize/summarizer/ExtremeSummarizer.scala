@@ -17,15 +17,14 @@
 package com.twosigma.flint.timeseries.summarize.summarizer
 
 import com.twosigma.flint.rdd.function.summarize.summarizer.ExtremesSummarizer
-import com.twosigma.flint.timeseries.summarize.summarizer.ExtremeSummarizerType.ExtremeType
+import com.twosigma.flint.timeseries.row.Schema
+import com.twosigma.flint.timeseries.summarize.ColumnList.Sequence
 import com.twosigma.flint.timeseries.summarize._
+import com.twosigma.flint.timeseries.summarize.summarizer.ExtremeSummarizerType.ExtremeType
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.types.StructType
 
 import scala.collection.mutable
-import com.twosigma.flint.timeseries.row.Schema
-import com.twosigma.flint.timeseries.summarize.ColumnList.Sequence
-
 import scala.reflect.ClassTag
 
 object ExtremeSummarizerType extends Enumeration {

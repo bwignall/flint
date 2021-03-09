@@ -19,8 +19,7 @@ package com.twosigma.flint.timeseries.summarize.summarizer
 import com.twosigma.flint.timeseries.row.Schema
 import com.twosigma.flint.timeseries.summarize.{
   BaseSummarizerFactory,
-  ColumnList,
-  SummarizerFactory
+  ColumnList
 }
 import org.apache.spark.sql.catalyst.expressions.GenericInternalRow
 import org.apache.spark.sql.types.{ DoubleType, StructType }

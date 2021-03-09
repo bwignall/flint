@@ -16,17 +16,17 @@
 
 package com.twosigma.flint.timeseries.summarize.summarizer
 
-import com.twosigma.flint.timeseries.summarize._
-import com.twosigma.flint.timeseries.window.TimeWindow
-import com.twosigma.flint.timeseries.Windows
-import com.twosigma.flint.timeseries.row.Schema
-import org.apache.spark.sql.types._
 import com.twosigma.flint.rdd.function.summarize.summarizer.overlappable.{
   LagSumSummarizerState,
   LagSumSummarizer => LSSummarizer
 }
+import com.twosigma.flint.timeseries.Windows
+import com.twosigma.flint.timeseries.row.Schema
 import com.twosigma.flint.timeseries.summarize.ColumnList.Sequence
+import com.twosigma.flint.timeseries.summarize._
+import com.twosigma.flint.timeseries.window.TimeWindow
 import org.apache.spark.sql.catalyst.InternalRow
+import org.apache.spark.sql.types._
 
 /**
  * N.B. LagSumSummarizer exists solely to be a trivial example of an OverlappableSummarizerFactory that we can

@@ -16,18 +16,17 @@
 
 package com.twosigma.flint.timeseries.io.read
 
-import java.lang.{ Long => JLong }
-import java.util.concurrent.TimeUnit
-import javax.annotation.Nullable
-
-import org.joda.time.DateTimeZone
 import com.twosigma.flint.annotation.PythonApi
+import com.twosigma.flint.timeseries.TimeSeriesRDD
 import com.twosigma.flint.timeseries.clock.UniformClock
-import com.twosigma.flint.timeseries.{ Clocks, TimeSeriesRDD }
 import com.twosigma.flint.timeseries.time.TimeFormat
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
+import org.joda.time.DateTimeZone
 
+import java.lang.{ Long => JLong }
+import java.util.concurrent.TimeUnit
+import javax.annotation.Nullable
 import scala.concurrent.duration.Duration
 
 /**

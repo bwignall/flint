@@ -17,6 +17,7 @@
 package com.twosigma.flint.rdd.function.summarize.summarizer.subtractable
 
 import com.twosigma.flint.math.Kahan
+
 import scala.math._
 
 /**

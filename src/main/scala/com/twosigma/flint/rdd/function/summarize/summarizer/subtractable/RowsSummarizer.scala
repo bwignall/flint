@@ -16,9 +16,10 @@
 
 package com.twosigma.flint.rdd.function.summarize.summarizer.subtractable
 
-import scala.reflect.ClassTag
-import java.util.ArrayDeque
 import org.apache.spark.sql.catalyst.InternalRow
+
+import java.util.ArrayDeque
+import scala.reflect.ClassTag
 
 /**
  * A summarizer that puts all input values into an Array in the order they are added.

@@ -16,8 +16,10 @@
 
 package com.twosigma.flint.rdd.function.summarize.summarizer
 
-import com.twosigma.flint.timeseries.summarize.summarizer.ExponentialSmoothingConvention
-import com.twosigma.flint.timeseries.summarize.summarizer.ExponentialSmoothingInterpolation
+import com.twosigma.flint.timeseries.summarize.summarizer.{
+  ExponentialSmoothingConvention,
+  ExponentialSmoothingInterpolation
+}
 
 case class SmoothingRow(time: Long, x: Double)
 

@@ -17,13 +17,13 @@
 package com.twosigma.flint.rdd.function.join
 
 import com.twosigma.flint.rdd.{
-  PeekableIterator,
-  PartitionsIterator,
   MergeIterator,
-  RangeSplit
+  PartitionsIterator,
+  PeekableIterator,
+  RangeSplit,
+  _
 }
 import org.apache.spark.NarrowDependency
-import com.twosigma.flint.rdd._
 
 import scala.reflect.ClassTag
 

@@ -16,13 +16,13 @@
 
 package com.twosigma.flint.rdd.function.summarize
 
-import com.twosigma.flint.rdd.OverlappedOrderedRDD
-import com.twosigma.flint.rdd._
+import com.twosigma.flint.rdd.{ OverlappedOrderedRDD, _ }
+import com.twosigma.flint.rdd.function.summarize.summarizer.Summarizer
 import com.twosigma.flint.rdd.function.summarize.summarizer.overlappable.OverlappableSummarizer
 import org.apache.spark.rdd.RDD
+
 import scala.collection.mutable
 import scala.reflect.ClassTag
-import com.twosigma.flint.rdd.function.summarize.summarizer.Summarizer
 
 protected[flint] object Summarize {
 

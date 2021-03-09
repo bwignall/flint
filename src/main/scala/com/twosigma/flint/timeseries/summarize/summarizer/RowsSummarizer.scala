@@ -16,8 +16,6 @@
 
 package com.twosigma.flint.timeseries.summarize.summarizer
 
-import java.util.ArrayDeque
-
 import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable
 import com.twosigma.flint.timeseries.row.Schema
 import com.twosigma.flint.timeseries.summarize.{
@@ -29,6 +27,8 @@ import com.twosigma.flint.timeseries.summarize.{
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.util.GenericArrayData
 import org.apache.spark.sql.types._
+
+import java.util.ArrayDeque
 
 case class RowsSummarizerFactory(column: String) extends SummarizerFactory {
   override val requiredColumns: ColumnList = ColumnList.All

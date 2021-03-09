@@ -16,8 +16,8 @@
 
 package com.twosigma.flint.math.stats.regression
 
-import org.apache.spark.rdd.RDD
 import breeze.linalg.{ DenseMatrix, DenseVector }
+import org.apache.spark.rdd.RDD
 
 object OLSMultipleLinearRegression {
 

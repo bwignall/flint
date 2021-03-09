@@ -17,8 +17,9 @@
 package com.twosigma.flint.rdd.function.summarize
 
 import com.twosigma.flint.rdd._
-import scala.collection.mutable.{ HashMap => MHashMap, Map => MMap }
 import com.twosigma.flint.rdd.function.summarize.summarizer.Summarizer
+
+import scala.collection.mutable.{ HashMap => MHashMap, Map => MMap }
 
 /**
  * Add intermediate values of the reduction (as per reduce) of summarizer, i.e. it applies the
