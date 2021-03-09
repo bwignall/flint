@@ -115,7 +115,7 @@ class CSVSpec extends TimeSeriesSuite {
       val first = timeseriesRdd.first()
 
       val format = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S")
-      format.setTimeZone(TimeZone.getDefault)
+      format.setTimeZone(TimeZone.getTimeZone("UTC"))
 
       assert(
         first.getAs[Long]("time") == format
