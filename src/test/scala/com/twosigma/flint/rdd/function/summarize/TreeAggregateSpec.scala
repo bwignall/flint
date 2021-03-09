@@ -26,28 +26,34 @@ class TreeAggregateSpec extends FlatSpec with SharedSparkContext {
     val numOfPartitions = 1001
     val scale = 5
     val maxDepth = 5
-    val rdd = sc.parallelize(1 to numOfPartitions, numOfPartitions).mapPartitionsWithIndex {
-      (idx, _) => (1 to scale).map { x => idx * scale + x }.toIterator
-    }
+    val rdd = sc
+      .parallelize(1 to numOfPartitions, numOfPartitions)
+      .mapPartitionsWithIndex { (idx, _) =>
+        (1 to scale).map { x => idx * scale + x }.toIterator
+      }
 
     // Use -1 as a "bad" state and propagate through the aggregation, otherwise
     // it is just simply a Math.max() operator.
-    val seqOp = (u: Int, t: Int) => if (u > t || u < 0) {
-      -1
-    } else {
-      t
-    }
+    val seqOp = (u: Int, t: Int) =>
+      if (u > t || u < 0) {
+        -1
+      } else {
+        t
+      }
 
-    val combOp = (u1: Int, u2: Int) => if (u1 >= u2 || u1 < 0 || u2 < 0) {
-      -1
-    } else {
-      u2
-    }
+    val combOp = (u1: Int, u2: Int) =>
+      if (u1 >= u2 || u1 < 0 || u2 < 0) {
+        -1
+      } else {
+        u2
+      }
 
     val expectedAggregatedResult = rdd.max()
 
-    (1 to maxDepth).foreach {
-      depth => assert(TreeAggregate(rdd)(0, seqOp, combOp, depth) == expectedAggregatedResult)
+    (1 to maxDepth).foreach { depth =>
+      assert(
+        TreeAggregate(rdd)(0, seqOp, combOp, depth) == expectedAggregatedResult
+      )
     }
   }
 
@@ -55,16 +61,20 @@ class TreeAggregateSpec extends FlatSpec with SharedSparkContext {
     val numOfPartitions = 1001
     val scale = 5
     val maxDepth = 5
-    val rdd = sc.parallelize(1 to numOfPartitions, numOfPartitions).mapPartitionsWithIndex {
-      (idx, _) => (1 to scale).map { x => s"${idx * scale + x}" }.toIterator
-    }
+    val rdd = sc
+      .parallelize(1 to numOfPartitions, numOfPartitions)
+      .mapPartitionsWithIndex { (idx, _) =>
+        (1 to scale).map { x => s"${idx * scale + x}" }.toIterator
+      }
 
     val seqOp = (u: String, t: String) => u + t
     val combOp = (u1: String, u2: String) => u1 + u2
     val expectedAggregatedResult = rdd.collect().mkString("")
 
-    (1 to maxDepth).foreach {
-      depth => assert(TreeAggregate(rdd)("", seqOp, combOp, depth) == expectedAggregatedResult)
+    (1 to maxDepth).foreach { depth =>
+      assert(
+        TreeAggregate(rdd)("", seqOp, combOp, depth) == expectedAggregatedResult
+      )
     }
   }
 
@@ -72,16 +82,20 @@ class TreeAggregateSpec extends FlatSpec with SharedSparkContext {
     val numOfPartitions = 1001
     val scale = 5
     val maxDepth = 5
-    val rdd = sc.parallelize(1 to numOfPartitions, numOfPartitions).mapPartitionsWithIndex {
-      (idx, _) => (1 to scale).map { x => idx * scale + x }.toIterator
-    }
+    val rdd = sc
+      .parallelize(1 to numOfPartitions, numOfPartitions)
+      .mapPartitionsWithIndex { (idx, _) =>
+        (1 to scale).map { x => idx * scale + x }.toIterator
+      }
 
     val seqOp = (u: Int, t: Int) => u + t
     val combOp = (u1: Int, u2: Int) => u1 + u2
     val expectedAggregatedResult = rdd.sum()
 
-    (1 to maxDepth).foreach {
-      depth => assert(TreeAggregate(rdd)(0, seqOp, combOp, depth) == expectedAggregatedResult)
+    (1 to maxDepth).foreach { depth =>
+      assert(
+        TreeAggregate(rdd)(0, seqOp, combOp, depth) == expectedAggregatedResult
+      )
     }
   }
 

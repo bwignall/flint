@@ -18,7 +18,9 @@ package com.twosigma.flint.timeseries
 
 import com.twosigma.flint.timeseries.row.Schema
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.catalyst.expressions.{ GenericRowWithSchema => SqlRow }
+import org.apache.spark.sql.catalyst.expressions.{
+  GenericRowWithSchema => SqlRow
+}
 import org.apache.spark.sql.types.{ ArrayType, DoubleType }
 import org.scalatest.exceptions.TestFailedException
 
@@ -28,8 +30,10 @@ class AssertEqualsSpec extends TimeSeriesSuite {
   "TimeSeriesSuite" should "assertEquals for two sql rows of DoubleType correctly" in {
     val schema = Schema("x" -> DoubleType)
     val row1 = new SqlRow(Array(1L, 1.0), schema)
-    val row2 = new SqlRow(Array(1L, 1.0 + defaultAdditivePrecision * 0.1), schema)
-    val row3 = new SqlRow(Array(1L, 1.0 + defaultAdditivePrecision * 10.0), schema)
+    val row2 =
+      new SqlRow(Array(1L, 1.0 + defaultAdditivePrecision * 0.1), schema)
+    val row3 =
+      new SqlRow(Array(1L, 1.0 + defaultAdditivePrecision * 10.0), schema)
     assertAlmostEquals(row1, row2)
     intercept[TestFailedException] {
       assertAlmostEquals(row1, row3)
@@ -38,12 +42,21 @@ class AssertEqualsSpec extends TimeSeriesSuite {
 
   it should "assertEquals for two sql rows of ArrayType(DoubleType) correctly" in {
     val schema = Schema("x" -> ArrayType(DoubleType))
-    val row1: Row = new SqlRow(Array(1L, mutable.WrappedArray.make(Array(1.0))), schema)
+    val row1: Row =
+      new SqlRow(Array(1L, mutable.WrappedArray.make(Array(1.0))), schema)
     val row2: Row = new SqlRow(
-      Array(1L, mutable.WrappedArray.make(Array(1.0 + defaultAdditivePrecision * 0.1))), schema
+      Array(
+        1L,
+        mutable.WrappedArray.make(Array(1.0 + defaultAdditivePrecision * 0.1))
+      ),
+      schema
     )
     val row3: Row = new SqlRow(
-      Array(1L, mutable.WrappedArray.make(Array(1.0 + defaultAdditivePrecision * 10.0))), schema
+      Array(
+        1L,
+        mutable.WrappedArray.make(Array(1.0 + defaultAdditivePrecision * 10.0))
+      ),
+      schema
     )
     assertAlmostEquals(row1, row2)
     intercept[TestFailedException] {
@@ -53,9 +66,16 @@ class AssertEqualsSpec extends TimeSeriesSuite {
 
   it should "assertEquals for two sql rows of ArrayType(DoubleType) that contain NaN values correctly" in {
     val schema = Schema("x" -> ArrayType(DoubleType))
-    val row1 = new SqlRow(Array(1L, mutable.WrappedArray.make(Array(Double.NaN))), schema)
-    val row2 = new SqlRow(Array(1L, mutable.WrappedArray.make(Array(Double.NaN))), schema)
-    val row3 = new SqlRow(Array(1L, mutable.WrappedArray.make(Array(1.0))), schema)
+    val row1 = new SqlRow(
+      Array(1L, mutable.WrappedArray.make(Array(Double.NaN))),
+      schema
+    )
+    val row2 = new SqlRow(
+      Array(1L, mutable.WrappedArray.make(Array(Double.NaN))),
+      schema
+    )
+    val row3 =
+      new SqlRow(Array(1L, mutable.WrappedArray.make(Array(1.0))), schema)
     assertAlmostEquals(row1, row2)
     intercept[TestFailedException] {
       assertAlmostEquals(row1, row3)

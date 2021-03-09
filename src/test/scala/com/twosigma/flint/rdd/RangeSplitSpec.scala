@@ -37,11 +37,18 @@ class RangeSplitSpec extends FlatSpec {
   }
 
   it should "getSplitsWithinRange correctly" in {
-    assert(RangeSplit.getIntersectingSplits(CloseOpen(4, Some(6)), rangeSplits) ==
-      List(RangeSplit(Split(2), CloseOpen(5, Some(7)))))
+    assert(
+      RangeSplit.getIntersectingSplits(CloseOpen(4, Some(6)), rangeSplits) ==
+        List(RangeSplit(Split(2), CloseOpen(5, Some(7))))
+    )
 
-    assert(RangeSplit.getIntersectingSplits(CloseOpen(4, None), rangeSplits) ==
-      List(RangeSplit(Split(2), CloseOpen(5, Some(7))), RangeSplit(Split(3), CloseOpen(7, Some(10)))))
+    assert(
+      RangeSplit.getIntersectingSplits(CloseOpen(4, None), rangeSplits) ==
+        List(
+          RangeSplit(Split(2), CloseOpen(5, Some(7))),
+          RangeSplit(Split(3), CloseOpen(7, Some(10)))
+        )
+    )
 
   }
 }

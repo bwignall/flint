@@ -35,33 +35,37 @@ class EmptyTimeSeriesRDDSpec extends TimeSeriesSuite {
       assert(tsrdd.orderedRdd.partitions.isEmpty)
     }
 
-    val schema = StructType(Seq(
-      StructField("time", LongType),
-      StructField("id", LongType),
-      StructField("v1", DoubleType),
-      StructField("v2", DoubleType)
-    ))
+    val schema = StructType(
+      Seq(
+        StructField("time", LongType),
+        StructField("id", LongType),
+        StructField("v1", DoubleType),
+        StructField("v2", DoubleType)
+      )
+    )
 
     val emptyDFs: Seq[DataFrame] = Seq(
-      sc.range(0, 1000L).map{ i =>
-        Row(i, i, i.toDouble, i.toDouble)
-      }.filter(r => r.getLong(0) > 2000L),
+      sc.range(0, 1000L)
+        .map { i =>
+          Row(i, i, i.toDouble, i.toDouble)
+        }
+        .filter(r => r.getLong(0) > 2000L),
       sc.emptyRDD[Row]
     ).map(sqlContext.createDataFrame(_, schema))
 
-    val emptyTSRdds = emptyDFs.flatMap {
-      df =>
-        Seq(
-          TimeSeriesRDD.fromDF(df)(isSorted = true, TimeUnit.NANOSECONDS),
-          TimeSeriesRDD.fromDF(df)(isSorted = false, TimeUnit.NANOSECONDS)
-        )
+    val emptyTSRdds = emptyDFs.flatMap { df =>
+      Seq(
+        TimeSeriesRDD.fromDF(df)(isSorted = true, TimeUnit.NANOSECONDS),
+        TimeSeriesRDD.fromDF(df)(isSorted = false, TimeUnit.NANOSECONDS)
+      )
     }
 
     val df2 = sqlContext.createDataFrame(
       sc.range(0, 1000L).map { i => Row(i, i, i.toDouble, i.toDouble) },
       schema
     )
-    val tsrdd2 = TimeSeriesRDD.fromDF(df2)(isSorted = true, TimeUnit.NANOSECONDS)
+    val tsrdd2 =
+      TimeSeriesRDD.fromDF(df2)(isSorted = true, TimeUnit.NANOSECONDS)
 
     val summarizers = Seq(
       Summarizers.count(),
@@ -108,12 +112,22 @@ class EmptyTimeSeriesRDDSpec extends TimeSeriesSuite {
       assertEmpty(tsrdd.renameColumns("id" -> "id2"))
 
       assertEmpty(tsrdd.addColumns("v" -> DoubleType -> { _ => 0.0 }))
-      assertEmpty(tsrdd.addColumnsForCycle("v" -> DoubleType -> { _: Seq[Row] => Seq.empty }))
+      assertEmpty(tsrdd.addColumnsForCycle("v" -> DoubleType -> { _: Seq[Row] =>
+        Seq.empty
+      }))
       for (summarizer <- summarizers) {
         assertEmpty(tsrdd.summarizeCycles(summarizer))
         assertEmpty(tsrdd.summarizeCycles(summarizer, key = "id"))
-        assertEmpty(tsrdd.summarizeIntervals(Clocks.uniform(sc, "1day"), summarizer))
-        assertEmpty(tsrdd.summarizeIntervals(Clocks.uniform(sc, "1day"), summarizer, key = Seq("id")))
+        assertEmpty(
+          tsrdd.summarizeIntervals(Clocks.uniform(sc, "1day"), summarizer)
+        )
+        assertEmpty(
+          tsrdd.summarizeIntervals(
+            Clocks.uniform(sc, "1day"),
+            summarizer,
+            key = Seq("id")
+          )
+        )
         assertEmpty(tsrdd.summarize(summarizer))
         assertEmpty(tsrdd.summarize(summarizer, key = Seq("id")))
         assertEmpty(tsrdd.addSummaryColumns(summarizer))
@@ -136,11 +150,19 @@ class EmptyTimeSeriesRDDSpec extends TimeSeriesSuite {
 
       // Join
 
-      assertEmpty(tsrdd.leftJoin(tsrdd, tolerance = "100ns", rightAlias = "right"))
-      assertEmpty(tsrdd.futureLeftJoin(tsrdd, tolerance = "100ns", rightAlias = "right"))
+      assertEmpty(
+        tsrdd.leftJoin(tsrdd, tolerance = "100ns", rightAlias = "right")
+      )
+      assertEmpty(
+        tsrdd.futureLeftJoin(tsrdd, tolerance = "100ns", rightAlias = "right")
+      )
 
-      assertEmpty(tsrdd.leftJoin(tsrdd2, tolerance = "100ns", rightAlias = "right"))
-      assertEmpty(tsrdd.futureLeftJoin(tsrdd2, tolerance = "100ns", rightAlias = "right"))
+      assertEmpty(
+        tsrdd.leftJoin(tsrdd2, tolerance = "100ns", rightAlias = "right")
+      )
+      assertEmpty(
+        tsrdd.futureLeftJoin(tsrdd2, tolerance = "100ns", rightAlias = "right")
+      )
 
       val expectedJoined = tsrdd2.addColumns(
         "right_id" -> LongType -> { _ => null },
@@ -165,8 +187,16 @@ class EmptyTimeSeriesRDDSpec extends TimeSeriesSuite {
 
       // Empty table self window with overlappable
       for (summarizer <- overlappableSummarizers) {
-        assertEmpty(tsrdd.summarizeWindows(Windows.pastAbsoluteTime("100ns"), summarizer))
-        assertEmpty(tsrdd.summarizeWindows(Windows.pastAbsoluteTime("100ns"), summarizer, key = Seq("id")))
+        assertEmpty(
+          tsrdd.summarizeWindows(Windows.pastAbsoluteTime("100ns"), summarizer)
+        )
+        assertEmpty(
+          tsrdd.summarizeWindows(
+            Windows.pastAbsoluteTime("100ns"),
+            summarizer,
+            key = Seq("id")
+          )
+        )
       }
     }
   }

@@ -23,87 +23,131 @@ import org.apache.spark.sql.Row
 import org.apache.spark.sql.types._
 
 class WeightedMeanTestSummarizerSpec extends SummarizerSuite {
-  override val defaultResourceDir: String = "/timeseries/summarize/summarizer/weightedmeantestsummarizer"
+  override val defaultResourceDir: String =
+    "/timeseries/summarize/summarizer/weightedmeantestsummarizer"
 
   private var priceTSRdd: TimeSeriesRDD = _
   private var forecastTSRdd: TimeSeriesRDD = _
   private var joinedRdd: TimeSeriesRDD = _
 
   private lazy val init = {
-    priceTSRdd = fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
-    forecastTSRdd = fromCSV("Forecast.csv", Schema("id" -> IntegerType, "forecast" -> DoubleType))
+    priceTSRdd =
+      fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
+    forecastTSRdd = fromCSV(
+      "Forecast.csv",
+      Schema("id" -> IntegerType, "forecast" -> DoubleType)
+    )
     joinedRdd = priceTSRdd.leftJoin(forecastTSRdd, key = Seq("id"))
   }
 
   "WeightedMeanTestSummarizer" should "compute `WeightedMean` correctly" in {
     init
-    val result = joinedRdd.summarize(Summarizers.weightedMeanTest("price", "forecast")).first
+    val result = joinedRdd
+      .summarize(Summarizers.weightedMeanTest("price", "forecast"))
+      .first
 
-    assert(result.getAs[Double]("price_forecast_weightedMean") === 0.11695906432748544)
-    assert(result.getAs[Double]("price_forecast_weightedStandardDeviation") === 4.373623725800579)
-    assert(result.getAs[Double]("price_forecast_weightedTStat") === 0.0788230123405099)
+    assert(
+      result
+        .getAs[Double]("price_forecast_weightedMean") === 0.11695906432748544
+    )
+    assert(
+      result.getAs[Double](
+        "price_forecast_weightedStandardDeviation"
+      ) === 4.373623725800579
+    )
+    assert(
+      result
+        .getAs[Double]("price_forecast_weightedTStat") === 0.0788230123405099
+    )
     assert(result.getAs[Long]("price_forecast_observationCount") == 12L)
   }
 
   it should "compute `WeightedMean` correctly for a window" in {
     init
     val lastWindowRdd = joinedRdd.deleteRows(r => r.getAs[Long]("time") < 1150L)
-    val expectedResult = lastWindowRdd.summarize(Summarizers.weightedMeanTest("price", "forecast")).first
-    val results = joinedRdd.summarizeWindows(
-      Windows.pastAbsoluteTime("100 ns"),
-      Summarizers.weightedMeanTest("price", "forecast")
-    ).collect()
+    val expectedResult = lastWindowRdd
+      .summarize(Summarizers.weightedMeanTest("price", "forecast"))
+      .first
+    val results = joinedRdd
+      .summarizeWindows(
+        Windows.pastAbsoluteTime("100 ns"),
+        Summarizers.weightedMeanTest("price", "forecast")
+      )
+      .collect()
     val lastResult = results(results.length - 1)
 
-    assert(lastResult.getAs[Double]("price_forecast_weightedMean") ===
-      expectedResult.getAs[Double]("price_forecast_weightedMean"))
-    assert(lastResult.getAs[Double]("price_forecast_weightedStandardDeviation") ===
-      expectedResult.getAs[Double]("price_forecast_weightedStandardDeviation"))
-    assert(lastResult.getAs[Double]("price_forecast_weightedTStat") ===
-      expectedResult.getAs[Double]("price_forecast_weightedTStat"))
-    assert(lastResult.getAs[Long]("price_forecast_observationCount") ==
-      expectedResult.getAs[Long]("price_forecast_observationCount"))
+    assert(
+      lastResult.getAs[Double]("price_forecast_weightedMean") ===
+        expectedResult.getAs[Double]("price_forecast_weightedMean")
+    )
+    assert(
+      lastResult.getAs[Double]("price_forecast_weightedStandardDeviation") ===
+        expectedResult.getAs[Double]("price_forecast_weightedStandardDeviation")
+    )
+    assert(
+      lastResult.getAs[Double]("price_forecast_weightedTStat") ===
+        expectedResult.getAs[Double]("price_forecast_weightedTStat")
+    )
+    assert(
+      lastResult.getAs[Long]("price_forecast_observationCount") ==
+        expectedResult.getAs[Long]("price_forecast_observationCount")
+    )
   }
 
   it should "ignore null values" in {
     init
     assertEquals(
       joinedRdd.summarize(Summarizers.weightedMeanTest("price", "forecast")),
-      insertNullRows(joinedRdd, "price").summarize(Summarizers.weightedMeanTest("price", "forecast"))
+      insertNullRows(joinedRdd, "price").summarize(
+        Summarizers.weightedMeanTest("price", "forecast")
+      )
     )
 
     assertEquals(
       joinedRdd.summarize(Summarizers.weightedMeanTest("price", "forecast")),
-      insertNullRows(joinedRdd, "price", "forecast").summarize(Summarizers.weightedMeanTest("price", "forecast"))
+      insertNullRows(joinedRdd, "price", "forecast").summarize(
+        Summarizers.weightedMeanTest("price", "forecast")
+      )
     )
   }
 
   it should "handle zero weight" in {
     init
 
-    val weightedRdd1 = priceTSRdd.addColumns("weight" -> DoubleType -> { _: Row => 0.0 })
-    val result1 = weightedRdd1.summarize(Summarizers.weightedMeanTest("price", "weight")).collect()(0)
+    val weightedRdd1 = priceTSRdd.addColumns("weight" -> DoubleType -> {
+      _: Row => 0.0
+    })
+    val result1 = weightedRdd1
+      .summarize(Summarizers.weightedMeanTest("price", "weight"))
+      .collect()(0)
     assert(result1.getAs[Double]("price_weight_weightedMean").isNaN)
-    assert(result1.getAs[Double]("price_weight_weightedStandardDeviation").isNaN)
+    assert(
+      result1.getAs[Double]("price_weight_weightedStandardDeviation").isNaN
+    )
     assert(result1.getAs[Double]("price_weight_weightedTStat").isNaN)
     assert(result1.getAs[Long]("price_weight_observationCount") == 0)
 
-    val weightedRdd2 = priceTSRdd.addColumns("weight" -> DoubleType -> { row: Row =>
-      if (row.getAs[Long]("time") == 1200 && row.getAs[Int]("id") == 3) {
-        1.0
-      } else if (row.getAs[Long]("time") == 1250 && row.getAs[Int]("id") == 7) {
-        -1.0
-      } else {
-        0.0
-      }
+    val weightedRdd2 = priceTSRdd.addColumns("weight" -> DoubleType -> {
+      row: Row =>
+        if (row.getAs[Long]("time") == 1200 && row.getAs[Int]("id") == 3) {
+          1.0
+        } else if (row.getAs[Long]("time") == 1250 && row.getAs[Int]("id") == 7) {
+          -1.0
+        } else {
+          0.0
+        }
     })
 
-    val result2 = weightedRdd2.summarize(Summarizers.weightedMeanTest("price", "weight")).collect()(0)
+    val result2 = weightedRdd2
+      .summarize(Summarizers.weightedMeanTest("price", "weight"))
+      .collect()(0)
     assert(result2.getAs[Double]("price_weight_weightedMean") === -0.75)
     assert(result2.getAs[Long]("price_weight_observationCount") == 2)
   }
 
   it should "pass summarizer property test" in {
-    summarizerPropertyTest(AllPropertiesAndSubtractable)(Summarizers.weightedMeanTest("x1", "x2"))
+    summarizerPropertyTest(AllPropertiesAndSubtractable)(
+      Summarizers.weightedMeanTest("x1", "x2")
+    )
   }
 }

@@ -26,7 +26,12 @@ class CSVSpec extends TimeSeriesSuite {
   "CSV" should "read a CSV file without header." in {
     withResource("/timeseries/csv/Price.csv") { source =>
       val expectedSchema = Schema("C1" -> IntegerType, "C2" -> DoubleType)
-      val timeseriesRdd = CSV.from(sqlContext, "file://" + source, sorted = true, schema = expectedSchema)
+      val timeseriesRdd = CSV.from(
+        sqlContext,
+        "file://" + source,
+        sorted = true,
+        schema = expectedSchema
+      )
       val ts = timeseriesRdd.collect()
       assert(timeseriesRdd.schema == expectedSchema)
       assert(ts(0).getAs[Long](TimeSeriesRDD.timeColumnName) == 1000L)
@@ -38,10 +43,13 @@ class CSVSpec extends TimeSeriesSuite {
 
   it should "read a CSV file with header." in {
     withResource("/timeseries/csv/PriceWithHeader.csv") { source =>
-      val expectedSchema = Schema("id" -> IntegerType, "price" -> DoubleType, "info" -> StringType)
+      val expectedSchema =
+        Schema("id" -> IntegerType, "price" -> DoubleType, "info" -> StringType)
       val timeseriesRdd = CSV.from(
         sqlContext,
-        "file://" + source, header = true, sorted = true
+        "file://" + source,
+        header = true,
+        sorted = true
       )
       val ts = timeseriesRdd.collect()
 
@@ -61,8 +69,13 @@ class CSVSpec extends TimeSeriesSuite {
         "price" -> DoubleType,
         "info" -> StringType
       )
-      val timeseriesRdd = CSV.from(sqlContext, "file://" + source,
-        header = true, keepOriginTimeColumn = true, sorted = true)
+      val timeseriesRdd = CSV.from(
+        sqlContext,
+        "file://" + source,
+        header = true,
+        keepOriginTimeColumn = true,
+        sorted = true
+      )
       val ts = timeseriesRdd.collect()
       // we want to keep the time column first, but the order isn't guaranteed
       assert(timeseriesRdd.schema.fieldIndex(TimeSeriesRDD.timeColumnName) == 0)
@@ -76,12 +89,19 @@ class CSVSpec extends TimeSeriesSuite {
   }
 
   it should "read an unsorted CSV file with header" in {
-    val ts1 = withResource("/timeseries/csv/PriceWithHeaderUnsorted.csv") { source =>
-      val timeseriesRdd = CSV.from(sqlContext, "file://" + source, header = true, sorted = false)
-      timeseriesRdd.collect()
+    val ts1 = withResource("/timeseries/csv/PriceWithHeaderUnsorted.csv") {
+      source =>
+        val timeseriesRdd = CSV.from(
+          sqlContext,
+          "file://" + source,
+          header = true,
+          sorted = false
+        )
+        timeseriesRdd.collect()
     }
     val ts2 = withResource("/timeseries/csv/PriceWithHeader.csv") { source =>
-      val timeseriesRdd = CSV.from(sqlContext, "file://" + source, header = true, sorted = true)
+      val timeseriesRdd =
+        CSV.from(sqlContext, "file://" + source, header = true, sorted = true)
       timeseriesRdd.collect()
     }
     assert(ts1.length == ts2.length)
@@ -90,27 +110,40 @@ class CSVSpec extends TimeSeriesSuite {
 
   it should "correctly convert SQL TimestampType with default format" in {
     withResource("/timeseries/csv/TimeStampsWithHeader.csv") { source =>
-      val timeseriesRdd = CSV.from(sqlContext, "file://" + source,
-        header = true, sorted = false)
+      val timeseriesRdd =
+        CSV.from(sqlContext, "file://" + source, header = true, sorted = false)
       val first = timeseriesRdd.first()
 
       val format = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S")
       format.setTimeZone(TimeZone.getDefault)
 
-      assert(first.getAs[Long]("time") == format.parse("2008-01-02 00:00:00.000").getTime * 1000000L)
+      assert(
+        first.getAs[Long]("time") == format
+          .parse("2008-01-02 00:00:00.000")
+          .getTime * 1000000L
+      )
     }
   }
 
   it should "correctly convert SQL TimestampType with specified format" in {
     withResource("/timeseries/csv/TimeStampsWithHeader2.csv") { source =>
-      val timeseriesRdd = CSV.from(sqlContext, "file://" + source,
-        header = true, sorted = false, dateFormat = "yyyyMMdd'T'HH:mm:ssZ")
+      val timeseriesRdd = CSV.from(
+        sqlContext,
+        "file://" + source,
+        header = true,
+        sorted = false,
+        dateFormat = "yyyyMMdd'T'HH:mm:ssZ"
+      )
       val first = timeseriesRdd.first()
 
       val format = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S")
       format.setTimeZone(TimeZone.getTimeZone("UTC"))
 
-      assert(first.getAs[Long]("time") == format.parse("2008-01-02 00:00:00.000").getTime * 1000000L)
+      assert(
+        first.getAs[Long]("time") == format
+          .parse("2008-01-02 00:00:00.000")
+          .getTime * 1000000L
+      )
     }
   }
 }

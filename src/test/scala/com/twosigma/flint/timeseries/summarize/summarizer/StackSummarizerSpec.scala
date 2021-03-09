@@ -24,12 +24,14 @@ import org.apache.spark.sql.types._
 
 class StackSummarizerSpec extends SummarizerSuite {
   // Reuse mean summarizer data
-  override val defaultResourceDir: String = "/timeseries/summarize/summarizer/meansummarizer"
+  override val defaultResourceDir: String =
+    "/timeseries/summarize/summarizer/meansummarizer"
 
   var priceTSRdd: TimeSeriesRDD = _
 
   lazy val init: Unit = {
-    priceTSRdd = fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
+    priceTSRdd =
+      fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
   }
 
   "StackSummarizer" should "stack three summarizers correctly" in {
@@ -45,7 +47,13 @@ class StackSummarizerSpec extends SummarizerSuite {
     )
     val rows = result.first().getAs[Seq[Row]](StackSummarizer.stackColumn)
 
-    assert(result.schema === Schema("stack" -> ArrayType(StructType(StructField("price_sum", DoubleType) :: Nil))))
+    assert(
+      result.schema === Schema(
+        "stack" -> ArrayType(
+          StructType(StructField("price_sum", DoubleType) :: Nil)
+        )
+      )
+    )
     assert(rows(0).getAs[Double]("price_sum") === 18.5)
     assert(rows(1).getAs[Double]("price_sum") === 20.5)
     assert(rows(2).getAs[Double]("price_sum") === 39.0)
@@ -54,7 +62,9 @@ class StackSummarizerSpec extends SummarizerSuite {
   it should "throw exception for non-identical output columns" in {
     init
     intercept[Exception] {
-      priceTSRdd.summarize(Summarizers.stack(Summarizers.mean("price"), Summarizers.sum("price")))
+      priceTSRdd.summarize(
+        Summarizers.stack(Summarizers.mean("price"), Summarizers.sum("price"))
+      )
     }
   }
 }

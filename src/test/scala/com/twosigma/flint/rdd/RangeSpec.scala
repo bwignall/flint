@@ -302,11 +302,22 @@ class RangeSpec extends FlatSpec {
     assert(!Range.isSorted(ranges))
   }
 
-  def assertIntersectsWith(range: Range[Int], ranges: IndexedSeq[Range[Int]]): Unit = {
-    assert(range.intersectsWith(ranges, true).toArray.deep
-      == range.intersectsWith(ranges, false).toArray.deep)
-    assert(range.intersectsWith(ranges, true).toArray.deep
-      == ranges.zipWithIndex.filter { case (r, i) => range.intersects(r) }.map(_._2).toArray.deep)
+  def assertIntersectsWith(
+    range: Range[Int],
+    ranges: IndexedSeq[Range[Int]]
+  ): Unit = {
+    assert(
+      range.intersectsWith(ranges, true).toArray.deep
+        == range.intersectsWith(ranges, false).toArray.deep
+    )
+    assert(
+      range.intersectsWith(ranges, true).toArray.deep
+        == ranges.zipWithIndex
+        .filter { case (r, i) => range.intersects(r) }
+        .map(_._2)
+        .toArray
+        .deep
+    )
   }
 
   it should "intersectsWith correctly" in {
@@ -325,8 +336,10 @@ class RangeSpec extends FlatSpec {
     )
     range = Range.closeOpen(1, Some(8))
     assert(Range.isSorted(ranges))
-    assert(range.intersectsWith(ranges, true).toArray.deep
-      == Array(0, 1, 2, 3, 4).deep)
+    assert(
+      range.intersectsWith(ranges, true).toArray.deep
+        == Array(0, 1, 2, 3, 4).deep
+    )
     assertIntersectsWith(range, ranges)
 
     assertIntersectsWith(Range.closeOpen(3, Some(6)), ranges)
@@ -344,6 +357,8 @@ class RangeSpec extends FlatSpec {
     val begins = IndexedSeq.fill(size)(Random.nextInt(size * 10)).sorted
     val ranges = begins.map { b => CloseOpen(b, Some(b + 10)) }
     assert(Range.isSorted(ranges))
-    (1 to size).map { b => assertIntersectsWith(CloseOpen(b, Some(b + 10)), ranges) }
+    (1 to size).map { b =>
+      assertIntersectsWith(CloseOpen(b, Some(b + 10)), ranges)
+    }
   }
 }

@@ -24,25 +24,32 @@ import org.apache.spark.sql.types.{ DoubleType, IntegerType }
 
 class VarianceSummarizerSpec extends SummarizerSuite {
   // It is by intention to reuse the files
-  override val defaultResourceDir: String = "/timeseries/summarize/summarizer/meansummarizer"
+  override val defaultResourceDir: String =
+    "/timeseries/summarize/summarizer/meansummarizer"
 
   "StandardDeviationSummarizer" should "compute `stddev` correctly" in {
-    val priceTSRdd = fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType)).addColumns(
-      "price2" -> DoubleType -> { r: Row => r.getAs[Double]("price") },
-      "price3" -> DoubleType -> { r: Row => -r.getAs[Double]("price") },
-      "price4" -> DoubleType -> { r: Row => r.getAs[Double]("price") * 2 },
-      "price5" -> DoubleType -> { r: Row => 0d }
-    )
+    val priceTSRdd = fromCSV(
+      "Price.csv",
+      Schema("id" -> IntegerType, "price" -> DoubleType)
+    ).addColumns(
+        "price2" -> DoubleType -> { r: Row => r.getAs[Double]("price") },
+        "price3" -> DoubleType -> { r: Row => -r.getAs[Double]("price") },
+        "price4" -> DoubleType -> { r: Row => r.getAs[Double]("price") * 2 },
+        "price5" -> DoubleType -> { r: Row => 0d }
+      )
 
     val result = priceTSRdd.summarize(Summarizers.variance("price")).first()
     assert(result.getAs[Double]("price_variance") === 3.250000000)
   }
 
   it should "ignore null values" in {
-    val priceTSRdd = fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
+    val priceTSRdd =
+      fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
     assertEquals(
       priceTSRdd.summarize(Summarizers.variance("price")),
-      insertNullRows(priceTSRdd, "price").summarize(Summarizers.variance("price"))
+      insertNullRows(priceTSRdd, "price").summarize(
+        Summarizers.variance("price")
+      )
     )
   }
 

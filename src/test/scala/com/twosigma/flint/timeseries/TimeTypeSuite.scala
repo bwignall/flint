@@ -23,18 +23,18 @@ trait TimeTypeSuite {
   def withTimeType[T](conf: String*)(block: => Unit): Unit = {
     val spark = SparkSession.builder().getOrCreate()
 
-    conf.foreach {
-      conf =>
-        val savedConf = spark.conf.getOption(FlintConf.TIME_TYPE_CONF)
-        spark.conf.set(FlintConf.TIME_TYPE_CONF, conf)
-        try {
-          block
-        } finally {
-          savedConf match {
-            case None => spark.conf.unset(FlintConf.TIME_TYPE_CONF)
-            case Some(oldConf) => spark.conf.set(FlintConf.TIME_TYPE_CONF, oldConf)
-          }
+    conf.foreach { conf =>
+      val savedConf = spark.conf.getOption(FlintConf.TIME_TYPE_CONF)
+      spark.conf.set(FlintConf.TIME_TYPE_CONF, conf)
+      try {
+        block
+      } finally {
+        savedConf match {
+          case None => spark.conf.unset(FlintConf.TIME_TYPE_CONF)
+          case Some(oldConf) =>
+            spark.conf.set(FlintConf.TIME_TYPE_CONF, oldConf)
         }
+      }
     }
   }
 

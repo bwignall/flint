@@ -23,14 +23,17 @@ class SummarizeNullSpec extends TimeSeriesSuite with TimeSeriesTestData {
   it should "ignore null values in summarize" in {
     assertEquals(
       forecastData.summarize(Summarizers.count("forecast")),
-      insertNullRows(forecastData, "forecast").summarize(Summarizers.count("forecast"))
+      insertNullRows(forecastData, "forecast").summarize(
+        Summarizers.count("forecast")
+      )
     )
   }
 
   it should "ignore null values in summarize with key" in {
     assertEquals(
       forecastData.summarize(Summarizers.count("forecast"), Seq("id")),
-      insertNullRows(forecastData, "forecast").summarize(Summarizers.count("forecast"), Seq("id"))
+      insertNullRows(forecastData, "forecast")
+        .summarize(Summarizers.count("forecast"), Seq("id"))
     )
   }
 
@@ -45,86 +48,119 @@ class SummarizeNullSpec extends TimeSeriesSuite with TimeSeriesTestData {
     })
     val result = nullKeys.summarize(Summarizers.count("forecast"), Seq("id"))
     assert(
-      result.keepRows{ r: Row => r.getAs[Int]("id") == 7 }.first().getAs[Long]("forecast_count") == 6
+      result
+        .keepRows { r: Row => r.getAs[Int]("id") == 7 }
+        .first()
+        .getAs[Long]("forecast_count") == 6
     )
     assert(
-      result.keepRows{ r: Row => r.getAs[Any]("id") == null }.first().getAs[Long]("forecast_count") == 6
+      result
+        .keepRows { r: Row => r.getAs[Any]("id") == null }
+        .first()
+        .getAs[Long]("forecast_count") == 6
     )
   }
 
   it should "summarize empty key" in {
-    val emptyCycle = forecastData.addColumns("forecast" -> DoubleType -> { r: Row =>
-      val id = r.getAs[Int]("id")
-      val forecast = r.getAs[Double]("forecast")
-      if (id == 3) {
-        null
-      } else {
-        forecast
-      }
+    val emptyCycle = forecastData.addColumns("forecast" -> DoubleType -> {
+      r: Row =>
+        val id = r.getAs[Int]("id")
+        val forecast = r.getAs[Double]("forecast")
+        if (id == 3) {
+          null
+        } else {
+          forecast
+        }
     })
 
     val result = emptyCycle.summarize(Summarizers.count("forecast"), Seq("id"))
     assert(
-      result.keepRows{ r: Row => r.getAs[Int]("id") == 7 }.first().getAs[Long]("forecast_count") == 6
+      result
+        .keepRows { r: Row => r.getAs[Int]("id") == 7 }
+        .first()
+        .getAs[Long]("forecast_count") == 6
     )
 
     assert(
-      result.keepRows{ r: Row => r.getAs[Int]("id") == 3 }.first().getAs[Long]("forecast_count") == 0
+      result
+        .keepRows { r: Row => r.getAs[Int]("id") == 3 }
+        .first()
+        .getAs[Long]("forecast_count") == 0
     )
   }
 
   it should "summarize empty cycle" in {
-    val emptyCycle = forecastData.addColumns("forecast" -> DoubleType -> { r: Row =>
-      val time = r.getAs[Long]("time")
-      val forecast = r.getAs[Double]("forecast")
-      if (time == 1050L) {
-        null
-      } else {
-        forecast
-      }
+    val emptyCycle = forecastData.addColumns("forecast" -> DoubleType -> {
+      r: Row =>
+        val time = r.getAs[Long]("time")
+        val forecast = r.getAs[Double]("forecast")
+        if (time == 1050L) {
+          null
+        } else {
+          forecast
+        }
     })
 
     val result = emptyCycle.summarizeCycles(Summarizers.count("forecast"))
     assert(
-      result.keepRows{ r: Row => r.getAs[Long]("time") == 1050L }.first().getAs[Long]("forecast_count") == 0
+      result
+        .keepRows { r: Row => r.getAs[Long]("time") == 1050L }
+        .first()
+        .getAs[Long]("forecast_count") == 0
     )
   }
 
   it should "summarize empty interval" in {
 
-    val clock = Clocks.uniform(sc, "100ns", beginDateTime = "1970-01-01", endDateTime = "1970-01-01 00:00:00.001")
+    val clock = Clocks.uniform(
+      sc,
+      "100ns",
+      beginDateTime = "1970-01-01",
+      endDateTime = "1970-01-01 00:00:00.001"
+    )
 
-    val emptyInterval = forecastData.addColumns("forecast" -> DoubleType -> { r: Row =>
-      val time = r.getAs[Long]("time")
-      val forecast = r.getAs[Double]("forecast")
-      if (time >= 1000L && time < 1100L) {
-        null
-      } else {
-        forecast
-      }
+    val emptyInterval = forecastData.addColumns("forecast" -> DoubleType -> {
+      r: Row =>
+        val time = r.getAs[Long]("time")
+        val forecast = r.getAs[Double]("forecast")
+        if (time >= 1000L && time < 1100L) {
+          null
+        } else {
+          forecast
+        }
     })
 
-    val result = emptyInterval.summarizeIntervals(clock, Summarizers.count("forecast"))
+    val result =
+      emptyInterval.summarizeIntervals(clock, Summarizers.count("forecast"))
 
     assert(
-      result.keepRows{ r: Row => r.getAs[Long]("time") == 1100L }.first().getAs[Long]("forecast_count") == 0
+      result
+        .keepRows { r: Row => r.getAs[Long]("time") == 1100L }
+        .first()
+        .getAs[Long]("forecast_count") == 0
     )
   }
 
   it should "addSummaryColumns with null correctly" in {
-    val withEmptyRows = forecastData.addColumns("forecast" -> DoubleType -> { r: Row =>
-      val time = r.getAs[Long]("time")
-      val forecast = r.getAs[Double]("forecast")
-      if (time >= 1100L && time < 1200L) {
-        null
-      } else {
-        forecast
-      }
+    val withEmptyRows = forecastData.addColumns("forecast" -> DoubleType -> {
+      r: Row =>
+        val time = r.getAs[Long]("time")
+        val forecast = r.getAs[Double]("forecast")
+        if (time >= 1100L && time < 1200L) {
+          null
+        } else {
+          forecast
+        }
     })
 
     val result = withEmptyRows.addSummaryColumns(Summarizers.count("forecast"))
     val stableSqlContext = this.sqlContext
     import stableSqlContext.implicits._
-    assert(result.toDF.select("forecast_count").as[Long].collect().toList == List(1, 2, 3, 4, 4, 4, 4, 4, 5, 6, 7, 8))
+    assert(
+      result.toDF.select("forecast_count").as[Long].collect().toList == List(
+        1,
+        2, 3, 4, 4, 4, 4, 4, 5, 6, 7, 8
+      )
+    )
   }
 }

@@ -114,8 +114,12 @@ class IntervalizeSpec extends FlatSpec with SharedSparkContext {
 
   override def beforeAll() {
     super.beforeAll()
-    orderedRDD = OrderedRDD.fromRDD(sc.parallelize(data, 4), KeyPartitioningType.Sorted)
-    clockRDD = OrderedRDD.fromRDD(sc.parallelize(clock.map { k => (k, k) }, 2), KeyPartitioningType.Sorted)
+    orderedRDD =
+      OrderedRDD.fromRDD(sc.parallelize(data, 4), KeyPartitioningType.Sorted)
+    clockRDD = OrderedRDD.fromRDD(
+      sc.parallelize(clock.map { k => (k, k) }, 2),
+      KeyPartitioningType.Sorted
+    )
   }
 
   "Intervalize" should "round correctly" in {

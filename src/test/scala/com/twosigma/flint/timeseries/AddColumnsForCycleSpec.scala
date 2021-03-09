@@ -30,7 +30,11 @@ class AddColumnsForCycleSpec extends MultiPartitionSuite with TimeTypeSuite {
     withAllTimeType {
       val resultTSRdd = fromCSV(
         "AddAdjustedPrice.results",
-        Schema("id" -> IntegerType, "price" -> DoubleType, "adjustedPrice" -> DoubleType)
+        Schema(
+          "id" -> IntegerType,
+          "price" -> DoubleType,
+          "adjustedPrice" -> DoubleType
+        )
       )
 
       def test(rdd: TimeSeriesRDD): Unit = {
@@ -44,7 +48,8 @@ class AddColumnsForCycleSpec extends MultiPartitionSuite with TimeTypeSuite {
         assert(adjustedPriceTSRdd.collect().deep == resultTSRdd.collect().deep)
       }
 
-      val priceTSRdd = fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
+      val priceTSRdd =
+        fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
       withPartitionStrategy(priceTSRdd)(DEFAULT)(test)
     }
   }
@@ -53,7 +58,11 @@ class AddColumnsForCycleSpec extends MultiPartitionSuite with TimeTypeSuite {
     withAllTimeType {
       val resultTSRdd = fromCSV(
         "AddAdjustedPrice.results",
-        Schema("id" -> IntegerType, "price" -> DoubleType, "adjustedPrice" -> StringType)
+        Schema(
+          "id" -> IntegerType,
+          "price" -> DoubleType,
+          "adjustedPrice" -> StringType
+        )
       )
 
       def test(rdd: TimeSeriesRDD): Unit = {
@@ -67,7 +76,8 @@ class AddColumnsForCycleSpec extends MultiPartitionSuite with TimeTypeSuite {
         assert(adjustedPriceTSRdd.collect().deep == resultTSRdd.collect().deep)
       }
 
-      val priceTSRdd = fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
+      val priceTSRdd =
+        fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
       withPartitionStrategy(priceTSRdd)(DEFAULT)(test)
     }
   }
@@ -76,7 +86,11 @@ class AddColumnsForCycleSpec extends MultiPartitionSuite with TimeTypeSuite {
     withAllTimeType {
       val resultTSRdd = fromCSV(
         "AddTotalVolumePerKey.results",
-        Schema("id" -> IntegerType, "volume" -> LongType, "totalVolume" -> LongType)
+        Schema(
+          "id" -> IntegerType,
+          "volume" -> LongType,
+          "totalVolume" -> LongType
+        )
       )
 
       def test(rdd: TimeSeriesRDD): Unit = {
@@ -84,7 +98,9 @@ class AddColumnsForCycleSpec extends MultiPartitionSuite with TimeTypeSuite {
           Seq(
             "totalVolume" -> LongType -> { rows: Seq[Row] =>
               val sum = rows.map(_.getAs[Long]("volume")).sum
-              rows.zipWithIndex.map { case (row, idx) => row -> (idx + sum) }.toMap
+              rows.zipWithIndex.map {
+                case (row, idx) => row -> (idx + sum)
+              }.toMap
             }
           ),
           Seq("id")
@@ -92,7 +108,8 @@ class AddColumnsForCycleSpec extends MultiPartitionSuite with TimeTypeSuite {
         totalVolumeTSRdd.collect().deep == resultTSRdd.collect().deep
       }
 
-      val volumeTSRdd = fromCSV("Volume.csv", Schema("id" -> IntegerType, "volume" -> LongType))
+      val volumeTSRdd =
+        fromCSV("Volume.csv", Schema("id" -> IntegerType, "volume" -> LongType))
       withPartitionStrategy(volumeTSRdd)(DEFAULT)(test)
     }
   }
@@ -101,7 +118,12 @@ class AddColumnsForCycleSpec extends MultiPartitionSuite with TimeTypeSuite {
     withAllTimeType {
       val resultTSRdd = fromCSV(
         "AddTotalVolumePerSeqOfKeys.results",
-        Schema("id" -> IntegerType, "group" -> IntegerType, "volume" -> LongType, "totalVolume" -> LongType)
+        Schema(
+          "id" -> IntegerType,
+          "group" -> IntegerType,
+          "volume" -> LongType,
+          "totalVolume" -> LongType
+        )
       )
 
       def test(rdd: TimeSeriesRDD): Unit = {
@@ -109,7 +131,9 @@ class AddColumnsForCycleSpec extends MultiPartitionSuite with TimeTypeSuite {
           Seq(
             "totalVolume" -> LongType -> { rows: Seq[Row] =>
               val sum = rows.map(_.getAs[Long]("volume")).sum
-              rows.zipWithIndex.map { case (row, idx) => row -> (idx + sum) }.toMap
+              rows.zipWithIndex.map {
+                case (row, idx) => row -> (idx + sum)
+              }.toMap
             }
           ),
           Seq("id", "group")
@@ -120,7 +144,11 @@ class AddColumnsForCycleSpec extends MultiPartitionSuite with TimeTypeSuite {
 
       val volumeTSRdd = fromCSV(
         "VolumeWithIndustryGroup.csv",
-        Schema("id" -> IntegerType, "group" -> IntegerType, "volume" -> LongType)
+        Schema(
+          "id" -> IntegerType,
+          "group" -> IntegerType,
+          "volume" -> LongType
+        )
       )
       withPartitionStrategy(volumeTSRdd)(DEFAULT)(test)
     }
@@ -129,7 +157,10 @@ class AddColumnsForCycleSpec extends MultiPartitionSuite with TimeTypeSuite {
   it should "not accept duplicate column names" in {
     withAllTimeType {
       val emptyTsRdd = TimeSeriesRDD.fromDF(
-        sqlContext.createDataFrame(sc.parallelize[Row](Seq()), Schema("time" -> LongType, "value" -> DoubleType))
+        sqlContext.createDataFrame(
+          sc.parallelize[Row](Seq()),
+          Schema("time" -> LongType, "value" -> DoubleType)
+        )
       )(isSorted = true, TimeUnit.NANOSECONDS)
 
       intercept[DuplicateColumnsException] {

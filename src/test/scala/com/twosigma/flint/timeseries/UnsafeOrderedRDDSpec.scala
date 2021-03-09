@@ -27,7 +27,8 @@ import scala.collection.mutable
 
 object TestHelper {
   private val schema = Schema("id" -> IntegerType, "price" -> DoubleType)
-  val converter: InternalRow => GenericRowWithSchema = CatalystTypeConvertersWrapper.toScalaRowConverter(schema)
+  val converter: InternalRow => GenericRowWithSchema =
+    CatalystTypeConvertersWrapper.toScalaRowConverter(schema)
 
   def filter(ts: Long, row: InternalRow): Boolean = {
     row.getInt(1) > 5
@@ -50,49 +51,57 @@ class UnsafeOrderedRDDSpec extends TimeSeriesSuite {
   override val defaultResourceDir: String = "/timeseries/leftjoin"
 
   private def compareRowReferences(rdd: OrderedRDD[Long, InternalRow]) = {
-    val cmp = rdd.mapPartitionsWithIndexOrdered {
-      case (_, iter) =>
-        val rowCopies = mutable.ListBuffer.empty[(Long, InternalRow)]
-        val rowReferences = mutable.ListBuffer.empty[(Long, InternalRow)]
-        iter.foreach {
-          case (ts, row) =>
-            val tuple = (ts, row)
-            rowReferences += tuple
-            val tupleCopy = (ts, row.copy())
-            rowCopies += tupleCopy
-        }
+    val cmp = rdd
+      .mapPartitionsWithIndexOrdered {
+        case (_, iter) =>
+          val rowCopies = mutable.ListBuffer.empty[(Long, InternalRow)]
+          val rowReferences = mutable.ListBuffer.empty[(Long, InternalRow)]
+          iter.foreach {
+            case (ts, row) =>
+              val tuple = (ts, row)
+              rowReferences += tuple
+              val tupleCopy = (ts, row.copy())
+              rowCopies += tupleCopy
+          }
 
-        val results = rowCopies.zip(rowReferences).map {
-          case (copy, reference) => (1L, copy.equals(reference))
-        }
+          val results = rowCopies.zip(rowReferences).map {
+            case (copy, reference) => (1L, copy.equals(reference))
+          }
 
-        results.iterator
-    }.collect()
+          results.iterator
+      }
+      .collect()
 
     cmp.map(_._2)
   }
 
-  private def usesOneRowBufferPerPartition(rdd: OrderedRDD[Long, InternalRow]) = {
-    val cmp = rdd.mapPartitionsWithIndexOrdered {
-      case (_, iter) =>
-        val rowReferences = mutable.ListBuffer.empty[InternalRow]
-        iter.foreach {
-          case (ts, row) =>
-            rowReferences += row
-        }
+  private def usesOneRowBufferPerPartition(
+    rdd: OrderedRDD[Long, InternalRow]
+  ) = {
+    val cmp = rdd
+      .mapPartitionsWithIndexOrdered {
+        case (_, iter) =>
+          val rowReferences = mutable.ListBuffer.empty[InternalRow]
+          iter.foreach {
+            case (ts, row) =>
+              rowReferences += row
+          }
 
-        val firstReference = rowReferences.head
-        val allEqual = rowReferences.tail.forall(anotherRowReference => anotherRowReference == firstReference)
+          val firstReference = rowReferences.head
+          val allEqual = rowReferences.tail.forall(anotherRowReference =>
+            anotherRowReference == firstReference)
 
-        Seq((1L, allEqual)).toIterator
-    }.collect()
+          Seq((1L, allEqual)).toIterator
+      }
+      .collect()
 
     cmp.map(_._2)
   }
 
   "UnsafeOrderedRDDSpec" should "allow referencing timeseriesRdd.orderedRdd rows" in {
     withResource("/timeseries/csv/Price.csv") { source =>
-      val timeseriesRdd = CSV.from(sqlContext, "file://" + source, sorted = true)
+      val timeseriesRdd =
+        CSV.from(sqlContext, "file://" + source, sorted = true)
       val impl = timeseriesRdd.asInstanceOf[TimeSeriesRDDImpl]
 
       val safeCmp = compareRowReferences(impl.orderedRdd)
@@ -104,8 +113,10 @@ class UnsafeOrderedRDDSpec extends TimeSeriesSuite {
   }
 
   it should "return correct data frames" in {
-    val priceTSRdd = fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
-    val volumeTSRdd = fromCSV("Volume.csv", Schema("id" -> IntegerType, "volume" -> LongType))
+    val priceTSRdd =
+      fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
+    val volumeTSRdd =
+      fromCSV("Volume.csv", Schema("id" -> IntegerType, "volume" -> LongType))
     val resultsTSRdd = fromCSV(
       "JoinOnTime.results",
       Schema("id" -> IntegerType, "price" -> DoubleType, "volume" -> LongType)
@@ -123,45 +134,63 @@ class UnsafeOrderedRDDSpec extends TimeSeriesSuite {
 
   it should "support multiple iterations" in {
     withResource("/timeseries/csv/Price.csv") { source =>
-      val timeseriesRdd = CSV.from(sqlContext, "file://" + source, sorted = true)
+      val timeseriesRdd =
+        CSV.from(sqlContext, "file://" + source, sorted = true)
       val impl = timeseriesRdd.asInstanceOf[TimeSeriesRDDImpl]
       assert(impl.orderedRdd.count() == impl.unsafeOrderedRdd.count())
 
       // explicitly making a copy to catch issues even if orderedRdd is broken
       val safeCopy = impl.orderedRdd.mapValues(TestHelper.copy)
 
-      val unsafeFiltered = impl.unsafeOrderedRdd.filterOrdered(TestHelper.filter)
+      val unsafeFiltered =
+        impl.unsafeOrderedRdd.filterOrdered(TestHelper.filter)
       val safeFiltered = safeCopy.filterOrdered(TestHelper.filter)
       // collect() can't be used with UnsafeRow
-      assert(unsafeFiltered.mapValues(TestHelper.copy).collect().deep == safeFiltered.collect().deep)
+      assert(
+        unsafeFiltered.mapValues(TestHelper.copy).collect().deep == safeFiltered
+          .collect()
+          .deep
+      )
 
       val unsafeShifted = impl.unsafeOrderedRdd.shift(TestHelper.shift)
       val safeShifted = safeCopy.shift(TestHelper.shift)
-      assert(unsafeShifted.mapValues(TestHelper.copy).collect().deep == safeShifted.collect().deep)
+      assert(
+        unsafeShifted.mapValues(TestHelper.copy).collect().deep == safeShifted
+          .collect()
+          .deep
+      )
 
       val unsafeMappeed = impl.unsafeOrderedRdd.mapOrdered(TestHelper.map)
       val safeMappeed = safeCopy.mapOrdered(TestHelper.map)
-      assert(unsafeMappeed.mapValues(TestHelper.copy).collect().deep == safeMappeed.collect().deep)
+      assert(
+        unsafeMappeed.mapValues(TestHelper.copy).collect().deep == safeMappeed
+          .collect()
+          .deep
+      )
     }
   }
 
   it should "collect rows correctly" in {
     withResource("/timeseries/csv/Price.csv") { source =>
-      val timeseriesRdd = CSV.from(sqlContext, "file://" + source, sorted = true)
+      val timeseriesRdd =
+        CSV.from(sqlContext, "file://" + source, sorted = true)
       val impl = timeseriesRdd.asInstanceOf[TimeSeriesRDDImpl]
 
       val expectedRows = timeseriesRdd.toDF.collect()
-      val internalRows = impl.orderedRdd.collect().map(_._2).map(TestHelper.converter)
+      val internalRows =
+        impl.orderedRdd.collect().map(_._2).map(TestHelper.converter)
       assert(internalRows.toSet == expectedRows.toSet)
 
-      val originalInternalRows = impl.unsafeOrderedRdd.collect().map(_._2).map(TestHelper.converter)
+      val originalInternalRows =
+        impl.unsafeOrderedRdd.collect().map(_._2).map(TestHelper.converter)
       assert(originalInternalRows.toSet != expectedRows.toSet)
     }
   }
 
   it should "reuse row buffer object in unsafeOrderedRdd.mapPartitionsWithIndexOrdered" in {
     withResource("/timeseries/csv/Price.csv") { source =>
-      val timeseriesRdd = CSV.from(sqlContext, "file://" + source, sorted = true)
+      val timeseriesRdd =
+        CSV.from(sqlContext, "file://" + source, sorted = true)
       val impl = timeseriesRdd.asInstanceOf[TimeSeriesRDDImpl]
 
       val safeCmp = usesOneRowBufferPerPartition(impl.orderedRdd)

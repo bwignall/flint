@@ -71,7 +71,6 @@ class SummarizerSuite extends TimeSeriesSuite {
       numSlices = defaultPartitionParallelism,
       seed = 31415926L
     ).generate(),
-
     new TimeSeriesGenerator(
       sc,
       begin = 0L,
@@ -327,12 +326,13 @@ class SummarizerSuite extends TimeSeriesSuite {
 
       val lastWindowSummarized = lastWindow.summarize(summarizerFactory)
       // We need to escape the column name to ensure that columns with names like "a.b" are handled well.
-      val nonTimeColumnNames = lastWindowSummarized.schema.fieldNames.filterNot(_ == TimeSeriesRDD.timeColumnName).map {
-        columnName => col(s"`$columnName`")
-      }
+      val nonTimeColumnNames = lastWindowSummarized.schema.fieldNames
+        .filterNot(_ == TimeSeriesRDD.timeColumnName)
+        .map { columnName =>
+          col(s"`$columnName`")
+        }
 
-      val expectedResults = lastWindowSummarized
-        .toDF
+      val expectedResults = lastWindowSummarized.toDF
         .select(nonTimeColumnNames: _*)
         .head
 
@@ -399,11 +399,12 @@ class SummarizerSuite extends TimeSeriesSuite {
     new ImmutableRightMergeProperty
   )
 
-  lazy val AllPropertiesAndSubtractable: Seq[SummarizerProperty] = AllProperties ++ Seq(
-    new LeftSubtractableProperty,
-    new WindowProperty,
-    new SubtractIdentityProperty
-  )
+  lazy val AllPropertiesAndSubtractable: Seq[SummarizerProperty] =
+    AllProperties ++ Seq(
+      new LeftSubtractableProperty,
+      new WindowProperty,
+      new SubtractIdentityProperty
+    )
 
   def summarizerPropertyTest(properties: Seq[SummarizerProperty])(
     summarizer: SummarizerFactory

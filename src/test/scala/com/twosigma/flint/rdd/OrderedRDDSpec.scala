@@ -244,7 +244,9 @@ class OrderedRDDSpec extends FlatSpec with SharedSparkContext {
   }
 
   it should "`filterOrdered` correctly" in {
-    val mean = unsortedData.map { case (_, (_, v)) => v }.sum / unsortedData.length
+    val mean = unsortedData.map {
+      case (_, (_, v)) => v
+    }.sum / unsortedData.length
     val benchmark =
       unsortedData.filter { case (_, (_, v)) => v > mean }.sortBy(_._1)
     val test =
@@ -310,8 +312,10 @@ class OrderedRDDSpec extends FlatSpec with SharedSparkContext {
     val lookback = 30
     val benchmark = unsortedData.sortBy(_._1).map {
       case (k1, (sk1, v1)) =>
-        (k1,
-          ((sk1, v1),
+        (
+          k1,
+          (
+            (sk1, v1),
             sortedData1
             .filter {
               case (k2, (sk2, v2)) =>
@@ -319,16 +323,22 @@ class OrderedRDDSpec extends FlatSpec with SharedSparkContext {
             }
             .sortBy(_._1)
             .lastOption
-            .map { case (k2, v2) => (k2, v2) }))
+            .map { case (k2, v2) => (k2, v2) }
+          )
+        )
     }
 
     val skFn = {
       case ((sk, _)) => sk
     }: ((Int, Double)) => Int
     val test = orderedRDD1
-      .leftJoin(orderedRDD2, {
+      .leftJoin(
+        orderedRDD2, {
         _ - lookback
-      }, skFn, skFn)
+      },
+        skFn,
+        skFn
+      )
       .collect()
     assert(benchmark.deep == test.deep)
   }
@@ -339,20 +349,32 @@ class OrderedRDDSpec extends FlatSpec with SharedSparkContext {
       case ((sk, _)) => sk
     }: ((Int, Double)) => Int
 
-    val rddLeft = orderedRDD1.leftJoin(orderedRDD2, {
+    val rddLeft = orderedRDD1.leftJoin(
+      orderedRDD2, {
       _ - lookback
-    }, skFn, skFn)
+    },
+      skFn,
+      skFn
+    )
     val rdd1 = rddLeft.mapValues { case (k, (v, v2)) => (Option(k, v), v2) }
-    val rddRight = orderedRDD2.leftJoin(orderedRDD1, {
+    val rddRight = orderedRDD2.leftJoin(
+      orderedRDD1, {
       _ - lookback
-    }, skFn, skFn)
+    },
+      skFn,
+      skFn
+    )
     val rdd2 = rddRight.mapValues { case (k, (v, v2)) => (v2, Option(k, v)) }
     val benchmark = rdd1.merge(rdd2).collect()
 
     val test = orderedRDD1
-      .symmetricJoin(orderedRDD2, {
+      .symmetricJoin(
+        orderedRDD2, {
         _ - lookback
-      }, skFn, skFn)
+      },
+        skFn,
+        skFn
+      )
       .collect()
     assert(benchmark.deep == test.deep)
   }

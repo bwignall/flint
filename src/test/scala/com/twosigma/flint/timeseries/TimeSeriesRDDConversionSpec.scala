@@ -22,7 +22,9 @@ import com.twosigma.flint.timeseries.row.Schema
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{ SQLContext, DataFrame, Row }
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.catalyst.expressions.{ GenericRowWithSchema => ExternalRow }
+import org.apache.spark.sql.catalyst.expressions.{
+  GenericRowWithSchema => ExternalRow
+}
 import org.scalatest.tagobjects.Slow
 
 class TimeSeriesRDDConversionSpec extends TimeSeriesSuite {
@@ -33,45 +35,55 @@ class TimeSeriesRDDConversionSpec extends TimeSeriesSuite {
   // The 10000-th prime.
   private val defaultNumRows = 104729
 
-  private def createDataFrame(isSorted: Boolean = true)(implicit sqlContext: SQLContext): DataFrame = {
+  private def createDataFrame(
+    isSorted: Boolean = true
+  )(implicit sqlContext: SQLContext): DataFrame = {
     val n = defaultNumRows
     val schema = Schema("value" -> DoubleType)
-    val rdd: RDD[Row] = sqlContext.sparkContext.parallelize(1 to n, defaultPartitionParallelism).map { i =>
-      val data: Array[Any] = if (isSorted) {
-        Array((i / 100).toLong, i.toDouble)
-      } else {
-        Array(((i + 1 - n) / 100).toLong, i.toDouble)
+    val rdd: RDD[Row] = sqlContext.sparkContext
+      .parallelize(1 to n, defaultPartitionParallelism)
+      .map { i =>
+        val data: Array[Any] = if (isSorted) {
+          Array((i / 100).toLong, i.toDouble)
+        } else {
+          Array(((i + 1 - n) / 100).toLong, i.toDouble)
+        }
+        new ExternalRow(data, schema)
       }
-      new ExternalRow(data, schema)
-    }
     sqlContext.createDataFrame(rdd, schema)
   }
 
   "TimeSeriesRDD" should "convert from a sorted DataFrame correctly" taggedAs (Slow) in {
     implicit val _sqlContext = sqlContext
-    (1 to 10).foreach {
-      i =>
-        val tsRdd = TimeSeriesRDD.fromDF(createDataFrame(isSorted = true))(isSorted = true, TimeUnit.NANOSECONDS)
-        assert(tsRdd.count() == defaultNumRows)
+    (1 to 10).foreach { i =>
+      val tsRdd = TimeSeriesRDD.fromDF(createDataFrame(isSorted = true))(
+        isSorted = true,
+        TimeUnit.NANOSECONDS
+      )
+      assert(tsRdd.count() == defaultNumRows)
     }
-    (1 to 10).foreach {
-      i =>
-        val tsRdd = TimeSeriesRDD.fromDF(createDataFrame(isSorted = true))(isSorted = false, TimeUnit.NANOSECONDS)
-        assert(tsRdd.count() == defaultNumRows)
+    (1 to 10).foreach { i =>
+      val tsRdd = TimeSeriesRDD.fromDF(createDataFrame(isSorted = true))(
+        isSorted = false,
+        TimeUnit.NANOSECONDS
+      )
+      assert(tsRdd.count() == defaultNumRows)
     }
-    (1 to 10).foreach {
-      i =>
-        val tsRdd = TimeSeriesRDD.fromDF(createDataFrame(isSorted = false))(isSorted = false, TimeUnit.NANOSECONDS)
-        assert(tsRdd.count() == defaultNumRows)
+    (1 to 10).foreach { i =>
+      val tsRdd = TimeSeriesRDD.fromDF(createDataFrame(isSorted = false))(
+        isSorted = false,
+        TimeUnit.NANOSECONDS
+      )
+      assert(tsRdd.count() == defaultNumRows)
     }
-    (1 to 10).foreach {
-      i =>
-        val tsRdd = TimeSeriesRDD.fromDF(
-          createDataFrame(isSorted = false).sort("time")
-        )(
-            isSorted = true, TimeUnit.NANOSECONDS
-          )
-        assert(tsRdd.count() == defaultNumRows)
+    (1 to 10).foreach { i =>
+      val tsRdd = TimeSeriesRDD.fromDF(
+        createDataFrame(isSorted = false).sort("time")
+      )(
+          isSorted = true,
+          TimeUnit.NANOSECONDS
+        )
+      assert(tsRdd.count() == defaultNumRows)
     }
   }
 }

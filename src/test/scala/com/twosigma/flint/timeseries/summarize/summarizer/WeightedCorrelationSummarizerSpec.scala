@@ -110,7 +110,7 @@ class WeightedCorrelationSummarizerSpec extends SummarizerSuite {
     def corr(x, y, w):
         """Weighted Correlation"""
         return cov(x, y, w) / np.sqrt(cov(x, x, w) * cov(y, y, w))
-    */
+     */
 
     assert(
       data

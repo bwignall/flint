@@ -17,7 +17,9 @@
 package com.twosigma.flint.rdd.function.summarize
 
 import com.twosigma.flint.FlintSuite
-import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.{ SumSummarizer => SumSum }
+import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.{
+  SumSummarizer => SumSum
+}
 import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.LeftSubtractableSummarizer
 import com.twosigma.flint.rdd.{ KeyPartitioningType, OrderedRDD }
 import org.scalactic.TolerantNumerics

@@ -23,52 +23,91 @@ import org.apache.spark.sql.types.{ DoubleType, IntegerType }
 
 class ProductSummarizerSpec extends SummarizerSuite {
 
-  override val defaultResourceDir: String = "/timeseries/summarize/summarizer/productsummarizer"
+  override val defaultResourceDir: String =
+    "/timeseries/summarize/summarizer/productsummarizer"
 
   "ProductSummarizer" should "compute product correctly" in {
-    val priceTSRdd = fromCSV("Price.csv", Schema(
-      "id" -> IntegerType,
-      "price" -> DoubleType,
-      "priceWithZero" -> DoubleType,
-      "priceWithNegatives" -> DoubleType
-    ))
-    val results = priceTSRdd.summarize(Summarizers.product("price"), Seq("id")).collect()
-    assert(results.find(_.getAs[Int]("id") == 3).head.getAs[Double]("price_product") === 324.84375)
-    assert(results.find(_.getAs[Int]("id") == 7).head.getAs[Double]("price_product") === 360.0)
+    val priceTSRdd = fromCSV(
+      "Price.csv",
+      Schema(
+        "id" -> IntegerType,
+        "price" -> DoubleType,
+        "priceWithZero" -> DoubleType,
+        "priceWithNegatives" -> DoubleType
+      )
+    )
+    val results =
+      priceTSRdd.summarize(Summarizers.product("price"), Seq("id")).collect()
+    assert(
+      results
+        .find(_.getAs[Int]("id") == 3)
+        .head
+        .getAs[Double]("price_product") === 324.84375
+    )
+    assert(
+      results
+        .find(_.getAs[Int]("id") == 7)
+        .head
+        .getAs[Double]("price_product") === 360.0
+    )
   }
 
   it should "compute product with a zero correctly" in {
-    val priceTSRdd = fromCSV("Price.csv", Schema(
-      "id" -> IntegerType,
-      "price" -> DoubleType,
-      "priceWithZero" -> DoubleType,
-      "priceWithNegatives" -> DoubleType
-    ))
-    var results = priceTSRdd.summarize(Summarizers.product("priceWithZero")).collect()
+    val priceTSRdd = fromCSV(
+      "Price.csv",
+      Schema(
+        "id" -> IntegerType,
+        "price" -> DoubleType,
+        "priceWithZero" -> DoubleType,
+        "priceWithNegatives" -> DoubleType
+      )
+    )
+    var results =
+      priceTSRdd.summarize(Summarizers.product("priceWithZero")).collect()
     assert(results.head.getAs[Double]("priceWithZero_product") === 0.0)
 
     // Test that having a zero exit the window still computes correctly.
-    results = priceTSRdd.coalesce(1).summarizeWindows(
-      Windows.pastAbsoluteTime("50 ns"),
-      Summarizers.product("priceWithZero")
-    ).collect()
+    results = priceTSRdd
+      .coalesce(1)
+      .summarizeWindows(
+        Windows.pastAbsoluteTime("50 ns"),
+        Summarizers.product("priceWithZero")
+      )
+      .collect()
     assert(results.head.getAs[Double]("priceWithZero_product") === 0.0)
     assert(results.last.getAs[Double]("priceWithZero_product") === 742.5)
   }
 
   it should "compute product with negative values correctly" in {
-    val priceTSRdd = fromCSV("Price.csv", Schema(
-      "id" -> IntegerType,
-      "price" -> DoubleType,
-      "priceWithZero" -> DoubleType,
-      "priceWithNegatives" -> DoubleType
-    ))
-    val results = priceTSRdd.summarize(Summarizers.product("priceWithNegatives"), Seq("id")).collect()
-    assert(results.find(_.getAs[Int]("id") == 3).head.getAs[Double]("priceWithNegatives_product") === -324.84375)
-    assert(results.find(_.getAs[Int]("id") == 7).head.getAs[Double]("priceWithNegatives_product") === 360.0)
+    val priceTSRdd = fromCSV(
+      "Price.csv",
+      Schema(
+        "id" -> IntegerType,
+        "price" -> DoubleType,
+        "priceWithZero" -> DoubleType,
+        "priceWithNegatives" -> DoubleType
+      )
+    )
+    val results = priceTSRdd
+      .summarize(Summarizers.product("priceWithNegatives"), Seq("id"))
+      .collect()
+    assert(
+      results
+        .find(_.getAs[Int]("id") == 3)
+        .head
+        .getAs[Double]("priceWithNegatives_product") === -324.84375
+    )
+    assert(
+      results
+        .find(_.getAs[Int]("id") == 7)
+        .head
+        .getAs[Double]("priceWithNegatives_product") === 360.0
+    )
   }
 
   it should "pass summarizer property test" in {
-    summarizerPropertyTest(AllPropertiesAndSubtractable)(Summarizers.product("x1"))
+    summarizerPropertyTest(AllPropertiesAndSubtractable)(
+      Summarizers.product("x1")
+    )
   }
 }

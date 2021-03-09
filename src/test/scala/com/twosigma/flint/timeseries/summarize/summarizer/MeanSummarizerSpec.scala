@@ -23,16 +23,19 @@ import org.apache.spark.sql.types.{ DoubleType, IntegerType }
 
 class MeanSummarizerSpec extends SummarizerSuite {
 
-  override val defaultResourceDir: String = "/timeseries/summarize/summarizer/meansummarizer"
+  override val defaultResourceDir: String =
+    "/timeseries/summarize/summarizer/meansummarizer"
 
   "MeanSummarizer" should "compute `mean` correctly" in {
-    val priceTSRdd = fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
+    val priceTSRdd =
+      fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
     val result = priceTSRdd.summarize(Summarizers.mean("price")).first()
     assert(result.getAs[Double]("price_mean") === 3.25)
   }
 
   it should "ignore null values" in {
-    val priceTSRdd = fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
+    val priceTSRdd =
+      fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
     assertEquals(
       priceTSRdd.summarize(Summarizers.mean("price")),
       insertNullRows(priceTSRdd, "price").summarize(Summarizers.mean("price"))

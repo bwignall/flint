@@ -64,8 +64,10 @@ class LeftJoinSpec extends FlatSpec with SharedSparkContext {
 
   override def beforeAll() {
     super.beforeAll()
-    leftRdd = OrderedRDD.fromRDD(sc.parallelize(left, 4), KeyPartitioningType.Sorted)
-    rightRdd = OrderedRDD.fromRDD(sc.parallelize(right, 4), KeyPartitioningType.Sorted)
+    leftRdd =
+      OrderedRDD.fromRDD(sc.parallelize(left, 4), KeyPartitioningType.Sorted)
+    rightRdd =
+      OrderedRDD.fromRDD(sc.parallelize(right, 4), KeyPartitioningType.Sorted)
   }
 
   "LeftJoin" should "`futureJoin` per id with strictForward correctly" in {
@@ -88,11 +90,16 @@ class LeftJoinSpec extends FlatSpec with SharedSparkContext {
     )
 
     val skFn = { case ((sk, v)) => sk }: ((Int, Double)) => Int
-    val joined = FutureLeftJoin.apply(
-      leftRdd, rightRdd,
-      (t: Long) => t + 10,
-      skFn, skFn, strictForward = true
-    ).collect
+    val joined = FutureLeftJoin
+      .apply(
+        leftRdd,
+        rightRdd,
+        (t: Long) => t + 10,
+        skFn,
+        skFn,
+        strictForward = true
+      )
+      .collect
     assert(joined.deep == expected.deep)
   }
 
@@ -116,11 +123,16 @@ class LeftJoinSpec extends FlatSpec with SharedSparkContext {
     )
 
     val skFn = { case ((sk, v)) => sk }: ((Int, Double)) => Int
-    val joined = FutureLeftJoin.apply(
-      leftRdd, rightRdd,
-      (t: Long) => t + 10,
-      skFn, skFn, strictForward = false
-    ).collect
+    val joined = FutureLeftJoin
+      .apply(
+        leftRdd,
+        rightRdd,
+        (t: Long) => t + 10,
+        skFn,
+        skFn,
+        strictForward = false
+      )
+      .collect
     assert(joined.deep == expected.deep)
   }
 
@@ -144,11 +156,16 @@ class LeftJoinSpec extends FlatSpec with SharedSparkContext {
     )
 
     val skFn = { case ((sk, v)) => None }: ((Int, Double)) => Option[Nothing]
-    val joined = FutureLeftJoin.apply(
-      leftRdd, rightRdd,
-      (t: Long) => t + 10,
-      skFn, skFn, strictForward = false
-    ).collect
+    val joined = FutureLeftJoin
+      .apply(
+        leftRdd,
+        rightRdd,
+        (t: Long) => t + 10,
+        skFn,
+        skFn,
+        strictForward = false
+      )
+      .collect
     assert(joined.deep == expected.deep)
   }
 
@@ -172,11 +189,16 @@ class LeftJoinSpec extends FlatSpec with SharedSparkContext {
     )
 
     val skFn = { case ((sk, v)) => None }: ((Int, Double)) => Option[Nothing]
-    val joined = FutureLeftJoin.apply(
-      leftRdd, rightRdd,
-      (t: Long) => t + 10,
-      skFn, skFn, strictForward = true
-    ).collect
+    val joined = FutureLeftJoin
+      .apply(
+        leftRdd,
+        rightRdd,
+        (t: Long) => t + 10,
+        skFn,
+        skFn,
+        strictForward = true
+      )
+      .collect
     assert(joined.deep == expected.deep)
   }
 

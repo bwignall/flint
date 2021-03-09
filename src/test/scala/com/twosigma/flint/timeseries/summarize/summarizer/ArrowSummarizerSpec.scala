@@ -24,25 +24,32 @@ import com.twosigma.flint.timeseries.summarize.SummarizerSuite
 import com.twosigma.flint.timeseries.ArrowTestUtils
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.ipc.{ ArrowFileReader, JsonFileReader }
-import org.apache.arrow.vector.util.{ ByteArrayReadableSeekableByteChannel, Validator }
+import org.apache.arrow.vector.util.{
+  ByteArrayReadableSeekableByteChannel,
+  Validator
+}
 import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
 import org.apache.spark.sql.{ FlintTestData, Row }
 import org.apache.spark.sql.types._
 
 class ArrowSummarizerSpec extends SummarizerSuite with FlintTestData {
-  override val defaultResourceDir: String = "/timeseries/summarize/summarizer/arrowsummarizer"
+  override val defaultResourceDir: String =
+    "/timeseries/summarize/summarizer/arrowsummarizer"
 
   var priceTSRdd: TimeSeriesRDD = _
 
   import ArrowSummarizer._
 
   private lazy val init = {
-    priceTSRdd = fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
+    priceTSRdd =
+      fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
   }
 
   "ArrowSummarizer" should "summarize cycles correctly" in {
     init
-    val result = priceTSRdd.summarizeCycles(Summarizers.arrow(Seq("time", "price"), includeBaseRows = false))
+    val result = priceTSRdd.summarizeCycles(
+      Summarizers.arrow(Seq("time", "price"), includeBaseRows = false)
+    )
 
     val jsonFile = withResource(s"$defaultResourceDir/Price.json") { filename =>
       new File(filename)
@@ -74,26 +81,48 @@ class ArrowSummarizerSpec extends SummarizerSuite with FlintTestData {
 
   it should "prune columns correctly" in {
     init
-    val result1 = priceTSRdd.summarizeCycles(Summarizers.arrow(Seq("price"), includeBaseRows = false))
-    val row1 = ArrowTestUtils.fileFormatToRows(result1.first().getAs[Array[Byte]](arrowBatchColumnName)).head
+    val result1 = priceTSRdd.summarizeCycles(
+      Summarizers.arrow(Seq("price"), includeBaseRows = false)
+    )
+    val row1 = ArrowTestUtils
+      .fileFormatToRows(
+        result1.first().getAs[Array[Byte]](arrowBatchColumnName)
+      )
+      .head
     val schema1 = StructType(Seq(StructField("price", DoubleType)))
     assertEquals(row1, new GenericRowWithSchema(Array(0.5), schema1))
 
-    val result2 = priceTSRdd.summarizeCycles(Summarizers.arrow(Seq("time", "id", "price"), includeBaseRows = false))
-    val row2 = ArrowTestUtils.fileFormatToRows(result2.first().getAs[Array[Byte]](arrowBatchColumnName)).head
-    val schema2 = StructType(Seq(
-      StructField("time", LongType),
-      StructField("id", IntegerType),
-      StructField("price", DoubleType)
-    ))
+    val result2 = priceTSRdd.summarizeCycles(
+      Summarizers.arrow(Seq("time", "id", "price"), includeBaseRows = false)
+    )
+    val row2 = ArrowTestUtils
+      .fileFormatToRows(
+        result2.first().getAs[Array[Byte]](arrowBatchColumnName)
+      )
+      .head
+    val schema2 = StructType(
+      Seq(
+        StructField("time", LongType),
+        StructField("id", IntegerType),
+        StructField("price", DoubleType)
+      )
+    )
     assertEquals(row2, new GenericRowWithSchema(Array(1000, 7, 0.5), schema2))
 
-    val result3 = priceTSRdd.summarizeCycles(Summarizers.arrow(Seq("time", "price"), includeBaseRows = false))
-    val row3 = ArrowTestUtils.fileFormatToRows(result3.first().getAs[Array[Byte]](arrowBatchColumnName)).head
-    val schema3 = StructType(Seq(
-      StructField("time", LongType),
-      StructField("price", DoubleType)
-    ))
+    val result3 = priceTSRdd.summarizeCycles(
+      Summarizers.arrow(Seq("time", "price"), includeBaseRows = false)
+    )
+    val row3 = ArrowTestUtils
+      .fileFormatToRows(
+        result3.first().getAs[Array[Byte]](arrowBatchColumnName)
+      )
+      .head
+    val schema3 = StructType(
+      Seq(
+        StructField("time", LongType),
+        StructField("price", DoubleType)
+      )
+    )
     assertEquals(row3, new GenericRowWithSchema(Array(1000, 0.5), schema3))
 
     val result4 = priceTSRdd.summarizeCycles(
@@ -103,11 +132,17 @@ class ArrowSummarizerSpec extends SummarizerSuite with FlintTestData {
       ),
       key = Seq("id")
     )
-    val row4 = ArrowTestUtils.fileFormatToRows(result4.first().getAs[Array[Byte]](arrowBatchColumnName)).head
-    val schema4 = StructType(Seq(
-      StructField("time", LongType),
-      StructField("price", DoubleType)
-    ))
+    val row4 = ArrowTestUtils
+      .fileFormatToRows(
+        result4.first().getAs[Array[Byte]](arrowBatchColumnName)
+      )
+      .head
+    val schema4 = StructType(
+      Seq(
+        StructField("time", LongType),
+        StructField("price", DoubleType)
+      )
+    )
     assertEquals(row4, new GenericRowWithSchema(Array(1000, 0.5), schema4))
 
     val result5 = priceTSRdd.summarizeCycles(
@@ -117,10 +152,16 @@ class ArrowSummarizerSpec extends SummarizerSuite with FlintTestData {
       ),
       key = Seq("id")
     )
-    val row5 = ArrowTestUtils.fileFormatToRows(result5.first().getAs[Array[Byte]](arrowBatchColumnName)).head
-    val schema5 = StructType(Seq(
-      StructField("price", DoubleType)
-    ))
+    val row5 = ArrowTestUtils
+      .fileFormatToRows(
+        result5.first().getAs[Array[Byte]](arrowBatchColumnName)
+      )
+      .head
+    val schema5 = StructType(
+      Seq(
+        StructField("price", DoubleType)
+      )
+    )
     assertEquals(row5, new GenericRowWithSchema(Array(0.5), schema5))
 
     val result6 = priceTSRdd.summarizeCycles(
@@ -129,10 +170,16 @@ class ArrowSummarizerSpec extends SummarizerSuite with FlintTestData {
         includeBaseRows = true
       )
     )
-    val row6 = ArrowTestUtils.fileFormatToRows(result6.first().getAs[Array[Byte]](arrowBatchColumnName)).head
-    val schema6 = StructType(Seq(
-      StructField("price", DoubleType)
-    ))
+    val row6 = ArrowTestUtils
+      .fileFormatToRows(
+        result6.first().getAs[Array[Byte]](arrowBatchColumnName)
+      )
+      .head
+    val schema6 = StructType(
+      Seq(
+        StructField("price", DoubleType)
+      )
+    )
     assertEquals(row6, new GenericRowWithSchema(Array(0.5), schema6))
 
     val result7 = priceTSRdd.summarizeCycles(
@@ -141,11 +188,17 @@ class ArrowSummarizerSpec extends SummarizerSuite with FlintTestData {
         includeBaseRows = true
       )
     )
-    val row7 = ArrowTestUtils.fileFormatToRows(result7.first().getAs[Array[Byte]](arrowBatchColumnName)).head
-    val schema7 = StructType(Seq(
-      StructField("time", LongType),
-      StructField("price", DoubleType)
-    ))
+    val row7 = ArrowTestUtils
+      .fileFormatToRows(
+        result7.first().getAs[Array[Byte]](arrowBatchColumnName)
+      )
+      .head
+    val schema7 = StructType(
+      Seq(
+        StructField("time", LongType),
+        StructField("price", DoubleType)
+      )
+    )
     assertEquals(row7, new GenericRowWithSchema(Array(1000, 0.5), schema7))
 
   }
@@ -153,8 +206,15 @@ class ArrowSummarizerSpec extends SummarizerSuite with FlintTestData {
   it should "include baseRows correctly" in {
     init
     val tsrdd = priceTSRdd.addColumns("v" -> DoubleType -> { _ => 1.0 })
-    val result = tsrdd.summarizeCycles(Summarizers.arrow(Seq("price"), includeBaseRows = true))
-    assert(result.collect()(0).getAs[Seq[Row]](baseRowsColumnName).sameElements(tsrdd.collect()))
+    val result = tsrdd.summarizeCycles(
+      Summarizers.arrow(Seq("price"), includeBaseRows = true)
+    )
+    assert(
+      result
+        .collect()(0)
+        .getAs[Seq[Row]](baseRowsColumnName)
+        .sameElements(tsrdd.collect())
+    )
   }
 
   it should "handle exception correctly" in {
@@ -169,7 +229,9 @@ class ArrowSummarizerSpec extends SummarizerSuite with FlintTestData {
       }
     })
 
-    val result = table.summarizeCycles(Summarizers.arrow(Seq("price1"), includeBaseRows = false))
+    val result = table.summarizeCycles(
+      Summarizers.arrow(Seq("price1"), includeBaseRows = false)
+    )
 
     val thrown = intercept[org.apache.spark.SparkException] {
       result.toDF.show()

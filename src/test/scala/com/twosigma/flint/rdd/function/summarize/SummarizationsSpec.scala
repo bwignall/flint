@@ -17,7 +17,9 @@
 package com.twosigma.flint.rdd.function.summarize
 
 import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.LeftSubtractableSummarizer
-import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.{ SumSummarizer => SumSum }
+import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.{
+  SumSummarizer => SumSum
+}
 
 import scala.Serializable
 import org.scalatest.FlatSpec
@@ -112,8 +114,10 @@ class SummarizationsSpec extends FlatSpec with SharedSparkContext {
 
   override def beforeAll() {
     super.beforeAll()
-    orderedRDD = OrderedRDD.fromRDD(sc.parallelize(data, 4), KeyPartitioningType.Sorted)
-    orderedRDD1 = OrderedRDD.fromRDD(sc.parallelize(data, 1), KeyPartitioningType.Sorted)
+    orderedRDD =
+      OrderedRDD.fromRDD(sc.parallelize(data, 4), KeyPartitioningType.Sorted)
+    orderedRDD1 =
+      OrderedRDD.fromRDD(sc.parallelize(data, 1), KeyPartitioningType.Sorted)
   }
 
   "Summarizations" should "apply correctly" in {

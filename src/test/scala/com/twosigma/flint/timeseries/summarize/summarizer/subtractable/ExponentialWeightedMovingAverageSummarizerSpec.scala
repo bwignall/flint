@@ -23,7 +23,9 @@ import com.twosigma.flint.timeseries.summarize.summarizer._
 import org.apache.spark.sql.types.{ DoubleType, IntegerType }
 import org.apache.spark.sql.Row
 
-class ExponentialWeightedMovingAverageSummarizerSpec extends SummarizerSuite with TimeTypeSuite {
+class ExponentialWeightedMovingAverageSummarizerSpec
+  extends SummarizerSuite
+  with TimeTypeSuite {
 
   override val defaultPartitionParallelism: Int = 10
 

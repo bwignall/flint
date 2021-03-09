@@ -68,7 +68,9 @@ class RangeMergeJoinSpec extends FlatSpec {
         List(RangeSplit(Split(2), CloseOpen(7, None)))
       )
     )
-    assertResult(benchmark) { RangeMergeJoin.mergeSplits(thisSplits, thatSplits) }
+    assertResult(benchmark) {
+      RangeMergeJoin.mergeSplits(thisSplits, thatSplits)
+    }
   }
 
   it should "`mergeSplits` with some tolerance correctly" in {
@@ -80,31 +82,51 @@ class RangeMergeJoinSpec extends FlatSpec {
       ),
       RangeMergeJoin(
         CloseOpen(2, Some(3)),
-        List(RangeSplit(Split(0), CloseOpen(1, Some(2))), RangeSplit(Split(1), CloseOpen(2, Some(3)))),
+        List(
+          RangeSplit(Split(0), CloseOpen(1, Some(2))),
+          RangeSplit(Split(1), CloseOpen(2, Some(3)))
+        ),
         List(RangeSplit(Split(0), CloseOpen(1, Some(3))))
       ),
       RangeMergeJoin(
         CloseOpen(3, Some(4)),
-        List(RangeSplit(Split(1), CloseOpen(2, Some(3))), RangeSplit(Split(2), CloseOpen(3, Some(4)))),
-        List(RangeSplit(Split(0), CloseOpen(1, Some(3))), RangeSplit(Split(1), CloseOpen(3, Some(7))))
+        List(
+          RangeSplit(Split(1), CloseOpen(2, Some(3))),
+          RangeSplit(Split(2), CloseOpen(3, Some(4)))
+        ),
+        List(
+          RangeSplit(Split(0), CloseOpen(1, Some(3))),
+          RangeSplit(Split(1), CloseOpen(3, Some(7)))
+        )
       ),
       RangeMergeJoin(
         CloseOpen(4, Some(5)),
-        List(RangeSplit(Split(2), CloseOpen(3, Some(4))), RangeSplit(Split(3), CloseOpen(4, Some(5)))),
+        List(
+          RangeSplit(Split(2), CloseOpen(3, Some(4))),
+          RangeSplit(Split(3), CloseOpen(4, Some(5)))
+        ),
         List(RangeSplit(Split(1), CloseOpen(3, Some(7))))
       ),
       RangeMergeJoin(
         CloseOpen(5, Some(7)),
-        List(RangeSplit(Split(3), CloseOpen(4, Some(5))), RangeSplit(Split(4), CloseOpen(5, None))),
+        List(
+          RangeSplit(Split(3), CloseOpen(4, Some(5))),
+          RangeSplit(Split(4), CloseOpen(5, None))
+        ),
         List(RangeSplit(Split(1), CloseOpen(3, Some(7))))
       ),
       RangeMergeJoin(
         CloseOpen(7, None),
         List(RangeSplit(Split(4), CloseOpen(5, None))),
-        List(RangeSplit(Split(1), CloseOpen(3, Some(7))), RangeSplit(Split(2), CloseOpen(7, None)))
+        List(
+          RangeSplit(Split(1), CloseOpen(3, Some(7))),
+          RangeSplit(Split(2), CloseOpen(7, None))
+        )
       )
     )
 
-    assertResult(benchmark) { RangeMergeJoin.mergeSplits(thisSplits, thatSplits, { x: Int => x - 1 }) }
+    assertResult(benchmark) {
+      RangeMergeJoin.mergeSplits(thisSplits, thatSplits, { x: Int => x - 1 })
+    }
   }
 }

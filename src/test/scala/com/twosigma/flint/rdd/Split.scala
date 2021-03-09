@@ -27,8 +27,9 @@ case class Split(override val index: Int) extends Partition {
   // http://stackoverflow.com/questions/11890805/hashcode-of-an-int
   override def hashCode(): Int = index
 
-  override def equals(other: Any): Boolean = other match {
-    case that: Partition => this.index == that.index
-    case _ => false
-  }
+  override def equals(other: Any): Boolean =
+    other match {
+      case that: Partition => this.index == that.index
+      case _ => false
+    }
 }

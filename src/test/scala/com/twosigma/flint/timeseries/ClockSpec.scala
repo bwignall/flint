@@ -25,11 +25,13 @@ import scala.concurrent.duration.Duration
 class ClockSpec extends TimeSeriesSuite with TimeTypeSuite {
 
   "UniformClock" should "generate clock ticks correctly" in {
-    var clock = new UniformClock(sc, 1000L, 2000L, 300L, 0L, true).asStream().toArray
+    var clock =
+      new UniformClock(sc, 1000L, 2000L, 300L, 0L, true).asStream().toArray
     var benchmark = Array(1000L, 1300L, 1600L, 1900L)
     assert(clock.deep == benchmark.deep)
 
-    clock = new UniformClock(sc, 1000L, 2000L, 300L, 500L, true).asStream().toArray
+    clock =
+      new UniformClock(sc, 1000L, 2000L, 300L, 500L, true).asStream().toArray
     benchmark = Array(1200L, 1500L, 1800L)
     assert(clock.deep == benchmark.deep)
   }
@@ -45,7 +47,8 @@ class ClockSpec extends TimeSeriesSuite with TimeTypeSuite {
   }
 
   it should "generate clock ticks in TimeSeriesRDD correctly" in {
-    val clockTSRdd: TimeSeriesRDD = Clocks.uniform(sc, "5h", "0d", "20010101", "20010201")
+    val clockTSRdd: TimeSeriesRDD =
+      Clocks.uniform(sc, "5h", "0d", "20010101", "20010201")
     assert(clockTSRdd.schema == Schema())
     val clockStream = new UniformClock(
       sc,
@@ -55,13 +58,16 @@ class ClockSpec extends TimeSeriesSuite with TimeTypeSuite {
       0L,
       true
     ).asStream()
-    val rdd = clockTSRdd.rdd.map(r => r.getAs[Long](TimeSeriesRDD.timeColumnName))
+    val rdd =
+      clockTSRdd.rdd.map(r => r.getAs[Long](TimeSeriesRDD.timeColumnName))
     assert(rdd.collect().deep == clockStream.toArray.deep)
   }
 
   it should "generate clock ticks with offset in TimeSeriesRDD correctly" in {
-    val clockTSRdd1: TimeSeriesRDD = Clocks.uniform(sc, "1d", "8h", "20010101", "20010201")
-    val clockTSRdd2: TimeSeriesRDD = Clocks.uniform(sc, "1d", "0h", "20010101 08:00", "20010201")
+    val clockTSRdd1: TimeSeriesRDD =
+      Clocks.uniform(sc, "1d", "8h", "20010101", "20010201")
+    val clockTSRdd2: TimeSeriesRDD =
+      Clocks.uniform(sc, "1d", "0h", "20010101 08:00", "20010201")
     assert(clockTSRdd1.collect().deep == clockTSRdd2.collect().deep)
   }
 
@@ -69,18 +75,34 @@ class ClockSpec extends TimeSeriesSuite with TimeTypeSuite {
     val clockTSRdd1: TimeSeriesRDD =
       Clocks.uniform(sc, "1d", "8h", "20010101", "20010201", "UTC")
     val clockTSRdd2: TimeSeriesRDD =
-      Clocks.uniform(sc, "1d", "0h", "20010101 08:00 +0000", "20010201 00:00 +0000", "MST")
+      Clocks.uniform(
+        sc,
+        "1d",
+        "0h",
+        "20010101 08:00 +0000",
+        "20010201 00:00 +0000",
+        "MST"
+      )
     assert(clockTSRdd1.collect().deep == clockTSRdd2.collect().deep)
   }
 
   it should "generate clock ticks with default in TimeSeriesRDD correctly" in {
-    val clockTSRdd1: TimeSeriesRDD = Clocks.uniform(sc, "1d", "0h", "19700101", "20300101", "UTC")
+    val clockTSRdd1: TimeSeriesRDD =
+      Clocks.uniform(sc, "1d", "0h", "19700101", "20300101", "UTC")
     val clockTSRdd2: TimeSeriesRDD = Clocks.uniform(sc, "1d")
     assert(clockTSRdd1.collect().deep == clockTSRdd2.collect().deep)
   }
 
   it should "generate timestamp correctly" in {
-    import org.apache.spark.sql.functions.{ year, month, dayofmonth, hour, minute, second, col }
+    import org.apache.spark.sql.functions.{
+      year,
+      month,
+      dayofmonth,
+      hour,
+      minute,
+      second,
+      col
+    }
 
     withTimeType("timestamp") {
       val clock1 = Clocks.uniform(sc, "1day", beginDateTime = "19900101")

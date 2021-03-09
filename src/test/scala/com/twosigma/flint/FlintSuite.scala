@@ -38,7 +38,11 @@ object FlintSuite {
    * @param codeBlock A function that takes a resource file path as input.
    * @return the return value of `codeBlock`.
    */
-  def withResource[T](resource: String, prefix: String = "", suffix: String = "")(codeBlock: String => T): T = {
+  def withResource[T](
+    resource: String,
+    prefix: String = "",
+    suffix: String = ""
+  )(codeBlock: String => T): T = {
     var source: String = getClass.getResource(resource).getPath
     var sourcePath: Path = null
     val sourceExists = new File(source).exists

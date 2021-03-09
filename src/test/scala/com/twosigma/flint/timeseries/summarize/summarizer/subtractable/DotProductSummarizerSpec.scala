@@ -23,16 +23,32 @@ import org.apache.spark.sql.types.{ DoubleType, IntegerType }
 
 class DotProductSummarizerSpec extends SummarizerSuite {
 
-  override val defaultResourceDir: String = "/timeseries/summarize/summarizer/dotproductsummarizer"
+  override val defaultResourceDir: String =
+    "/timeseries/summarize/summarizer/dotproductsummarizer"
 
   "DotProductSummarizer" should "compute dot product correctly" in {
-    val priceTSRdd = fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
-    val results = priceTSRdd.summarize(Summarizers.dotProduct("price", "price"), Seq("id")).collect()
-    assert(results.find(_.getAs[Int]("id") == 3).head.getAs[Double]("price_price_dotProduct") === 72.25)
-    assert(results.find(_.getAs[Int]("id") == 7).head.getAs[Double]("price_price_dotProduct") === 90.25)
+    val priceTSRdd =
+      fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
+    val results = priceTSRdd
+      .summarize(Summarizers.dotProduct("price", "price"), Seq("id"))
+      .collect()
+    assert(
+      results
+        .find(_.getAs[Int]("id") == 3)
+        .head
+        .getAs[Double]("price_price_dotProduct") === 72.25
+    )
+    assert(
+      results
+        .find(_.getAs[Int]("id") == 7)
+        .head
+        .getAs[Double]("price_price_dotProduct") === 90.25
+    )
   }
 
   it should "pass summarizer property test" in {
-    summarizerPropertyTest(AllPropertiesAndSubtractable)(Summarizers.dotProduct("x1", "x2"))
+    summarizerPropertyTest(AllPropertiesAndSubtractable)(
+      Summarizers.dotProduct("x1", "x2")
+    )
   }
 }

@@ -135,7 +135,9 @@ trait TimeSeriesSuite extends FlintSuite {
           )
         case TimestampType =>
           assert(
-            thisRow.getAs[Timestamp](col.name) == thatRow.getAs[Timestamp](col.name)
+            thisRow.getAs[Timestamp](col.name) == thatRow.getAs[Timestamp](
+              col.name
+            )
           )
         case dataType =>
           assert(
@@ -176,42 +178,44 @@ trait TimeSeriesSuite extends FlintSuite {
     header: Boolean = true,
     sorted: Boolean = true,
     dateFormat: String = "yyyy-MM-dd HH:mm:ss.S"
-  ): TimeSeriesRDD = withResource(s"$defaultResourceDir/$filepath") { source =>
-    var codec: String = null
-    if (filepath.endsWith(".gz")) {
-      codec = "gzip"
+  ): TimeSeriesRDD =
+    withResource(s"$defaultResourceDir/$filepath") { source =>
+      var codec: String = null
+      if (filepath.endsWith(".gz")) {
+        codec = "gzip"
+      }
+      CSV
+        .from(
+          sqlContext,
+          s"file://$source",
+          header = header,
+          sorted = sorted,
+          schema = schema,
+          dateFormat = dateFormat,
+          codec = codec
+        )
+        .repartition(defaultPartitionParallelism)
     }
-    CSV
-      .from(
-        sqlContext,
-        s"file://$source",
-        header = header,
-        sorted = sorted,
-        schema = schema,
-        dateFormat = dateFormat,
-        codec = codec
-      )
-      .repartition(defaultPartitionParallelism)
-  }
 
   def fromParquet(
     filepath: String,
     sorted: Boolean = true
-  ): TimeSeriesRDD = withResource(s"$defaultResourceDir/$filepath") { source =>
-    var codec: String = null
-    if (filepath.endsWith(".gz")) {
-      codec = "gzip"
+  ): TimeSeriesRDD =
+    withResource(s"$defaultResourceDir/$filepath") { source =>
+      var codec: String = null
+      if (filepath.endsWith(".gz")) {
+        codec = "gzip"
+      }
+      TimeSeriesRDD
+        .fromParquet(
+          sc,
+          s"file://$source"
+        )(
+            isSorted = sorted,
+            timeUnit = TimeUnit.NANOSECONDS
+          )
+        .repartition(defaultPartitionParallelism)
     }
-    TimeSeriesRDD
-      .fromParquet(
-        sc,
-        s"file://$source"
-      )(
-          isSorted = sorted,
-          timeUnit = TimeUnit.NANOSECONDS
-        )
-      .repartition(defaultPartitionParallelism)
-  }
 
   /**
    * Parse a file as json.

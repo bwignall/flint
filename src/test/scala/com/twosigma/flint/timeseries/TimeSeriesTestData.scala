@@ -20,7 +20,12 @@ import com.twosigma.flint.rdd.{ CloseOpen, ParallelCollectionRDD }
 import org.apache.spark.{ Partition, SparkContext, TaskContext }
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.types.{ IntegerType, LongType, StructField, StructType }
+import org.apache.spark.sql.types.{
+  IntegerType,
+  LongType,
+  StructField,
+  StructType
+}
 import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
 import org.apache.spark.sql.functions.{ col, round }
@@ -40,47 +45,53 @@ private[flint] trait TimeSeriesTestData {
   import TimeSeriesTestData._
 
   protected lazy val testData: TimeSeriesRDD = {
-    val df = sqlContext.sparkContext.parallelize(
-      TestData(1000) ::
+    val df = sqlContext.sparkContext
+      .parallelize(
         TestData(1000) ::
-        TestData(1000) ::
-        TestData(2000) ::
-        TestData(2000) ::
-        TestData(3000) ::
-        TestData(3000) ::
-        TestData(3000) ::
-        TestData(3000) ::
-        TestData(3000) ::
-        TestData(4000) ::
-        TestData(5000) ::
-        TestData(5000) :: Nil
-    ).toDF()
+          TestData(1000) ::
+          TestData(1000) ::
+          TestData(2000) ::
+          TestData(2000) ::
+          TestData(3000) ::
+          TestData(3000) ::
+          TestData(3000) ::
+          TestData(3000) ::
+          TestData(3000) ::
+          TestData(4000) ::
+          TestData(5000) ::
+          TestData(5000) :: Nil
+      )
+      .toDF()
     TimeSeriesRDD.fromDF(df)(isSorted = true, timeUnit = NANOSECONDS)
   }
 
   protected lazy val forecastData: TimeSeriesRDD = {
-    val df = sqlContext.sparkContext.parallelize(
-      ForecastData(1000L, 7, Some(3.0)) ::
-        ForecastData(1000L, 3, Some(5.0)) ::
-        ForecastData(1050L, 3, Some(-1.5)) ::
-        ForecastData(1050L, 7, Some(2.0)) ::
-        ForecastData(1100L, 3, Some(-2.4)) ::
-        ForecastData(1100L, 7, Some(6.4)) ::
-        ForecastData(1150L, 3, Some(1.5)) ::
-        ForecastData(1150L, 7, Some(-7.9)) ::
-        ForecastData(1200L, 3, Some(4.6)) ::
-        ForecastData(1200L, 7, Some(1.4)) ::
-        ForecastData(1250L, 3, Some(-9.6)) ::
-        ForecastData(1250L, 7, Some(6.0)) :: Nil
-    ).toDF()
+    val df = sqlContext.sparkContext
+      .parallelize(
+        ForecastData(1000L, 7, Some(3.0)) ::
+          ForecastData(1000L, 3, Some(5.0)) ::
+          ForecastData(1050L, 3, Some(-1.5)) ::
+          ForecastData(1050L, 7, Some(2.0)) ::
+          ForecastData(1100L, 3, Some(-2.4)) ::
+          ForecastData(1100L, 7, Some(6.4)) ::
+          ForecastData(1150L, 3, Some(1.5)) ::
+          ForecastData(1150L, 7, Some(-7.9)) ::
+          ForecastData(1200L, 3, Some(4.6)) ::
+          ForecastData(1200L, 7, Some(1.4)) ::
+          ForecastData(1250L, 3, Some(-9.6)) ::
+          ForecastData(1250L, 7, Some(6.0)) :: Nil
+      )
+      .toDF()
 
     TimeSeriesRDD.fromDF(df)(isSorted = true, timeUnit = NANOSECONDS)
   }
 
   protected lazy val cycleMetaData1 = CycleMetaData(1000000L, 1000000L * 10)
   protected lazy val cycleMetaData2 = CycleMetaData(1000000L, 1000000L * 10)
-  protected lazy val cycleData1: TimeSeriesRDD = generateCycleData(0, cycleMetaData1)
-  protected lazy val cycleData2: TimeSeriesRDD = generateCycleData(1, cycleMetaData2)
+  protected lazy val cycleData1: TimeSeriesRDD =
+    generateCycleData(0, cycleMetaData1)
+  protected lazy val cycleData2: TimeSeriesRDD =
+    generateCycleData(1, cycleMetaData2)
 
   /**
    * Meta data for the generated cycle data. Metadata is used by test to decide arguments for various functions.
@@ -100,7 +111,10 @@ private[flint] trait TimeSeriesTestData {
    * ...
    *
    */
-  private def generateCycleData(salt: Long, metadata: CycleMetaData): TimeSeriesRDD = {
+  private def generateCycleData(
+    salt: Long,
+    metadata: CycleMetaData
+  ): TimeSeriesRDD = {
     val begin = 0L
     val numIntervals = 13
     val beginCycleOffset = 3
@@ -112,7 +126,8 @@ private[flint] trait TimeSeriesTestData {
     var df = new TimeSeriesGenerator(
       sqlContext.sparkContext,
       begin = begin,
-      end = numIntervals * cycleWidth, frequency = cycleWidth
+      end = numIntervals * cycleWidth,
+      frequency = cycleWidth
     )(
       columns = Seq(
         "v1" -> { (_: Long, _: Int, r: Random) => r.nextDouble() },
@@ -124,22 +139,34 @@ private[flint] trait TimeSeriesTestData {
       seed = seed + salt
     ).generate().toDF
 
-    df = df.withColumn("index", (df("time") / intervalWitdh).cast(IntegerType))
-      .withColumn("cycleOffset", (df("time") % intervalWitdh / cycleWidth).cast(IntegerType))
+    df = df
+      .withColumn("index", (df("time") / intervalWitdh).cast(IntegerType))
+      .withColumn(
+        "cycleOffset",
+        (df("time") % intervalWitdh / cycleWidth).cast(IntegerType)
+      )
       .where(col("cycleOffset") > beginCycleOffset)
       .where(col("cycleOffset") < endCycleOffset)
       .drop("cycleOffset")
 
     val rows = df.queryExecution.executedPlan.executeCollect().toSeq
     val indexColumn = df.schema.fieldIndex("index")
-    val groupedRows = rows.groupBy(_.getInt(indexColumn)).toSeq.sortBy(_._1).map(_._2)
+    val groupedRows =
+      rows.groupBy(_.getInt(indexColumn)).toSeq.sortBy(_._1).map(_._2)
 
-    val rdd = new ParallelCollectionRDD[InternalRow](sqlContext.sparkContext, groupedRows)
-    val ranges = df.select("index").distinct().collect().map(_.getInt(0)).sorted.map{
-      case index =>
-        CloseOpen(index * intervalWitdh, Some((index + 1) * intervalWitdh))
-    }
-    TimeSeriesRDD.fromDFWithRanges(DFConverter.toDataFrame(rdd, df.schema), ranges)
+    val rdd = new ParallelCollectionRDD[InternalRow](
+      sqlContext.sparkContext,
+      groupedRows
+    )
+    val ranges =
+      df.select("index").distinct().collect().map(_.getInt(0)).sorted.map {
+        case index =>
+          CloseOpen(index * intervalWitdh, Some((index + 1) * intervalWitdh))
+      }
+    TimeSeriesRDD.fromDFWithRanges(
+      DFConverter.toDataFrame(rdd, df.schema),
+      ranges
+    )
   }
 }
 

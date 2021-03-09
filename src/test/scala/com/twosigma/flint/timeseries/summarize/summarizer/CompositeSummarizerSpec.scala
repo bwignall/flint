@@ -16,25 +16,33 @@
 
 package com.twosigma.flint.timeseries.summarize.summarizer
 
-import com.twosigma.flint.timeseries.{ CSV, Summarizers, TimeSeriesRDD, TimeSeriesSuite }
+import com.twosigma.flint.timeseries.{
+  CSV,
+  Summarizers,
+  TimeSeriesRDD,
+  TimeSeriesSuite
+}
 import com.twosigma.flint.timeseries.row.Schema
 import com.twosigma.flint.timeseries.summarize.SummarizerSuite
 import org.apache.spark.sql.types.{ DoubleType, IntegerType, StructType }
 
 class CompositeSummarizerSpec extends SummarizerSuite {
   // Reuse mean summarizer data
-  override val defaultResourceDir: String = "/timeseries/summarize/summarizer/meansummarizer"
+  override val defaultResourceDir: String =
+    "/timeseries/summarize/summarizer/meansummarizer"
 
   var priceTSRdd: TimeSeriesRDD = _
 
   lazy val init: Unit = {
-    priceTSRdd = fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
+    priceTSRdd =
+      fromCSV("Price.csv", Schema("id" -> IntegerType, "price" -> DoubleType))
   }
 
   "CompositeSummarizer" should "compute `mean` and `stddev` correctly" in {
     init
     val result = priceTSRdd.summarize(
-      Summarizers.compose(Summarizers.mean("price"), Summarizers.stddev("price"))
+      Summarizers
+        .compose(Summarizers.mean("price"), Summarizers.stddev("price"))
     )
     val row = result.first()
 
@@ -45,14 +53,20 @@ class CompositeSummarizerSpec extends SummarizerSuite {
   it should "throw exception for conflicting output columns" in {
     init
     intercept[Exception] {
-      priceTSRdd.summarize(Summarizers.compose(Summarizers.mean("price"), Summarizers.mean("price")))
+      priceTSRdd.summarize(
+        Summarizers
+          .compose(Summarizers.mean("price"), Summarizers.mean("price"))
+      )
     }
   }
 
   it should "handle conflicting output columns using prefix" in {
     init
     val result = priceTSRdd.summarize(
-      Summarizers.compose(Summarizers.mean("price"), Summarizers.mean("price").prefix("prefix"))
+      Summarizers.compose(
+        Summarizers.mean("price"),
+        Summarizers.mean("price").prefix("prefix")
+      )
     )
 
     val row = result.first()
@@ -64,13 +78,15 @@ class CompositeSummarizerSpec extends SummarizerSuite {
   it should "handle null values" in {
     init
     val inputWithNull = insertNullRows(priceTSRdd, "price")
-    val row = inputWithNull.summarize(
-      Summarizers.compose(
-        Summarizers.count(),
-        Summarizers.count("id"),
-        Summarizers.count("price")
+    val row = inputWithNull
+      .summarize(
+        Summarizers.compose(
+          Summarizers.count(),
+          Summarizers.count("id"),
+          Summarizers.count("price")
+        )
       )
-    ).first()
+      .first()
 
     val count = priceTSRdd.count()
     assert(row.getAs[Long]("count") == 2 * count)

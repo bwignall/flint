@@ -40,7 +40,7 @@ object ArrowTestUtils {
     val columnCount = root.getSchema.getFields.size()
 
     val values = (0 until rowCount).map { i =>
-      (0 until columnCount).map{ j =>
+      (0 until columnCount).map { j =>
         vectors(j).getObject(i)
       }
     }

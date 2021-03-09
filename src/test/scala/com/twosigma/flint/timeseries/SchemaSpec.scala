@@ -22,26 +22,32 @@ import org.apache.spark.sql.types._
 
 class SchemaSpec extends FlatSpec {
   "Schema" should "create a schema correctly" in {
-    val schema = StructType(Array(
-      StructField("time", LongType),
-      StructField("price", DoubleType)
-    ))
+    val schema = StructType(
+      Array(
+        StructField("time", LongType),
+        StructField("price", DoubleType)
+      )
+    )
     assert(Schema("time" -> LongType, "price" -> DoubleType) == schema)
     assert(Schema("price" -> DoubleType) == schema)
   }
 
   it should "`of` correctly" in {
-    val schema = StructType(Array(
-      StructField("foo", LongType),
-      StructField("price", DoubleType)
-    ))
+    val schema = StructType(
+      Array(
+        StructField("foo", LongType),
+        StructField("price", DoubleType)
+      )
+    )
     assert(Schema.of("foo" -> LongType, "price" -> DoubleType) == schema)
   }
 
   it should "create a time schema correctly without specifying any column" in {
-    val schema = StructType(Array(
-      StructField("time", LongType)
-    ))
+    val schema = StructType(
+      Array(
+        StructField("time", LongType)
+      )
+    )
     assert(Schema() == schema)
   }
 
@@ -77,8 +83,15 @@ class SchemaSpec extends FlatSpec {
 
   it should "cast numeric columns" in {
     val currentSchema = Schema("foo" -> IntegerType, "bar" -> ShortType)
-    val newSchema = Schema.cast(currentSchema, "foo" -> DoubleType, "bar" -> IntegerType)
+    val newSchema =
+      Schema.cast(currentSchema, "foo" -> DoubleType, "bar" -> IntegerType)
 
-    assert(Schema.of("time" -> LongType, "foo" -> DoubleType, "bar" -> IntegerType) == newSchema)
+    assert(
+      Schema.of(
+        "time" -> LongType,
+        "foo" -> DoubleType,
+        "bar" -> IntegerType
+      ) == newSchema
+    )
   }
 }
