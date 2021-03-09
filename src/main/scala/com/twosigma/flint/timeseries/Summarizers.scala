@@ -34,7 +34,7 @@ object Summarizers {
     RowsSummarizerFactory(column)
 
   @PythonApi(until = "0.4.0")
-  @deprecated("Use arrow summarizer with includeBaseRows")
+  @deprecated("Use arrow summarizer with includeBaseRows", since = "???")
   private[timeseries] def arrow(columns: Seq[String]): SummarizerFactory =
     ArrowSummarizerFactory(columns, includeBaseRows = false)
 

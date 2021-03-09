@@ -63,7 +63,10 @@ protected[flint] object TreeAggregate {
       //       of times of shuffling in the while-loop later and the memory pressure for each
       //       executor to perform (sorted) reduce op.
       val scale =
-        math.max(math.ceil(math.pow(numPartitions, 1.0 / depth)).toInt, 2)
+        math.max(
+          math.ceil(math.pow(numPartitions.toDouble, 1.0 / depth)).toInt,
+          2
+        )
 
       // In RDD.treeAggregate(...), it will collect all U(s) (after the number of
       // partitions is sufficient small) back to driver to reduce wall-clock time.
