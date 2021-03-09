@@ -38,8 +38,12 @@ object Summarizers {
     ArrowSummarizerFactory(columns, false)
 
   @PythonApi
-  private[timeseries] def arrow(columns: Seq[String], includeBaseRows: Boolean): SummarizerFactory =
+  private[timeseries] def arrow(
+    columns: Seq[String],
+    includeBaseRows: Boolean
+  ): SummarizerFactory =
     ArrowSummarizerFactory(columns, includeBaseRows)
+
   /**
    * Counts the number of rows.
    *
@@ -297,7 +301,7 @@ object Summarizers {
    *   - "logLikelihood": [[DoubleType]], the log-likelihood of the data given the fitted betas.
    *   - "akaikeIC": [[DoubleType]], the Akaike information criterion.
    *   - "bayesIC": [[DoubleType]], the Bayes information criterion.
-   *   - "cond": [[DoubleType]], the condition number Gramian matrix, i.e. X^TX.
+   *   - "cond": [[DoubleType]], the condition number Gramian matrix, i.e. X.T X.
    *   - "const_columns": [[ArrayType]] of [[StringType]], the list of variables in `xColumns` that are constants.
    *
    *
@@ -328,15 +332,16 @@ object Summarizers {
     weightColumn: String = null,
     shouldIntercept: Boolean = true,
     shouldIgnoreConstants: Boolean = false,
-    constantErrorBound: Double = 1.0E-12
-  ): SummarizerFactory = OLSRegressionSummarizerFactory(
-    yColumn,
-    xColumns.toArray,
-    weightColumn,
-    shouldIntercept,
-    shouldIgnoreConstants,
-    constantErrorBound
-  )
+    constantErrorBound: Double = 1.0e-12
+  ): SummarizerFactory =
+    OLSRegressionSummarizerFactory(
+      yColumn,
+      xColumns.toArray,
+      weightColumn,
+      shouldIntercept,
+      shouldIgnoreConstants,
+      constantErrorBound
+    )
 
   @PythonApi(until = "0.2.5")
   private def OLSRegression(
@@ -360,13 +365,14 @@ object Summarizers {
     xColumns: Seq[String],
     weightColumn: String,
     shouldIntercept: Boolean
-  ): SummarizerFactory = OLSRegression(
-    yColumn = yColumn,
-    xColumns = xColumns,
-    weightColumn,
-    shouldIntercept = shouldIntercept,
-    shouldIgnoreConstants = false
-  )
+  ): SummarizerFactory =
+    OLSRegression(
+      yColumn = yColumn,
+      xColumns = xColumns,
+      weightColumn,
+      shouldIntercept = shouldIntercept,
+      shouldIgnoreConstants = false
+    )
 
   /**
    * Return a list of quantiles for a given list of quantile probabilities.

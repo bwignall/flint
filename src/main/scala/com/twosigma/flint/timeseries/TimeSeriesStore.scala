@@ -22,8 +22,15 @@ import org.apache.spark.{ Dependency, OneToOneDependency }
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.expressions.{ Ascending, AttributeReference, SortOrder }
-import org.apache.spark.sql.catalyst.plans.physical.{ ClusteredDistribution, OrderedDistribution }
+import org.apache.spark.sql.catalyst.expressions.{
+  Ascending,
+  AttributeReference,
+  SortOrder
+}
+import org.apache.spark.sql.catalyst.plans.physical.{
+  ClusteredDistribution,
+  OrderedDistribution
+}
 import org.apache.spark.sql.execution.SparkPlan
 import org.apache.spark.sql.types.{ LongType, StructType, TimestampType }
 import org.apache.spark.storage.StorageLevel
@@ -43,33 +50,38 @@ private[timeseries] object TimeSeriesStore {
    *                    the given DataFrame.
    * @return a [[TimeSeriesStore]].
    */
-  def apply(dataFrame: DataFrame, partInfoOpt: Option[PartitionInfo]): TimeSeriesStore = partInfoOpt match {
-    case Some(partInfo) =>
-      new NormalizedDataFrameStore(dataFrame, partInfo)
-    case None =>
-      val schema = dataFrame.schema
-      val internalRows = dataFrame.queryExecution.toRdd
-      val pairRdd = internalRows.mapPartitions { rows =>
-        val converter = TimeSeriesStore.getInternalRowConverter(schema, requireCopy = false)
-        rows.map(converter)
-      }
+  def apply(
+    dataFrame: DataFrame,
+    partInfoOpt: Option[PartitionInfo]
+  ): TimeSeriesStore =
+    partInfoOpt match {
+      case Some(partInfo) =>
+        new NormalizedDataFrameStore(dataFrame, partInfo)
+      case None =>
+        val schema = dataFrame.schema
+        val internalRows = dataFrame.queryExecution.toRdd
+        val pairRdd = internalRows.mapPartitions { rows =>
+          val converter =
+            TimeSeriesStore.getInternalRowConverter(schema, requireCopy = false)
+          rows.map(converter)
+        }
 
-      // Ideally, we may use dataFrame.select("time").queryExecution.toRdd to build the `keyRdd`.
-      // This may allow us push down column pruning and thus reduce IO. However, there is no guarantee that
-      // DataFrame.sort("time").select("time") preserves partitioning as DataFrame.sort("time").
-      // val keyRdd = internalRows.mapPartitions { rows => rows.map(_.getLong(timeColumnIndex)) }
-      val keyRdd = pairRdd.mapPartitions { tuples => tuples.map(_._1) }
+        // Ideally, we may use dataFrame.select("time").queryExecution.toRdd to build the `keyRdd`.
+        // This may allow us push down column pruning and thus reduce IO. However, there is no guarantee that
+        // DataFrame.sort("time").select("time") preserves partitioning as DataFrame.sort("time").
+        // val keyRdd = internalRows.mapPartitions { rows => rows.map(_.getLong(timeColumnIndex)) }
+        val keyRdd = pairRdd.mapPartitions { tuples => tuples.map(_._1) }
 
-      // The input DataFrame is sorted already, along with clustered distribution it's normalized
-      val isNormalized = isClustered(dataFrame.queryExecution.executedPlan)
+        // The input DataFrame is sorted already, along with clustered distribution it's normalized
+        val isNormalized = isClustered(dataFrame.queryExecution.executedPlan)
 
-      val orderedRdd = OrderedRDD.fromRDD(
-        pairRdd,
-        KeyPartitioningType(isSorted = true, isNormalized = isNormalized),
-        keyRdd
-      )
-      TimeSeriesStore(orderedRdd, schema)
-  }
+        val orderedRdd = OrderedRDD.fromRDD(
+          pairRdd,
+          KeyPartitioningType(isSorted = true, isNormalized = isNormalized),
+          keyRdd
+        )
+        TimeSeriesStore(orderedRdd, schema)
+    }
 
   /**
    * Convert an [[OrderedRDD]] to a [[TimeSeriesStore]].
@@ -78,7 +90,10 @@ private[timeseries] object TimeSeriesStore {
    * @param schema      Schema of this [[TimeSeriesStore]].
    * @return a [[TimeSeriesStore]].
    */
-  def apply(orderedRdd: OrderedRDD[Long, InternalRow], schema: StructType): TimeSeriesStore = {
+  def apply(
+    orderedRdd: OrderedRDD[Long, InternalRow],
+    schema: StructType
+  ): TimeSeriesStore = {
     val df = DFConverter.toDataFrame(orderedRdd, schema)
 
     require(
@@ -108,31 +123,38 @@ private[timeseries] object TimeSeriesStore {
     val timeColumnIndex = schema.fieldIndex(TimeSeriesRDD.timeColumnName)
     val timeType = TimeType(schema(timeColumnIndex).dataType)
 
-    if (requireCopy) {
-      (row: InternalRow) => (timeType.internalToNanos(row.getLong(timeColumnIndex)), row.copy())
-    } else {
-      (row: InternalRow) => (timeType.internalToNanos(row.getLong(timeColumnIndex)), row)
+    if (requireCopy) { (row: InternalRow) =>
+      (timeType.internalToNanos(row.getLong(timeColumnIndex)), row.copy())
+    } else { (row: InternalRow) =>
+      (timeType.internalToNanos(row.getLong(timeColumnIndex)), row)
     }
   }
 
   private def getTimeAttribute(executedPlan: SparkPlan): AttributeReference = {
-    val timeAttributes = executedPlan.output.collect {
-      case reference: AttributeReference => reference
-    }.filter(_.name == TimeSeriesRDD.timeColumnName)
+    val timeAttributes = executedPlan.output
+      .collect {
+        case reference: AttributeReference => reference
+      }
+      .filter(_.name == TimeSeriesRDD.timeColumnName)
 
-    require(timeAttributes.size == 1, s"Time attribute is not unique. $timeAttributes")
+    require(
+      timeAttributes.size == 1,
+      s"Time attribute is not unique. $timeAttributes"
+    )
 
     return timeAttributes.head
   }
 
   /**
    * Check whether output distribution says the DataFrame is sorted
-   * @param executedPlan
+   * @param executedPlan The executed plan
    * @return
    */
   private[timeseries] def isSorted(executedPlan: SparkPlan): Boolean = {
     val timeAttribute = getTimeAttribute(executedPlan)
-    val requiredDistribution = OrderedDistribution(Seq(SortOrder(timeAttribute, Ascending)))
+    val requiredDistribution = OrderedDistribution(
+      Seq(SortOrder(timeAttribute, Ascending))
+    )
     executedPlan.outputPartitioning.satisfies(requiredDistribution)
   }
 
@@ -152,6 +174,7 @@ private[timeseries] object TimeSeriesStore {
 }
 
 private[timeseries] sealed trait TimeSeriesStore extends Serializable {
+
   /**
    * Returns the schema of this [[TimeSeriesStore]].
    */
@@ -234,24 +257,31 @@ private[timeseries] class NormalizedDataFrameStore(
    */
   override val dataFrame: DataFrame = internalDf
 
-  override def orderedRdd: OrderedRDD[Long, InternalRow] = toOrderedRdd(requireCopy = true)
+  override def orderedRdd: OrderedRDD[Long, InternalRow] =
+    toOrderedRdd(requireCopy = true)
 
-  override def unsafeOrderedRdd: OrderedRDD[Long, InternalRow] = toOrderedRdd(requireCopy = false)
+  override def unsafeOrderedRdd: OrderedRDD[Long, InternalRow] =
+    toOrderedRdd(requireCopy = false)
 
   override def partInfo: Option[PartitionInfo] = Some(internalPartInfo)
 
   override def persist(): Unit = internalDf.persist()
 
-  override def persist(newLevel: StorageLevel): Unit = internalDf.persist(newLevel)
+  override def persist(newLevel: StorageLevel): Unit =
+    internalDf.persist(newLevel)
 
   override def cache(): Unit = internalDf.cache()
 
-  override def unpersist(blocking: Boolean): Unit = internalDf.unpersist(blocking)
+  override def unpersist(blocking: Boolean): Unit =
+    internalDf.unpersist(blocking)
 
-  private def toOrderedRdd(requireCopy: Boolean): OrderedRDD[Long, InternalRow] = {
+  private def toOrderedRdd(
+    requireCopy: Boolean
+  ): OrderedRDD[Long, InternalRow] = {
     val internalRows = newDf.queryExecution.toRdd
     val pairRdd = internalRows.mapPartitions { rows =>
-      val converter = TimeSeriesStore.getInternalRowConverter(schema, requireCopy)
+      val converter =
+        TimeSeriesStore.getInternalRowConverter(schema, requireCopy)
       rows.map(converter)
     }
 

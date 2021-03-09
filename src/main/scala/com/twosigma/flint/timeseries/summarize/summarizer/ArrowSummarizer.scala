@@ -16,10 +16,19 @@
 
 package com.twosigma.flint.timeseries.summarize.summarizer
 
-import com.twosigma.flint.rdd.function.summarize.summarizer.{ ArrowSummarizerResult, ArrowSummarizerState, ArrowSummarizer => ArrowSum }
+import com.twosigma.flint.rdd.function.summarize.summarizer.{
+  ArrowSummarizerResult,
+  ArrowSummarizerState,
+  ArrowSummarizer => ArrowSum
+}
 import com.twosigma.flint.timeseries.row.Schema
 import com.twosigma.flint.timeseries.summarize.ColumnList
-import com.twosigma.flint.timeseries.summarize.{ ColumnList, InputAlwaysValid, Summarizer, SummarizerFactory }
+import com.twosigma.flint.timeseries.summarize.{
+  ColumnList,
+  InputAlwaysValid,
+  Summarizer,
+  SummarizerFactory
+}
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.GenericInternalRow
 import org.apache.spark.sql.catalyst.util.GenericArrayData
@@ -33,9 +42,13 @@ object ArrowSummarizer {
 /**
  * Summarize columns into arrow batch.
  *
- * @param columns
+ * @param columns Columns to show
+ * @param includeBaseRows Whether or not to include base rows
  */
-case class ArrowSummarizerFactory(columns: Seq[String], includeBaseRows: Boolean) extends SummarizerFactory {
+case class ArrowSummarizerFactory(
+  columns: Seq[String],
+  includeBaseRows: Boolean
+) extends SummarizerFactory {
   override val requiredColumns: ColumnList =
     if (includeBaseRows) {
       ColumnList.All
@@ -44,8 +57,16 @@ case class ArrowSummarizerFactory(columns: Seq[String], includeBaseRows: Boolean
     }
 
   override def apply(inputSchema: StructType): ArrowSummarizer = {
-    val outputBatchSchema = StructType(columns.map(col => inputSchema(inputSchema.fieldIndex(col))))
-    ArrowSummarizer(inputSchema, outputBatchSchema, includeBaseRows, prefixOpt, requiredColumns)
+    val outputBatchSchema = StructType(
+      columns.map(col => inputSchema(inputSchema.fieldIndex(col)))
+    )
+    ArrowSummarizer(
+      inputSchema,
+      outputBatchSchema,
+      includeBaseRows,
+      prefixOpt,
+      requiredColumns
+    )
   }
 }
 
@@ -55,11 +76,13 @@ case class ArrowSummarizer(
   includeBaseRows: Boolean,
   override val prefixOpt: Option[String],
   requiredColumns: ColumnList
-) extends Summarizer with InputAlwaysValid {
+) extends Summarizer
+  with InputAlwaysValid {
   override type T = InternalRow
   override type U = ArrowSummarizerState
   override type V = ArrowSummarizerResult
-  override val summarizer = ArrowSum(inputSchema, outputBatchSchema, includeBaseRows)
+  override val summarizer =
+    ArrowSum(inputSchema, outputBatchSchema, includeBaseRows)
   override val schema: StructType =
     if (includeBaseRows) {
       Schema.of(

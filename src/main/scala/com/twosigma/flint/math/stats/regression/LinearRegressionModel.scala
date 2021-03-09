@@ -163,7 +163,8 @@ trait LinearRegression {
    *
    * @return the standard error of regression
    */
-  def estimateRegressionStandardError(): Double = Math.sqrt(estimateErrorVariance())
+  def estimateRegressionStandardError(): Double =
+    Math.sqrt(estimateErrorVariance())
 
   /**
    * Calculate the t stat of regression parameters.
@@ -203,26 +204,39 @@ trait LinearRegression {
  * @param input RDD of WeightedLabeledPoint.
  * @param intercept Whether to use intercept.
  * @param n The number of points.
- * @param xx The k-by-k matrix of X^TX.
- * @param xy The k-vector of X^Ty.
- * @param swx The k-vector of X^Tw.
+ * @param xx The k-by-k matrix of X.T X.
+ * @param xy The k-vector of X.T y.
+ * @param swx The k-vector of X.T w.
  * @param srwsl The square root weighted sum of labels.
  * @param ssrw The sum of square root of weights.
  * @param wsl The weighted sum of labels.
  * @param sw The sum of weights of WeightedLabeledPoint(s).
  * @param lw The sum of log weights of WeightedLabeledPoint(s).
  */
-case class LinearRegressionModel(input: RDD[WeightedLabeledPoint], intercept: Boolean, n: Long,
-  xx: DenseMatrix[Double], xy: DenseVector[Double], swx: DenseVector[Double], srwsl: Double,
-  ssrw: Double, wsl: Double, sw: Double, lw: Double) extends LinearRegression {
+case class LinearRegressionModel(
+  input: RDD[WeightedLabeledPoint],
+  intercept: Boolean,
+  n: Long,
+  xx: DenseMatrix[Double],
+  xy: DenseVector[Double],
+  swx: DenseVector[Double],
+  srwsl: Double,
+  ssrw: Double,
+  wsl: Double,
+  sw: Double,
+  lw: Double
+) extends LinearRegression {
 
   // Lazy variables will be calculated once only.
   protected lazy val beta: DenseVector[Double] = calculateBeta()
-  protected lazy val standardErrorOfBeta: DenseVector[Double] = calculateRegressionParametersStandardErrors()
-  protected lazy val varianceOfBeta: DenseMatrix[Double] = calculateBetaVariance()
+  protected lazy val standardErrorOfBeta: DenseVector[Double] =
+    calculateRegressionParametersStandardErrors()
+  protected lazy val varianceOfBeta: DenseMatrix[Double] =
+    calculateBetaVariance()
   protected lazy val varianceOfY: Double = calculateVarianceOfY()
   protected lazy val varianceOfError: Double = calculateErrorVariance()
-  protected lazy val (sumOfSquaredResidue, sumOfSquaredDeviationOfY) = calculateResidues(input, beta)
+  protected lazy val (sumOfSquaredResidue, sumOfSquaredDeviationOfY) =
+    calculateResidues(input, beta)
   protected lazy val (centeredTSS, uncenteredTSS) = calculateTSS(input)
   protected lazy val eigenvalues = eigSym.justEigenvalues(xx)
   protected lazy val hc0 = calculateHCRobustEstimator(input, xx, beta)
@@ -241,10 +255,12 @@ case class LinearRegressionModel(input: RDD[WeightedLabeledPoint], intercept: Bo
   def calculateUncenteredTSS(): Double = uncenteredTSS
   def calculateSumOfSquaredResidue(): Double = sumOfSquaredResidue
   def estimateRegressionParameters(): DenseVector[Double] = beta
-  def estimateRegressionParametersVariance(): DenseMatrix[Double] = varianceOfBeta
+  def estimateRegressionParametersVariance(): DenseMatrix[Double] =
+    varianceOfBeta
   def estimateRegressandVariance(): Double = varianceOfY
   def estimateErrorVariance(): Double = varianceOfError
-  def estimateRegressionParametersStandardErrors(): DenseVector[Double] = standardErrorOfBeta
+  def estimateRegressionParametersStandardErrors(): DenseVector[Double] =
+    standardErrorOfBeta
   def estimateLogLikelihood(): Double = logLikelihood
   def estimateAkaikeInformationCriterion(): Double = akaikeIC
   def estimateBayesianInformationCriterion(): Double = bayesIC
@@ -277,7 +293,8 @@ case class LinearRegressionModel(input: RDD[WeightedLabeledPoint], intercept: Bo
    *
    * @return the White's (1980) heteroskedasticity robust standard errors.
    */
-  def calculateStandardErrorsOfHC0(): DenseVector[Double] = diag(hc0).map(Math.sqrt _)
+  def calculateStandardErrorsOfHC0(): DenseVector[Double] =
+    diag(hc0).map(Math.sqrt _)
 
   /**
    * Calculate the MacKinnon and White's (1985) heteroskedasticity robust standard errors which
@@ -359,7 +376,10 @@ case class LinearRegressionModel(input: RDD[WeightedLabeledPoint], intercept: Bo
    * @param beta The estimate regression parameters.
    * @return a pair of the sum of squared residues and the sum of squared derivation of y.
    */
-  protected def calculateResidues(input: RDD[WeightedLabeledPoint], beta: DenseVector[Double]) = {
+  protected def calculateResidues(
+    input: RDD[WeightedLabeledPoint],
+    beta: DenseVector[Double]
+  ) = {
     // Materialize the lazy variable before RDD.map()
     val meanOfY = calculateMeanOfY()
     // 1. The sum of squared residues
@@ -373,8 +393,12 @@ case class LinearRegressionModel(input: RDD[WeightedLabeledPoint], intercept: Bo
         v.features.t * beta - v.label
       }
       val deviationOfY = w * v.label - meanOfY
-      (U._1 + residue * residue * v.weight, U._2 + deviationOfY * deviationOfY)
-    }, combOp = (U1, U2) => (U1._1 + U2._1, U1._2 + U2._2)
+      (
+        U._1 + residue * residue * v.weight,
+        U._2 + deviationOfY * deviationOfY
+      )
+    },
+      combOp = (U1, U2) => (U1._1 + U2._1, U1._2 + U2._2)
     )
   }
 
@@ -384,7 +408,9 @@ case class LinearRegressionModel(input: RDD[WeightedLabeledPoint], intercept: Bo
    * @param input The RDD of (label, weight, array of features) tuples.
    * @return the total (weighted) sum of squares centered (and uncentered) about the mean.
    */
-  protected def calculateTSS(input: RDD[WeightedLabeledPoint]): (Double, Double) = {
+  protected def calculateTSS(
+    input: RDD[WeightedLabeledPoint]
+  ): (Double, Double) = {
     // Materialize the lazy variable before RDD.map()
     val weightedMeanOfY = wsl / sw
     // 1. centeredTSS
@@ -393,7 +419,8 @@ case class LinearRegressionModel(input: RDD[WeightedLabeledPoint], intercept: Bo
       seqOp = (U, v) => {
       val c = v.label - weightedMeanOfY
       (U._1 + c * c * v.weight, U._2 + v.label * v.label * v.weight)
-    }, combOp = (U1, U2) => (U1._1 + U2._1, U1._2 + U2._2)
+    },
+      combOp = (U1, U2) => (U1._1 + U2._1, U1._2 + U2._2)
     )
   }
 
@@ -405,13 +432,14 @@ case class LinearRegressionModel(input: RDD[WeightedLabeledPoint], intercept: Bo
    * </pre>
    *
    * @param input The RDD of (label, weight, array of features) tuples.
-   * @param xx The k-by-k matrix of X^TX.
+   * @param xx The k-by-k matrix of X.T X.
    * @param beta The regression coefficients using.
    * @return the various heteroscedasticity-consistent robust estimator(s).
    */
   protected def calculateHCRobustEstimator(
     input: RDD[WeightedLabeledPoint],
-    xx: DenseMatrix[Double], beta: DenseVector[Double]
+    xx: DenseMatrix[Double],
+    beta: DenseVector[Double]
   ) = {
     val invXX = inv(xx)
     val k = getK
@@ -425,7 +453,8 @@ case class LinearRegressionModel(input: RDD[WeightedLabeledPoint], intercept: Bo
       }
       xe = xe :* v.weight
       U += xe.asDenseMatrix.t * xe.asDenseMatrix
-    }, combOp = (U1, U2) => { U1 += U2 }
+    },
+      combOp = (U1, U2) => { U1 += U2 }
     )
     invXX * sigma * invXX
   }
@@ -435,7 +464,8 @@ case class LinearRegressionModel(input: RDD[WeightedLabeledPoint], intercept: Bo
    *
    * @return the variance of y.
    */
-  protected def calculateVarianceOfY(): Double = sumOfSquaredDeviationOfY / (getN - 1)
+  protected def calculateVarianceOfY(): Double =
+    sumOfSquaredDeviationOfY / (getN - 1)
 
   /**
    * Calculates the variance of the error term.
@@ -446,7 +476,8 @@ case class LinearRegressionModel(input: RDD[WeightedLabeledPoint], intercept: Bo
    *
    * @return error variance estimate.
    */
-  protected def calculateErrorVariance(): Double = sumOfSquaredResidue / (getN - getK)
+  protected def calculateErrorVariance(): Double =
+    sumOfSquaredResidue / (getN - getK)
 
   /**
    * Calculates the standard error of regression parameters.
@@ -471,7 +502,9 @@ case class LinearRegressionModel(input: RDD[WeightedLabeledPoint], intercept: Bo
    * @return log-likelihood
    */
   protected def calculateLogLikelihood(): Double = {
-    -0.5 * getN * (math.log(sumOfSquaredResidue) + 1 + math.log(2.0 * math.Pi / getN)) + 0.5 * lw
+    -0.5 * getN * (math.log(sumOfSquaredResidue) + 1 + math.log(
+      2.0 * math.Pi / getN
+    )) + 0.5 * lw
   }
 
   /**
@@ -492,7 +525,8 @@ case class LinearRegressionModel(input: RDD[WeightedLabeledPoint], intercept: Bo
    *
    * @return Bayes information criterion
    */
-  def calculateBayesianInformationCriterion(): Double = -2.0 * logLikelihood + getK * math.log(getN.toDouble)
+  def calculateBayesianInformationCriterion(): Double =
+    -2.0 * logLikelihood + getK * math.log(getN.toDouble)
 
   /**
    * Calculates the Akaike information criterion of the linear model given the input data and assuming no prior is
@@ -512,8 +546,8 @@ case class LinearRegressionModel(input: RDD[WeightedLabeledPoint], intercept: Bo
    *
    * @return Akaike information criterion
    */
-  def calculateAkaikeInformationCriterion(): Double = -2.0 * logLikelihood + 2.0 * getK
+  def calculateAkaikeInformationCriterion(): Double =
+    -2.0 * logLikelihood + 2.0 * getK
 }
 
-object LinearRegressionModel {
-}
+object LinearRegressionModel {}
