@@ -233,7 +233,7 @@ private[flint] object PartitionStrategy {
         rows.groupBy(row => timeType.internalToNanos(row.getLong(timeIndex)))
 
       val count = groupedRows.size
-      val targetPartitionNumber = math.sqrt(count).toLong
+      val targetPartitionNumber = math.sqrt(count.toDouble).toLong
       val timestampsPerPartition = count / targetPartitionNumber
 
       val partitionedRows = groupedRows.grouped(timestampsPerPartition.toInt).toArray
@@ -267,7 +267,7 @@ private[flint] object PartitionStrategy {
       val rows = rdd.collect()
 
       val count = rows.length
-      val targetPartitionNumber = math.sqrt(count).toLong
+      val targetPartitionNumber = math.sqrt(count.toDouble).toLong
       val rowsPerPartition = count / targetPartitionNumber
 
       val partitionedRows = rows.grouped(rowsPerPartition.toInt).toArray
