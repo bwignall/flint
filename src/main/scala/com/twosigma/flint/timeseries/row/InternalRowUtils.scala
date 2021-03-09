@@ -152,7 +152,7 @@ private[timeseries] object InternalRowUtils {
     toDelete: Seq[String]
   ): (InternalRow => InternalRow, StructType) = {
     val fields = schema.zipWithIndex.filterNot {
-      case (field: StructField, i) => toDelete.contains(field.name)
+      case (field: StructField, _) => toDelete.contains(field.name)
     }
     val columns = fields.map {
       case (field, i) => (i, field.dataType)
@@ -166,7 +166,7 @@ private[timeseries] object InternalRowUtils {
     toSelect: Seq[String]
   ): (InternalRow => InternalRow, StructType) = {
     val fields = schema.zipWithIndex.filter {
-      case (field: StructField, i) => toSelect.contains(field.name)
+      case (field: StructField, _) => toSelect.contains(field.name)
     }
     val columns = fields.map {
       case (field, i) => (i, field.dataType)

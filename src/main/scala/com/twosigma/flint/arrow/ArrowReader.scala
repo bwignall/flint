@@ -402,7 +402,7 @@ object RowFieldWriter {
               unsafeRowWriter,
               valueVector.asInstanceOf[TimeStampSecVector]
             )
-          case (ArrowTimeUnit.SECOND, tz) =>
+          case (ArrowTimeUnit.SECOND, _) =>
             new TimestampSecTZRowFieldWriter(
               ordinal,
               unsafeRowWriter,
@@ -414,7 +414,7 @@ object RowFieldWriter {
               unsafeRowWriter,
               valueVector.asInstanceOf[TimeStampMilliVector]
             )
-          case (ArrowTimeUnit.MILLISECOND, tz) =>
+          case (ArrowTimeUnit.MILLISECOND, _) =>
             new TimestampMilliTZRowFieldWriter(
               ordinal,
               unsafeRowWriter,
@@ -426,7 +426,7 @@ object RowFieldWriter {
               unsafeRowWriter,
               valueVector.asInstanceOf[TimeStampMicroVector]
             )
-          case (ArrowTimeUnit.MICROSECOND, tz) =>
+          case (ArrowTimeUnit.MICROSECOND, _) =>
             new TimestampMicroTZRowFieldWriter(
               ordinal,
               unsafeRowWriter,
@@ -438,7 +438,7 @@ object RowFieldWriter {
               unsafeRowWriter,
               valueVector.asInstanceOf[TimeStampNanoVector]
             )
-          case (ArrowTimeUnit.NANOSECOND, tz) =>
+          case (ArrowTimeUnit.NANOSECOND, _) =>
             new TimestampNanoTZRowFieldWriter(
               ordinal,
               unsafeRowWriter,

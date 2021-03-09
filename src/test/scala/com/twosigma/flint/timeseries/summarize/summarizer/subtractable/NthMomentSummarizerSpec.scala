@@ -247,7 +247,7 @@ class NthMomentSummarizerSpec extends SummarizerSuite {
       ids = Seq(1),
       ratioOfCycleSize = 1.0,
       columns = Seq(
-        "x" -> { (_: Long, _: Int, rand: util.Random) =>
+        "x" -> { (_: Long, _: Int, _: util.Random) =>
           1.0
         }
       ),

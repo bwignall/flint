@@ -164,7 +164,7 @@ object Conversion {
       .map(_.swap)
 
     val rangeSplits = indexMapping.map {
-      case (idx, (parentIdx, begin)) =>
+      case (idx, (_, begin)) =>
         val end = indexMapping.get(idx + 1).flatMap {
           case (idx2, _) => partitionToFirstKey.get(idx2)
         }
@@ -345,8 +345,8 @@ object Conversion {
 
     // It is cleaner to create the dependency map instead of put the old dependencies object inside the new one.
     val newDep = narrowDep match {
-      case d: OneToOneDependency[_] => new OneToOneDependency(rdd)
-      case d: NarrowDependency[_] =>
+      case _: OneToOneDependency[_] => new OneToOneDependency(rdd)
+      case _: NarrowDependency[_] =>
         new NarrowDependency(rdd) {
           override def getParents(partitionId: Int): Seq[Int] =
             indexToParentPartIndices(partitionId)

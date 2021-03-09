@@ -97,7 +97,7 @@ private[flint] object PartitionStrategy {
       val rowGroupArray = rowGroupMap.values.toArray
 
       val rangeSplits = rowGroupMap.zipWithIndex.map {
-        case ((time: Long, rows), index) =>
+        case ((time: Long, _), index) =>
           RangeSplit(
             OrderedRDDPartition(index),
             CloseOpen(time, Some(expandEnd(time)))
@@ -108,7 +108,7 @@ private[flint] object PartitionStrategy {
         rdd.orderedRdd.sparkContext,
         rangeSplits,
         Nil
-      )((part, context) =>
+      )((part, _) =>
         rowGroupArray(part.index).map { row =>
           (timeType.internalToNanos(row.getLong(timeIndex)), row)
         }.toIterator)
@@ -159,7 +159,7 @@ private[flint] object PartitionStrategy {
       val indexToNeighbourRanges = getIndexToNeighbourRanges(rdd)
 
       val newPartInfo = withRangeChange(rdd.partInfo) {
-        case (index, range) =>
+        case (index, _) =>
           val neighourRanges = indexToNeighbourRanges(index)
           neighourRanges match {
             case Seq(null, current, _) =>
@@ -185,12 +185,12 @@ private[flint] object PartitionStrategy {
       val indexToNeighbourRanges = getIndexToNeighbourRanges(rdd)
 
       val newPartInfo = withRangeChange(rdd.partInfo) {
-        case (index, range) =>
+        case (index, _) =>
           val neighourRanges = indexToNeighbourRanges(index)
           neighourRanges match {
-            case Seq(previous, current, null) =>
+            case Seq(_, current, null) =>
               CloseOpen(current.begin, None)
-            case Seq(previous, current, next) =>
+            case Seq(_, current, next) =>
               CloseOpen(current.begin, Some(next.begin))
           }
       }
@@ -215,11 +215,11 @@ private[flint] object PartitionStrategy {
       }
 
       val newPartInfo = withRangeChange(rdd.partInfo) {
-        case (index, range) =>
+        case (index, _) =>
           val neighbourRanges = indexToNeighbourRanges(index)
 
           neighbourRanges match {
-            case Seq(null, current, null) =>
+            case Seq(null, _, null) =>
               CloseOpen(Long.MinValue, None)
             case Seq(null, current, next) =>
               CloseOpen(Long.MinValue, Some(middle(current, next)))
@@ -273,7 +273,7 @@ private[flint] object PartitionStrategy {
         rdd.orderedRdd.sparkContext,
         rangeSplits,
         Nil
-      )((part, context) =>
+      )((part, _) =>
         partitionedRows(part.index).toArray.flatMap {
           case (time, rs) =>
             rs.map((time, _))
