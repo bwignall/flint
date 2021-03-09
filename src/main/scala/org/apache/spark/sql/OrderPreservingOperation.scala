@@ -75,7 +75,7 @@ object OrderPreservingOperation {
       // the two tree should equal. If this assumption is violated, we throw an exception.
       assert(
         childrenEqual,
-        s"Root node equals but tree don't equal. plan1: ${plan1}, plan2: ${plan2}"
+        s"Root node equals but tree don't equal. plan1: $plan1, plan2: $plan2"
       )
       childrenEqual
     } else {

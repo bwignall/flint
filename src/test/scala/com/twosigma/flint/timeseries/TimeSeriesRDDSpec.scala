@@ -1048,7 +1048,7 @@ class TimeSeriesRDDSpec extends TimeSeriesSuite with TimeTypeSuite {
   it should "`addWindows` correctly with secondary key" in {
     val lookback = 99
     val windowLength = s"${lookback}s"
-    val windowColumnName = s"window_past_${windowLength}"
+    val windowColumnName = s"window_past_$windowLength"
 
     val resultWindows = forecastTSRdd
       .addWindows(

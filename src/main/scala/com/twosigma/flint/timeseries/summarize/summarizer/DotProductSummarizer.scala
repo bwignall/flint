@@ -49,7 +49,7 @@ class DotProductSummarizer(
     asDoubleExtractor(inputSchema(columnXIndex).dataType, columnXIndex)
   private final val columnYExtractor =
     asDoubleExtractor(inputSchema(columnYIndex).dataType, columnYIndex)
-  private val columnPrefix = s"${columnX}_${columnY}"
+  private val columnPrefix = s"${columnX}_$columnY"
 
   override type T = (Double, Double)
   override type U = Kahan

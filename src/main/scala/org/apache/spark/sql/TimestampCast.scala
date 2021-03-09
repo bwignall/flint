@@ -91,7 +91,7 @@ trait TimestampCast extends UnaryExpression with NullIntolerant {
       CodeGenerator
         .defaultValue(resultType)
     };
-      if (!${childNull}) {
+      if (!$childNull) {
         $resultPrim = (long) ${cast(childPrim)};
       }
     """

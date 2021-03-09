@@ -119,7 +119,7 @@ object Intervalize {
       require(
         ord.lt(clock(i), clock(i + 1)),
         s"Invalid interval. clock[n] must < clock[n + 1] for all n. " +
-          s"n: ${i} clock[n]: ${clock(i)} clock[n + 1]: ${clock(i + 1)}"
+          s"n: $i clock[n]: ${clock(i)} clock[n + 1]: ${clock(i + 1)}"
       )
       i += 1
     }

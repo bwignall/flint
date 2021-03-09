@@ -28,14 +28,10 @@ package object summarize {
     columnIndex: Int
   ): InternalRow => Double =
     dataType match {
-      case DoubleType => { row: InternalRow => row.getDouble(columnIndex) }
-      case LongType => { row: InternalRow => row.getLong(columnIndex).toDouble }
-      case IntegerType => { row: InternalRow =>
-        row.getInt(columnIndex).toDouble
-      }
-      case FloatType => { row: InternalRow =>
-        row.getFloat(columnIndex).toDouble
-      }
+      case DoubleType => row: InternalRow => row.getDouble(columnIndex)
+      case LongType => row: InternalRow => row.getLong(columnIndex).toDouble
+      case IntegerType => row: InternalRow => row.getInt(columnIndex).toDouble
+      case FloatType => row: InternalRow => row.getFloat(columnIndex).toDouble
       case _ =>
         throw new IllegalArgumentException(
           s"Cannot cast $dataType to DoubleType"

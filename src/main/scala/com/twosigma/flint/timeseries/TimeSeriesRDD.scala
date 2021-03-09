@@ -276,7 +276,7 @@ object TimeSeriesRDD {
         }
       case t =>
         throw new IllegalArgumentException(
-          s"Unsupported data type for time column: ${t}. " +
+          s"Unsupported data type for time column: $t. " +
             s"Only TimestampType and LongType are supported."
         )
     }

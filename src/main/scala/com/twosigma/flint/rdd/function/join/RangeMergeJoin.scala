@@ -132,7 +132,7 @@ protected[flint] object RangeMergeJoin {
       val toleranceBegin = toleranceFn(left.range.begin)
       require(
         ord.gteq(left.range.begin, toleranceBegin),
-        s"It should be a look-back tolerance. ${left.range.begin}, ${toleranceBegin}"
+        s"It should be a look-back tolerance. ${left.range.begin}, $toleranceBegin"
       )
       (
         left,

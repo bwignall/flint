@@ -60,7 +60,7 @@ object TimeType {
       case "timestamp" => TimestampType
       case _ =>
         throw new IllegalAccessException(
-          s"Unsupported time type: ${timeType}. " +
+          s"Unsupported time type: $timeType. " +
             s"Only `long` and `timestamp` are supported."
         )
     }
@@ -71,7 +71,7 @@ object TimeType {
       case types.LongType => LongType
       case types.TimestampType => TimestampType
       case _ =>
-        throw new IllegalArgumentException(s"Unsupported time type: ${sqlType}")
+        throw new IllegalArgumentException(s"Unsupported time type: $sqlType")
     }
   }
 

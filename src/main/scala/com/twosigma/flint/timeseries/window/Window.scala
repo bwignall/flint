@@ -82,5 +82,5 @@ case class AbsoluteTimeWindow(
 ) extends ShiftTimeWindow {
   def length(t: Long): Long = length
 
-  override def toString: String = s"${this.getClass.getSimpleName}(${name})"
+  override def toString: String = s"${this.getClass.getSimpleName}($name)"
 }

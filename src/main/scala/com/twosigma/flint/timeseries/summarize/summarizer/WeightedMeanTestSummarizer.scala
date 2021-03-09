@@ -50,7 +50,7 @@ case class WeightedMeanTestSummarizer(
     inputSchema(weightColumnIndex).dataType,
     weightColumnIndex
   )
-  private val columnPrefix = s"${valueColumn}_${weightColumn}"
+  private val columnPrefix = s"${valueColumn}_$weightColumn"
 
   override type T = (Double, Double)
   override type U = WeightedMeanTestState

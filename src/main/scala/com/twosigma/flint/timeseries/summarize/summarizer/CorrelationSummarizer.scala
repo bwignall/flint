@@ -46,7 +46,7 @@ abstract class AbstractCorrelationSummarizer(
     asDoubleExtractor(inputSchema(columnXIndex).dataType, columnXIndex)
   protected final val yExtractor =
     asDoubleExtractor(inputSchema(columnYIndex).dataType, columnYIndex)
-  protected val columnPrefix = s"${columnX}_${columnY}"
+  protected val columnPrefix = s"${columnX}_$columnY"
   override final type T = (Double, Double)
   override final type U = CorrelationState
   override final type V = CorrelationOutput
