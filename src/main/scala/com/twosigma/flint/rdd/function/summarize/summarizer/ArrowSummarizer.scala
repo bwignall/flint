@@ -16,25 +16,16 @@
 
 package com.twosigma.flint.rdd.function.summarize.summarizer
 
-import java.io.ByteArrayOutputStream
-import java.nio.channels.Channels
-import java.util
-
-import com.twosigma.flint.arrow.{
-  ArrowFieldWriter,
-  ArrowPayload,
-  ArrowUtils,
-  ArrowWriter
-}
+import com.twosigma.flint.arrow.{ ArrowUtils, ArrowWriter }
 import org.apache.arrow.memory.{ BufferAllocator, RootAllocator }
 import org.apache.arrow.vector.VectorSchemaRoot
 import org.apache.arrow.vector.ipc.ArrowFileWriter
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.expressions.GenericInternalRow
-import org.apache.spark.sql.catalyst.util.GenericArrayData
 import org.apache.spark.sql.types.StructType
 
-import scala.collection.JavaConverters._
+import java.io.ByteArrayOutputStream
+import java.nio.channels.Channels
+import java.util
 
 /**
  * State is NOT serializable. This summarizer is not a distributed summarizer.
