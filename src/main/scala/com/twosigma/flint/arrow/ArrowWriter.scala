@@ -53,7 +53,7 @@ object ArrowWriter {
     val inputIndices =
       outputSchema.map(f => inputSchema.fieldIndex(f.name)).toArray
 
-    val children = root.getFieldVectors().asScala.map { vector =>
+    val children = root.getFieldVectors.asScala.map { vector =>
       vector.allocateNew()
       createFieldWriter(vector)
     }
@@ -69,7 +69,7 @@ object ArrowWriter {
   }
 
   private def createFieldWriter(vector: ValueVector): ArrowFieldWriter = {
-    val field = vector.getField()
+    val field = vector.getField
     (ArrowUtils.fromArrowField(field), vector) match {
       case (BooleanType, vector: BitVector) => new BooleanWriter(vector)
       case (ByteType, vector: TinyIntVector) => new ByteWriter(vector)
@@ -85,7 +85,7 @@ object ArrowWriter {
         new TimestampWriter(vector)
 
       case (ArrayType(_, _), vector: ListVector) =>
-        val elementVector = createFieldWriter(vector.getDataVector())
+        val elementVector = createFieldWriter(vector.getDataVector)
         new ArrayWriter(vector, elementVector)
       case (StructType(_), vector: StructVector) =>
         val children = (0 until vector.size()).map { ordinal =>
@@ -139,9 +139,9 @@ abstract class ArrowFieldWriter {
 
   def valueVector: ValueVector
 
-  def name: String = valueVector.getField().getName()
-  def dataType: DataType = ArrowUtils.fromArrowField(valueVector.getField())
-  def nullable: Boolean = valueVector.getField().isNullable()
+  def name: String = valueVector.getField.getName
+  def dataType: DataType = ArrowUtils.fromArrowField(valueVector.getField)
+  def nullable: Boolean = valueVector.getField.isNullable
 
   def setNull(): Unit
   def setValue(input: SpecializedGetters, ordinal: Int): Unit

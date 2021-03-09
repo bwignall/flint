@@ -22,6 +22,6 @@ import com.twosigma.flint.timeseries.summarize.SummarizerSuite
 class CountSummarizerSpec extends SummarizerSuite {
 
   "CountSummarizer" should "pass summarizer property test" in {
-    summarizerPropertyTest(AllPropertiesAndSubtractable)(Summarizers.count)
+    summarizerPropertyTest(AllPropertiesAndSubtractable)(Summarizers.count())
   }
 }

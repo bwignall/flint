@@ -44,7 +44,7 @@ class WeightedMeanTestSummarizerSpec extends SummarizerSuite {
     init
     val result = joinedRdd
       .summarize(Summarizers.weightedMeanTest("price", "forecast"))
-      .first
+      .first()
 
     assert(
       result
@@ -67,7 +67,7 @@ class WeightedMeanTestSummarizerSpec extends SummarizerSuite {
     val lastWindowRdd = joinedRdd.deleteRows(r => r.getAs[Long]("time") < 1150L)
     val expectedResult = lastWindowRdd
       .summarize(Summarizers.weightedMeanTest("price", "forecast"))
-      .first
+      .first()
     val results = joinedRdd
       .summarizeWindows(
         Windows.pastAbsoluteTime("100 ns"),

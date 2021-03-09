@@ -302,7 +302,7 @@ class ArrowBackendUnsafeRowIterator(
       i += 1
     }
     rowIndex += 1
-    unsafeRowWriter.getRow()
+    unsafeRowWriter.getRow
   }
 
   override def close(): Unit = root.close()
@@ -349,13 +349,13 @@ object RowFieldWriter {
           valueVector.asInstanceOf[BigIntVector]
         )
 
-      case float: ArrowType.FloatingPoint if float.getPrecision() == FloatingPointPrecision.SINGLE =>
+      case float: ArrowType.FloatingPoint if float.getPrecision == FloatingPointPrecision.SINGLE =>
         new FloatRowFieldWriter(
           ordinal,
           unsafeRowWriter,
           valueVector.asInstanceOf[Float4Vector]
         )
-      case float: ArrowType.FloatingPoint if float.getPrecision() == FloatingPointPrecision.DOUBLE =>
+      case float: ArrowType.FloatingPoint if float.getPrecision == FloatingPointPrecision.DOUBLE =>
         new DoubleRowFieldWriter(
           ordinal,
           unsafeRowWriter,

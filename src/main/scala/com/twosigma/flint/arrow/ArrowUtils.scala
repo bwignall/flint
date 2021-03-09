@@ -67,9 +67,9 @@ object ArrowUtils {
         IntegerType
       case int: ArrowType.Int if int.getIsSigned && int.getBitWidth == 8 * 8 =>
         LongType
-      case float: ArrowType.FloatingPoint if float.getPrecision() == FloatingPointPrecision.SINGLE =>
+      case float: ArrowType.FloatingPoint if float.getPrecision == FloatingPointPrecision.SINGLE =>
         FloatType
-      case float: ArrowType.FloatingPoint if float.getPrecision() == FloatingPointPrecision.DOUBLE =>
+      case float: ArrowType.FloatingPoint if float.getPrecision == FloatingPointPrecision.DOUBLE =>
         DoubleType
       case ArrowType.Utf8.INSTANCE => StringType
       case ArrowType.Binary.INSTANCE => BinaryType
@@ -110,11 +110,11 @@ object ArrowUtils {
   def fromArrowField(field: Field): DataType = {
     field.getType match {
       case ArrowType.List.INSTANCE =>
-        val elementField = field.getChildren().get(0)
+        val elementField = field.getChildren.get(0)
         val elementType = fromArrowField(elementField)
         ArrayType(elementType, containsNull = elementField.isNullable)
       case ArrowType.Struct.INSTANCE =>
-        val fields = field.getChildren().asScala.map { child =>
+        val fields = field.getChildren.asScala.map { child =>
           val dt = fromArrowField(child)
           StructField(child.getName, dt, child.isNullable)
         }

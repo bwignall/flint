@@ -49,7 +49,7 @@ private[flint] sealed trait PartitionStrategy {
       override def repartition(rdd: TimeSeriesRDD): TimeSeriesRDD =
         self.repartition(other.repartition(rdd))
 
-      override def toString() = {
+      override def toString = {
         s"${other.toString} :: ${self.toString}"
       }
     }

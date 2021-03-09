@@ -53,15 +53,15 @@ protected[flint] class SequentialArrayQueue[@specialized(Double) T: ClassTag]
     val newCapacity = values.length << 1
     require(newCapacity > 0)
     val newValues = new Array[T](newCapacity)
-    System.arraycopy(values, begin, newValues, 0, size)
-    end = size
+    System.arraycopy(values, begin, newValues, 0, size())
+    end = size()
     begin = 0
     values = newValues
   }
 
   private def shift(): Unit = {
-    System.arraycopy(values, begin, values, 0, size)
-    end = size
+    System.arraycopy(values, begin, values, 0, size())
+    end = size()
     begin = 0
   }
 
@@ -79,8 +79,8 @@ protected[flint] class SequentialArrayQueue[@specialized(Double) T: ClassTag]
     }
     require(newCapacity > 0)
     val newValues = new Array[T](newCapacity)
-    System.arraycopy(values, begin, newValues, 0, size)
-    System.arraycopy(otherValues, otherBegin, newValues, size, other.size)
+    System.arraycopy(values, begin, newValues, 0, size())
+    System.arraycopy(otherValues, otherBegin, newValues, size(), other.size())
     end = newSize
     begin = 0
     values = newValues
@@ -122,7 +122,7 @@ case class QuantileSummarizer(
     val percentileEstimator =
       new Percentile().withEstimationType(Percentile.EstimationType.R_7)
     val (begin, end, values) = u.view()
-    percentileEstimator.setData(values, begin, u.size)
+    percentileEstimator.setData(values, begin, u.size())
     // Convert scale from (0.0, 1.0] to (0.0, 100.0]
     p.map { x =>
       percentileEstimator.evaluate(x * 100.0)

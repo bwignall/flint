@@ -133,7 +133,8 @@ object Summarizations {
         scanLeft(iter, MHashMap.empty ++ prefixes(idx)) {
           case (uPerSK: MMap[SK, U], (k, v)) =>
             val sk = skFn(v)
-            val added = summarizer.add(uPerSK.getOrElse(sk, summarizer.zero), v)
+            val added =
+              summarizer.add(uPerSK.getOrElse(sk, summarizer.zero()), v)
             (uPerSK += sk -> added, summarizer.render(added))
         }
     }

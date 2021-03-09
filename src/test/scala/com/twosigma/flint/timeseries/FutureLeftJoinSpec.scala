@@ -56,7 +56,7 @@ class FutureLeftJoinSpec
 
   "FutureLeftJoin" should "join on time" in {
     withAllTimeType {
-      init
+      init()
       val resultsTSRdd = fromCSV(
         "JoinOnTime.results",
         Schema("id" -> IntegerType, "price" -> DoubleType, "volume" -> LongType)
@@ -76,7 +76,7 @@ class FutureLeftJoinSpec
 
   it should "join on time and key" in {
     withAllTimeType {
-      init
+      init()
       val resultsTSRdd = fromCSV(
         "JoinOnTimeAndKey.results",
         Schema("id" -> IntegerType, "price" -> DoubleType, "volume" -> LongType)
@@ -97,7 +97,7 @@ class FutureLeftJoinSpec
 
   it should "join on time and key with strictLookahead" in {
     withAllTimeType {
-      init
+      init()
       val resultsTSRdd = fromCSV(
         "JoinOnTimeStrictLookahead.results",
         Schema("id" -> IntegerType, "price" -> DoubleType, "volume" -> LongType)
@@ -119,7 +119,7 @@ class FutureLeftJoinSpec
 
   it should "join on time and key with right table shifted" in {
     withAllTimeType {
-      init
+      init()
       val resultsTSRdd = fromCSV(
         "JoinOnTimeRightShifted.results",
         Schema("id" -> IntegerType, "price" -> DoubleType, "volume" -> LongType)
@@ -140,7 +140,7 @@ class FutureLeftJoinSpec
 
   it should "join on time and key with column filtered" in {
     withAllTimeType {
-      init
+      init()
       val resultsTSRdd = fromCSV(
         "JoinOnTimeAndKeyColumnFiltered.results",
         Schema("id" -> IntegerType, "price" -> DoubleType, "volume" -> LongType)
@@ -161,7 +161,7 @@ class FutureLeftJoinSpec
 
   it should "join on time and key with row filtered" in {
     withAllTimeType {
-      init
+      init()
       val resultsTSRdd = fromCSV(
         "JoinOnTimeAndKeyRowFiltered.results",
         Schema("id" -> IntegerType, "price" -> DoubleType, "volume" -> LongType)
@@ -183,7 +183,7 @@ class FutureLeftJoinSpec
 
   it should "pass `JoinOnTimeAndMultipleKeys` test." in {
     withAllTimeType {
-      init
+      init()
       val resultsTSRdd = fromCSV(
         "JoinOnTimeAndMultipleKeys.results",
         Schema(
