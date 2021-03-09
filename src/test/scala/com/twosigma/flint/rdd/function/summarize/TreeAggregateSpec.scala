@@ -22,7 +22,7 @@ import org.scalatest.tagobjects.Slow
 
 class TreeAggregateSpec extends FlatSpec with SharedSparkContext {
 
-  "TreeAggregate" should "aggregate as RDD.aggregate in order for max op" taggedAs (Slow) in {
+  "TreeAggregate" should "aggregate as RDD.aggregate in order for max op" taggedAs Slow in {
     val numOfPartitions = 1001
     val scale = 5
     val maxDepth = 5
@@ -57,7 +57,7 @@ class TreeAggregateSpec extends FlatSpec with SharedSparkContext {
     }
   }
 
-  it should "aggregate as RDD.aggregate in order for string concat" taggedAs (Slow) in {
+  it should "aggregate as RDD.aggregate in order for string concat" taggedAs Slow in {
     val numOfPartitions = 1001
     val scale = 5
     val maxDepth = 5
@@ -78,7 +78,7 @@ class TreeAggregateSpec extends FlatSpec with SharedSparkContext {
     }
   }
 
-  it should "aggregate as RDD.aggregate in order for sum" taggedAs (Slow) in {
+  it should "aggregate as RDD.aggregate in order for sum" taggedAs Slow in {
     val numOfPartitions = 1001
     val scale = 5
     val maxDepth = 5

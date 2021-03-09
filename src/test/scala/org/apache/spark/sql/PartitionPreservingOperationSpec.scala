@@ -25,7 +25,7 @@ class PartitionPreservingOperationSpec extends FlintSuite with FlintTestData {
   import PartitionPreservingOperation._
 
   def assertPartitionPreserving(
-    op: (DataFrame) => DataFrame,
+    op: DataFrame => DataFrame,
     expected: Boolean
   ): Unit = {
     assert(isPartitionPreserving(testData, op(testData)) == expected)

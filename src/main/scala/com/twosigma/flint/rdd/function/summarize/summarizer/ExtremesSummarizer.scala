@@ -46,7 +46,7 @@ case class ExtremesSummarizer[T](
     u1: PriorityQueue[T],
     u2: PriorityQueue[T]
   ): PriorityQueue[T] = {
-    val u = (u1 ++ u2)
+    val u = u1 ++ u2
     // If there are more than n items after merge, keep the top k items
     while (u.size > k) {
       u.dequeue()

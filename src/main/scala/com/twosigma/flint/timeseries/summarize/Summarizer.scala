@@ -117,7 +117,7 @@ trait SummarizerFactory {
    * @return a new [[SummarizerFactory]] that will be applied only to filtered rows.
    */
   def where[A1: TypeTag](
-    f: (A1) => Boolean
+    f: A1 => Boolean
   )(columns: String*): SummarizerFactory = {
     require(columns.size == 1)
     val inputTypes =

@@ -22,7 +22,7 @@ import org.scalatest.tagobjects.Slow
 
 class TreeReduceSpec extends FlatSpec with SharedSparkContext {
 
-  "TreeReduce" should "reduce in order for max op" taggedAs (Slow) in {
+  "TreeReduce" should "reduce in order for max op" taggedAs Slow in {
     val numOfPartitions = 1023
     val scale = 5
     val maxDepth = 5
@@ -48,7 +48,7 @@ class TreeReduceSpec extends FlatSpec with SharedSparkContext {
     }
   }
 
-  it should "reduce in order for string concat" taggedAs (Slow) in {
+  it should "reduce in order for string concat" taggedAs Slow in {
     val numOfPartitions = 1111
     val scale = 5
     val maxDepth = 5
@@ -66,7 +66,7 @@ class TreeReduceSpec extends FlatSpec with SharedSparkContext {
     }
   }
 
-  it should "reduce in order for sum op" taggedAs (Slow) in {
+  it should "reduce in order for sum op" taggedAs Slow in {
     val numOfPartitions = 1023
     val scale = 5
     val maxDepth = 5

@@ -45,7 +45,7 @@ object Clock {
     begin: Long,
     end: Long,
     frequency: Long,
-    nextTick: (Long) => Long,
+    nextTick: Long => Long,
     endInclusive: Boolean
   ): Stream[Long] = {
     def loop(t: Long): Stream[Long] = t #:: loop(nextTick(t))
@@ -212,7 +212,7 @@ class RandomClock(
   private val rand = new Random(seed)
 
   override def nextTick(t: Long): Long = {
-    val rawTick = (t + Math.abs(rand.nextLong()) % frequency + 1L)
+    val rawTick = t + Math.abs(rand.nextLong()) % frequency + 1L
     val tick = rawTick - rawTick % 1000 + 1000
     tick
   }

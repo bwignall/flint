@@ -1526,7 +1526,7 @@ class TimeSeriesRDDSpec extends TimeSeriesSuite with TimeTypeSuite {
   }
 
   // This test is temporarily tagged as "Slow" so that scalatest runner could exclude this test optionally.
-  it should "read parquet files" taggedAs (Slow) in {
+  it should "read parquet files" taggedAs Slow in {
     withResource("/timeseries/parquet/PriceWithHeader.parquet") { source =>
       val expectedSchema =
         Schema("id" -> IntegerType, "price" -> DoubleType, "info" -> StringType)
@@ -1544,7 +1544,7 @@ class TimeSeriesRDDSpec extends TimeSeriesSuite with TimeTypeSuite {
   }
 
   // This test is temporarily tagged as "Slow" so that scalatest runner could exclude this test optionally.
-  it should "not modify original rows during conversions/modifications" taggedAs (Slow) in {
+  it should "not modify original rows during conversions/modifications" taggedAs Slow in {
     withResource("/timeseries/parquet/PriceWithHeader.parquet") { source =>
       val tsrdd =
         TimeSeriesRDD.fromParquet(sc, "file://" + source)(true, NANOSECONDS)

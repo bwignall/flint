@@ -440,7 +440,7 @@ class MultiPartitionSuite extends TimeSeriesSuite with PropertyChecks {
   def withPartitionStrategyCompare(rdd: TimeSeriesRDD)(
     strategies: Seq[PartitionStrategy]
   )(
-    fn: (TimeSeriesRDD) => TimeSeriesRDD
+    fn: TimeSeriesRDD => TimeSeriesRDD
   ): Unit = {
     val baseline = fn(OnePartition.repartition(rdd))
     val strategiesWithoutOnePartition = strategies.filter(_ != OnePartition)

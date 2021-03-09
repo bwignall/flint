@@ -30,7 +30,7 @@ import org.apache.arrow.vector.types.{
 import org.apache.arrow.vector.types.pojo.{ ArrowType, Schema }
 
 import org.apache.spark.sql.catalyst.expressions.UnsafeRow
-import org.apache.spark.sql.catalyst.expressions.codegen.{ UnsafeRowWriter }
+import org.apache.spark.sql.catalyst.expressions.codegen.UnsafeRowWriter
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
 

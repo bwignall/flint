@@ -23,9 +23,11 @@ import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.{
 
 import scala.Serializable
 import org.scalatest.FlatSpec
-import org.scalactic.{ TolerantNumerics, Equality }
+import org.scalactic.{ Equality, TolerantNumerics }
 import com.twosigma.flint.SharedSparkContext
 import com.twosigma.flint.rdd.{ KeyPartitioningType, OrderedRDD }
+
+import scala.annotation.tailrec
 
 class SummarizationsSpec extends FlatSpec with SharedSparkContext {
 
@@ -103,6 +105,7 @@ class SummarizationsSpec extends FlatSpec with SharedSparkContext {
 
   implicit val doubleEq = TolerantNumerics.tolerantDoubleEquality(1.0e-6)
   implicit val equality = new Equality[List[Double]] {
+    @tailrec
     override def areEqual(a: List[Double], b: Any): Boolean = {
       (a, b) match {
         case (Nil, Nil) => true
@@ -122,7 +125,7 @@ class SummarizationsSpec extends FlatSpec with SharedSparkContext {
 
   "Summarizations" should "apply correctly" in {
     val summarizer = KVSumSummarizer()
-    val key = { case ((sk, v)) => None }: ((Int, Double)) => Option[Nothing]
+    val key = { case (sk, v) => None }: ((Int, Double)) => Option[Nothing]
     val ret = Summarizations(orderedRDD, summarizer, key)
     val ret1 = Summarizations(orderedRDD1, summarizer, key)
 
@@ -132,7 +135,7 @@ class SummarizationsSpec extends FlatSpec with SharedSparkContext {
 
   it should "apply perSecondaryKey == true correctly" in {
     val summarizer = KVSumSummarizer()
-    val key = { case ((sk, v)) => sk }: ((Int, Double)) => Int
+    val key = { case (sk, v) => sk }: ((Int, Double)) => Int
 
     val ret = Summarizations(orderedRDD, summarizer, key)
     val ret1 = Summarizations(orderedRDD1, summarizer, key)

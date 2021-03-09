@@ -76,7 +76,7 @@ class SummarizeSpec extends FlintSuite {
   }
 
   "Summarize" should "apply correctly" in {
-    val skFn = { case ((_, _)) => None }: ((Int, Double)) => Option[Nothing]
+    val skFn = { case (_, _) => None }: ((Int, Double)) => Option[Nothing]
     (1 to 4).foreach { depth =>
       val ret = Summarize(orderedRDD, summarizer, skFn, depth)
       assert(ret.size == 1)
@@ -85,7 +85,7 @@ class SummarizeSpec extends FlintSuite {
   }
 
   it should "apply with sk correctly" in {
-    val skFn = { case ((sk, _)) => sk }: ((Int, Double)) => Int
+    val skFn = { case (sk, _) => sk }: ((Int, Double)) => Int
     (1 to 4).foreach { depth =>
       val ret = Summarize(orderedRDD, summarizer, skFn, depth)
       assert(ret.size == 2)

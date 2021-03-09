@@ -24,6 +24,7 @@ import com.twosigma.flint.timeseries.summarize.{
 import com.twosigma.flint.timeseries.summarize.summarizer._
 import org.apache.spark.sql.types._
 
+import scala.annotation.tailrec
 import scala.concurrent.duration.Duration
 
 object Summarizers {
@@ -344,6 +345,7 @@ object Summarizers {
     )
 
   @PythonApi(until = "0.2.5")
+  @tailrec
   private def OLSRegression(
     yColumn: String,
     xColumns: Seq[String],

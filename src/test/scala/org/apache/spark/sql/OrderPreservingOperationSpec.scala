@@ -36,15 +36,15 @@ class OrderPreservingOperationSpec extends FlintSuite with FlintTestData {
     .toList
 
   def withInputTransform(
-    transformations: Seq[(DataFrame) => DataFrame]
-  )(df: DataFrame)(test: (DataFrame) => Unit): Unit = {
+    transformations: Seq[DataFrame => DataFrame]
+  )(df: DataFrame)(test: DataFrame => Unit): Unit = {
     for (ts <- transformations) {
       test(ts(df))
     }
   }
 
   def assertOrderPreserving(
-    op: (DataFrame) => DataFrame,
+    op: DataFrame => DataFrame,
     isOrderPreserving: Boolean
   ): Unit = {
     def test(df: DataFrame): Unit = {

@@ -28,7 +28,7 @@ private[flint] class LinkedListHolder[V](l: JLinkedList[V]) {
    * @return a tuple where the left is the list of removed elements and the right is the list of left elements.
    */
   def dropWhile(
-    p: (V) => Boolean
+    p: V => Boolean
   ): (JLinkedList[V], JLinkedList[V]) = {
     val dropped = new JLinkedList[V]()
     while (!l.isEmpty && p(l.getFirst)) {

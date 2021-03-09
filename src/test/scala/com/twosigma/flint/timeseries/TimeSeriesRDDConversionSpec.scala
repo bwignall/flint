@@ -53,7 +53,7 @@ class TimeSeriesRDDConversionSpec extends TimeSeriesSuite {
     sqlContext.createDataFrame(rdd, schema)
   }
 
-  "TimeSeriesRDD" should "convert from a sorted DataFrame correctly" taggedAs (Slow) in {
+  "TimeSeriesRDD" should "convert from a sorted DataFrame correctly" taggedAs Slow in {
     implicit val _sqlContext = sqlContext
     (1 to 10).foreach { i =>
       val tsRdd = TimeSeriesRDD.fromDF(createDataFrame(isSorted = true))(

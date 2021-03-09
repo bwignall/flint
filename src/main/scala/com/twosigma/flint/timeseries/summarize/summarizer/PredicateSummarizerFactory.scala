@@ -112,7 +112,7 @@ private object UDFConverter {
 
     columns.size match {
       case 1 =>
-        val func = function.asInstanceOf[(Any) => Boolean]
+        val func = function.asInstanceOf[Any => Boolean]
         (input: InternalRow) => {
           func(extractors(0)(input))
         }

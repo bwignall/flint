@@ -575,7 +575,7 @@ object TimeSeriesRDD {
 
   private[flint] def createSafeGetAsAny(
     schema: StructType
-  ): Seq[String] => (InternalRow => Seq[Any]) = { (cols: Seq[String]) =>
+  ): Seq[String] => InternalRow => Seq[Any] = { (cols: Seq[String]) =>
     {
       if (cols.isEmpty) {
         emptyKeyFn
@@ -649,7 +649,7 @@ trait TimeSeriesRDD extends Serializable {
    */
   val schema: StructType
 
-  private[flint] val safeGetAsAny: Seq[String] => (InternalRow => Seq[Any])
+  private[flint] val safeGetAsAny: Seq[String] => InternalRow => Seq[Any]
 
   /**
    * Partition info of this [[TimeSeriesRDD]]
@@ -1450,7 +1450,7 @@ class TimeSeriesRDDImpl private[timeseries] (
   import TimeSeriesRDD.timeColumnName
 
   override val schema: StructType = dataStore.schema
-  override val safeGetAsAny: Seq[String] => (InternalRow => Seq[Any]) =
+  override val safeGetAsAny: Seq[String] => InternalRow => Seq[Any] =
     TimeSeriesRDD.createSafeGetAsAny(schema)
 
   /**

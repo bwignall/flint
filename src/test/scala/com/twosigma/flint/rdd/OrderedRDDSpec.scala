@@ -329,7 +329,7 @@ class OrderedRDDSpec extends FlatSpec with SharedSparkContext {
     }
 
     val skFn = {
-      case ((sk, _)) => sk
+      case (sk, _) => sk
     }: ((Int, Double)) => Int
     val test = orderedRDD1
       .leftJoin(
@@ -346,7 +346,7 @@ class OrderedRDDSpec extends FlatSpec with SharedSparkContext {
   it should "`symmetricJoin` correctly" in {
     val lookback = 30
     val skFn = {
-      case ((sk, _)) => sk
+      case (sk, _) => sk
     }: ((Int, Double)) => Int
 
     val rddLeft = orderedRDD1.leftJoin(
@@ -421,7 +421,7 @@ class OrderedRDDSpec extends FlatSpec with SharedSparkContext {
       None
     }
     val skFn = {
-      case ((sk, _)) => sk
+      case (sk, _) => sk
     }: ((Int, Double)) => Int
     val sum = RowsSummarizer[(Int, Double)]()
 

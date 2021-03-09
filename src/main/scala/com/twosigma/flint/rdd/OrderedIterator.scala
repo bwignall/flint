@@ -24,7 +24,7 @@ import scala.reflect.ClassTag
  */
 protected[flint] class OrderedIterator[T, K: Ordering: ClassTag](
   iterator: Iterator[T],
-  key: (T) => K
+  key: T => K
 ) extends Iterator[T] {
 
   override def hasNext: Boolean = iterator.hasNext
@@ -63,7 +63,7 @@ protected[flint] object OrderedIterator {
 
   def apply[T, K: Ordering: ClassTag](
     iterator: Iterator[T],
-    key: (T) => K
+    key: T => K
   ): OrderedIterator[T, K] =
     new OrderedIterator(iterator, key)
 }

@@ -563,7 +563,7 @@ class OrderedRDD[K: ClassTag, V: ClassTag](
     )((p, tc) => {
       val iter =
         new SummarizeByKeyIterator(iterator(p, tc), skFn, new RowsSummarizer[V])
-      tc.addTaskCompletionListener[Unit]((_) => iter.close())
+      tc.addTaskCompletionListener[Unit](_ => iter.close())
       iter.map { case (k, (_, v)) => (k, v) }
     })
 
@@ -592,7 +592,7 @@ class OrderedRDD[K: ClassTag, V: ClassTag](
       Seq(new OneToOneDependency(self))
     )((p, tc) => {
       val iter = new SummarizeByKeyIterator(iterator(p, tc), skFn, summarizer)
-      tc.addTaskCompletionListener[Unit]((_) => iter.close())
+      tc.addTaskCompletionListener[Unit](_ => iter.close())
       iter
     })
 
