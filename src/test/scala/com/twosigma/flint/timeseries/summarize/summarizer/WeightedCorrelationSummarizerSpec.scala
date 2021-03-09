@@ -48,7 +48,7 @@ class WeightedCorrelationSummarizerSpec extends SummarizerSuite {
         "y" -> { (_: Long, _: Int, rand: util.Random) =>
           rand.nextDouble()
         },
-        "w1" -> { (_: Long, _: Int, rand: util.Random) =>
+        "w1" -> { (_: Long, _: Int, _: util.Random) =>
           2.0
         },
         "w2" -> { (_: Long, _: Int, rand: util.Random) =>

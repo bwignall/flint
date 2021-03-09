@@ -132,7 +132,6 @@ class WeightedMeanTest extends UserDefinedAggregateFunction {
     val sumWeight = buffer.getAs[Double](1)
     val mean = buffer.getAs[Double](2)
     val sumSquareOfDiffFromMean = buffer.getAs[Double](3)
-    val sumSquareOfWeights = buffer.getAs[Double](4)
 
     val variance = sumSquareOfDiffFromMean / sumWeight
     val stdDev = sqrt(variance)

@@ -1074,7 +1074,7 @@ class TimeSeriesRDDSpec extends TimeSeriesSuite with TimeTypeSuite {
 
   it should "`keepRows and filter` correctly" in {
     val expectedData = volData.filter {
-      case (t: Long, r: Row) => r.getAs[Long]("volume") > 900
+      case (_: Long, r: Row) => r.getAs[Long]("volume") > 900
     }
     val result = volTSRdd.keepRows { row: Row =>
       row.getAs[Long]("volume") > 900
@@ -1090,7 +1090,7 @@ class TimeSeriesRDDSpec extends TimeSeriesSuite with TimeTypeSuite {
 
   it should "`deleteRows` correctly" in {
     val expectedData = volData.filterNot {
-      case (t: Long, r: Row) => r.getAs[Long]("volume") > 900
+      case (_: Long, r: Row) => r.getAs[Long]("volume") > 900
     }
     val result = volTSRdd.deleteRows { row: Row =>
       row.getAs[Long]("volume") > 900

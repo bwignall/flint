@@ -34,7 +34,7 @@ object TestHelper {
     row.getInt(1) > 5
   }
 
-  def copy(ts: Long, iRow: InternalRow): InternalRow = {
+  def copy(i: Long, iRow: InternalRow): InternalRow = {
     iRow.copy
   }
 
@@ -83,7 +83,7 @@ class UnsafeOrderedRDDSpec extends TimeSeriesSuite {
         case (_, iter) =>
           val rowReferences = mutable.ListBuffer.empty[InternalRow]
           iter.foreach {
-            case (ts, row) =>
+            case (_, row) =>
               rowReferences += row
           }
 
