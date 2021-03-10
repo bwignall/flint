@@ -48,7 +48,7 @@ jobs:
               sbt -v +test
               ;;
             5)
-              sbt -v "coverage; test; +coverageReport;"
+              sbt -v clean coverage test coverageReport
               ;;
             *)
               echo unknown jobtype
