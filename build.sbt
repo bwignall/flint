@@ -14,11 +14,8 @@
  *  limitations under the License.
  */
 
-import de.heikoseeberger.sbtheader.HeaderPattern
-import com.typesafe.sbt.SbtScalariform.ScalariformKeys
-import scalariform.formatter.preferences._
-import com.typesafe.sbt.SbtScalariform
 import BuildUtil._
+import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 
 licenses += ("Apache-2.0", url("http://apache.org/licenses/LICENSE-2.0"))
 
@@ -31,7 +28,7 @@ lazy val formattingPreferences = {
 }
 
 val _scalaVersion: String =
-  sys.props.getOrElse("scala.version", default = "2.12.13")
+  sys.props.getOrElse("scala.version", default = "2.12.12")
 val _sparkVersion: String =
   sys.props.getOrElse("spark.version", default = "3.0.2")
 
@@ -71,7 +68,7 @@ lazy val versions = new {
   val scalatest = "3.0.8"
   val scalacheck = "1.13.4"
   val grizzled_slf4j = "1.3.0"
-  val arrow = "0.12.0"
+  // val arrow = "0.12.0"
   val jackson_module = "2.9.8"
 }
 
