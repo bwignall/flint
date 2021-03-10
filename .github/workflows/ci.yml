@@ -20,7 +20,7 @@ jobs:
             jobtype: 2
           - os: ubuntu-latest
             java: 11
-            jobtype: 3
+            jobtype: 4
     runs-on: ${{ matrix.os }}
     env:
       # define Java options for both official sbt and sbt-extras
@@ -46,6 +46,9 @@ jobs:
               ;;
             3)
               sbt -v "dependency-management/*"
+              ;;
+            4)
+              sbt -v "+test;"
               ;;
             *)
               echo unknown jobtype
