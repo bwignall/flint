@@ -9,15 +9,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
-            java: 11
-            jobtype: 1
-          - os: ubuntu-latest
-            java: 11
-            jobtype: 2
           - os: windows-latest
             java: 11
-            jobtype: 2
+            jobtype: 4
           - os: ubuntu-latest
             java: 11
             jobtype: 4
