@@ -13,11 +13,11 @@ jobs:
             java: 11
             jobtype: 4
           - os: ubuntu-latest
-              java: 11
-              jobtype: 4
+            java: 11
+            jobtype: 4
           - os: ubuntu-latest
-              java: 11
-              jobtype: 5
+            java: 11
+            jobtype: 5
     runs-on: ${{ matrix.os }}
     env:
       # define Java options for both official sbt and sbt-extras
