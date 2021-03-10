@@ -227,7 +227,7 @@ class SummarizeWindowsSpec
 
     def gen(): TimeSeriesRDD = cycleData1
 
-    withPartitionStrategyAndParams(gen)("addWindows")(DEFAULT)(params)(
+    withPartitionStrategyAndParams(() => gen())("addWindows")(DEFAULT)(params)(
       addWindows
     )
 

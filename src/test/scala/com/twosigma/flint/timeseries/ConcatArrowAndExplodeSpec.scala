@@ -96,7 +96,7 @@ class ConcatArrowAndExplodeSpec extends TimeSeriesSuite {
     )
     tsrdd.toDF.show()
 
-    var expected = spark.range(1000, 1000 + batchSize).toDF("time")
+    var expected = spark.range(1000, 1000 + batchSize.toLong).toDF("time")
     expected = expected.withColumn("v", col("time") - 1000.0)
     expected = expected.withColumn("v1", col("time") - 1000 + 10.0)
     expected = expected.withColumn("v2", col("time") - 1000 + 20.0)
