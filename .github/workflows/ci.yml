@@ -48,7 +48,7 @@ jobs:
               sbt -v "dependency-management/*"
               ;;
             4)
-              sbt -v "+test;"
+              sbt -v +test
               ;;
             *)
               echo unknown jobtype
