@@ -49,6 +49,7 @@ jobs:
               ;;
             5)
               sbt -v "coverage; test; +coverageReport;"
+              ;;
             *)
               echo unknown jobtype
               exit 1
