@@ -10,10 +10,10 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            java: 8
+            java: 11
             jobtype: 4
           - os: ubuntu-latest
-            java: 8
+            java: 11
             jobtype: 5
     runs-on: ${{ matrix.os }}
     env:
