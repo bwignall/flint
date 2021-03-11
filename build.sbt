@@ -38,7 +38,7 @@ lazy val compilationSettings = scalariformSettings ++ Seq(
   scalaVersion := _scalaVersion,
   assemblyOption in assembly := (assemblyOption in assembly).value
     .copy(includeScala = false),
-  javacOptions ++= Seq("-source", "11", "-target", "11"),
+  javacOptions ++= Seq("-source", "8", "-target", "8"),
   compileOrder in Compile := CompileOrder.JavaThenScala,
   scalacOptions ++= Seq(
     "-deprecation",
