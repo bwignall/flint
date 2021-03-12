@@ -125,14 +125,113 @@ class CSVSpec extends TimeSeriesSuite {
     }
   }
 
-  it should "correctly convert SQL TimestampType with specified format" in {
-    withResource("/timeseries/csv/TimeStampsWithHeader2.csv") { source =>
+  it should "correctly convert SQL TimestampType with default format and explicit schema" in {
+    withResource("/timeseries/csv/TimeStampsWithHeader.csv") { source =>
+      val expectedSchema = Schema("time" -> TimestampType)
+      val timeseriesRdd =
+        CSV.from(
+          sqlContext,
+          "file://" + source,
+          header = true,
+          sorted = false,
+          schema = expectedSchema
+        )
+      val first = timeseriesRdd.first()
+
+      val format = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S")
+      format.setTimeZone(TimeZone.getTimeZone("UTC"))
+
+      assert(
+        first.getAs[Long]("time") == format
+          .parse("2008-01-02 00:00:00.000")
+          .getTime * 1000000L
+      )
+    }
+  }
+
+  it should "correctly convert SQL TimestampType with explicit format" in {
+    withResource("/timeseries/csv/TimeStampsWithHeader.csv") { source =>
+      val specifiedFormat = "yyyy-MM-dd HH:mm:ss.S"
       val timeseriesRdd = CSV.from(
         sqlContext,
         "file://" + source,
         header = true,
         sorted = false,
-        dateFormat = "yyyyMMdd'T'HH:mm:ssZ"
+        dateFormat = specifiedFormat
+      )
+      val first = timeseriesRdd.first()
+
+      val format = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S")
+      format.setTimeZone(TimeZone.getTimeZone("UTC"))
+
+      assert(
+        first.getAs[Long]("time") == format
+          .parse("2008-01-02 00:00:00.000")
+          .getTime * 1000000L
+      )
+    }
+  }
+
+  it should "correctly convert SQL TimestampType with specified format and explicit schema, V2" in {
+    withResource("/timeseries/csv/TimeStampsWithHeaderV2.csv") { source =>
+      val expectedSchema = Schema("time" -> TimestampType)
+      val specifiedFormat = "yyyy-MM-dd'T'HH:mm:ss.S"
+
+      val timeseriesRdd =
+        CSV.from(
+          sqlContext,
+          "file://" + source,
+          header = true,
+          sorted = false,
+          schema = expectedSchema,
+          dateFormat = specifiedFormat
+        )
+      val first = timeseriesRdd.first()
+
+      val format = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S")
+      format.setTimeZone(TimeZone.getTimeZone("UTC"))
+
+      assert(
+        first.getAs[Long]("time") == format
+          .parse("2008-01-02 00:00:00.000")
+          .getTime * 1000000L
+      )
+    }
+  }
+
+  it should "correctly convert SQL TimestampType with explicit format, V2" in {
+    withResource("/timeseries/csv/TimeStampsWithHeaderV2.csv") { source =>
+      val specifiedFormat = "yyyy-MM-dd'T'HH:mm:ss.S"
+
+      val timeseriesRdd = CSV.from(
+        sqlContext,
+        "file://" + source,
+        header = true,
+        sorted = false,
+        dateFormat = specifiedFormat
+      )
+      val first = timeseriesRdd.first()
+
+      val format = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S")
+      format.setTimeZone(TimeZone.getTimeZone("UTC"))
+
+      assert(
+        first.getAs[Long]("time") === format
+          .parse("2008-01-02 00:00:00.000")
+          .getTime * 1000000L
+      )
+    }
+  }
+
+  it should "correctly convert SQL TimestampType with specified format" in {
+    withResource("/timeseries/csv/TimeStampsWithHeader2.csv") { source =>
+      val specifiedFormat = "yyyyMMdd'T'HH:mm:ssZ"
+      val timeseriesRdd = CSV.from(
+        sqlContext,
+        "file://" + source,
+        header = true,
+        sorted = false,
+        dateFormat = specifiedFormat
       )
       val first = timeseriesRdd.first()
 

@@ -137,7 +137,7 @@ private[timeseries] object Schema {
       } else {
         require(
           columns.contains((TimeSeriesRDD.timeColumnName, LongType)),
-          s"The columns doesn't contain a field name ${TimeSeriesRDD.timeColumnName} of LongType"
+          s"The columns doesn't contain a field name ${TimeSeriesRDD.timeColumnName} of LongType (have <$columns>)"
         )
         columns
       }

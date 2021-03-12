@@ -16,12 +16,13 @@
 
 package com.twosigma.flint.timeseries
 
+import org.apache.spark.sql.{ DataFrame, SparkSession, SQLContext }
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{ DataFrame, SQLContext }
 
 import java.nio.charset.Charset
 import java.sql.Timestamp
+import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration._
 
@@ -118,6 +119,7 @@ object CSV {
       .option("escape", escape.toString)
       .option("comment", comment.toString)
       .option("mode", mode)
+      .option("columnNameOfCorruptRecord", "corruptedColumn")
       .option("parserLib", parserLib)
       .option("ignoreLeadingWhiteSpace", ignoreLeadingWhiteSpace.toString)
       .option("ignoreTrailingWhiteSpace", ignoreTrailingWhiteSpace.toString)
@@ -189,11 +191,42 @@ object CSV {
           timeColumnName,
           timestampToLong(dataFrame(timeColumnName))
         )
-
       case _ =>
         sys.error(
           s"Columns of ${dataType.typeName} type are not supported as a `time` column."
         )
     }
+  }
+
+  def parse_csv_1(sqlContext: SQLContext, source: String): Unit = {
+    val timeseriesRdd =
+      CSV.from(sqlContext, "file://" + source, header = true, sorted = false)
+
+    val first = timeseriesRdd.first()
+
+    val format = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S")
+    format.setTimeZone(TimeZone.getTimeZone("UTC"))
+
+    assert(
+      first.getAs[Long]("time") == format
+        .parse("2008-01-02 00:00:00.000")
+        .getTime * 1000000L
+    )
+  }
+
+  def main(args: Array[String]): Unit = {
+    val sparkSession = SparkSession
+      .builder()
+      .master("local[*]")
+      .appName("CheckCSV")
+      .getOrCreate()
+
+    // val sqlContext = SparkSession.builder.config(sc.getConf).getOrCreate
+    val sqlContext = sparkSession.sqlContext
+
+    val source =
+      "/home/brian/code/github/flint/src/test/resources/timeseries/csv/TimeStampsWithHeader.csv"
+    parse_csv_1(sqlContext, source)
+    ()
   }
 }
