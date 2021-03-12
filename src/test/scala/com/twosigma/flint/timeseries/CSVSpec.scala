@@ -223,6 +223,29 @@ class CSVSpec extends TimeSeriesSuite {
     }
   }
 
+  it should "correctly convert SQL TimestampType with specified format, V2" in {
+    withResource("/timeseries/csv/TimeStampsWithHeaderV2.csv") { source =>
+      val specifiedFormat = "yyyy-MM-dd'T'HH:mm:ss.S"
+      val timeseriesRdd = CSV.from(
+        sqlContext,
+        "file://" + source,
+        header = true,
+        sorted = false,
+        dateFormat = specifiedFormat
+      )
+      val first = timeseriesRdd.first()
+
+      val format = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S")
+      format.setTimeZone(TimeZone.getTimeZone("UTC"))
+
+      assert(
+        first.getAs[Long]("time") == format
+          .parse("2008-01-02 00:00:00.000")
+          .getTime * 1000000L
+      )
+    }
+  }
+
   it should "correctly convert SQL TimestampType with specified format" in {
     withResource("/timeseries/csv/TimeStampsWithHeader2.csv") { source =>
       val specifiedFormat = "yyyyMMdd'T'HH:mm:ssZ"
@@ -244,5 +267,35 @@ class CSVSpec extends TimeSeriesSuite {
           .getTime * 1000000L
       )
     }
+  }
+
+  it should "correctly parse datetimes" in {
+    val specifiedFormat =
+      new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S")
+    specifiedFormat.setTimeZone(TimeZone.getTimeZone("UTC"))
+
+    val lhs = specifiedFormat.parse("2008-01-02 00:00:00.000").getTime
+
+    val format = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S")
+    format.setTimeZone(TimeZone.getTimeZone("UTC"))
+
+    val rhs = format.parse("2008-01-02 00:00:00.000").getTime
+
+    assert(lhs === rhs)
+  }
+
+  it should "correctly parse datetimes2" in {
+    val specifiedFormat =
+      new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S")
+    specifiedFormat.setTimeZone(TimeZone.getTimeZone("UTC"))
+
+    val lhs = specifiedFormat.parse("2008-01-02T00:00:00.000").getTime
+
+    val format = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S")
+    format.setTimeZone(TimeZone.getTimeZone("UTC"))
+
+    val rhs = format.parse("2008-01-02 00:00:00.000").getTime
+
+    assert(lhs === rhs)
   }
 }
