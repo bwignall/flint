@@ -11,9 +11,19 @@ jobs:
         include:
           - os: ubuntu-latest
             java: 8
+            spark: 3.1.1
             jobtype: 4
           - os: ubuntu-latest
             java: 8
+            spark: 3.1.1
+            jobtype: 5
+          - os: ubuntu-latest
+            java: 8
+            spark: 2.4.3
+            jobtype: 4
+          - os: ubuntu-latest
+            java: 8
+            spark: 2.4.3
             jobtype: 5
     runs-on: ${{ matrix.os }}
     env:
@@ -42,10 +52,10 @@ jobs:
               sbt -v "dependency-management/*"
               ;;
             4)
-              sbt -v +test
+              sbt -v -Dspark.version="{{ matrix.spark }}" +test
               ;;
             5)
-              sbt -v clean coverage test coverageReport
+              sbt -v -Dspark.version="{{ matrix.spark }}" clean coverage test coverageReport
               ;;
             *)
               echo unknown jobtype
