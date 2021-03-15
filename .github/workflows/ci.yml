@@ -11,19 +11,9 @@ jobs:
         include:
           - os: ubuntu-latest
             java: 8
-            spark: 3.1.1
             jobtype: 4
           - os: ubuntu-latest
             java: 8
-            spark: 3.1.1
-            jobtype: 5
-          - os: ubuntu-latest
-            java: 8
-            spark: 2.4.3
-            jobtype: 4
-          - os: ubuntu-latest
-            java: 8
-            spark: 2.4.3
             jobtype: 5
     runs-on: ${{ matrix.os }}
     env:
