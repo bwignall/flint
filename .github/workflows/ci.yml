@@ -52,10 +52,10 @@ jobs:
               sbt -v "dependency-management/*"
               ;;
             4)
-              sbt -v -Dspark.version="{{ matrix.spark }}" +test
+              sbt -v -Dspark.version="${{ matrix.spark }}" +test
               ;;
             5)
-              sbt -v -Dspark.version="{{ matrix.spark }}" clean coverage test coverageReport
+              sbt -v -Dspark.version="${{ matrix.spark }}" clean coverage test coverageReport
               ;;
             *)
               echo unknown jobtype
