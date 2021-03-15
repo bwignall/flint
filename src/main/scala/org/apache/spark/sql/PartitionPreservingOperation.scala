@@ -16,12 +16,14 @@
 
 package org.apache.spark.sql
 
-import com.twosigma.flint.annotation.PythonApi
 import org.apache.spark.sql.execution._
 import org.apache.spark.sql.execution.columnar.InMemoryTableScanExec
 import org.apache.spark.sql.execution.python.BatchEvalPythonExec
+import org.apache.spark.sql.execution.{ ColumnarToRowExec, RowToColumnarExec }
 
 import scala.annotation.tailrec
+
+import com.twosigma.flint.annotation.PythonApi
 
 /**
  * A class to used to check whether a DataFrame operation is partition preserving.
@@ -67,6 +69,8 @@ object PartitionPreservingOperation {
       case _: InputAdapter => true
       case _: GenerateExec => true
       case _: SerializeFromObjectExec => true
+      case _: ColumnarToRowExec => true
+      case _: RowToColumnarExec => true
       case _ => false
     }
   }

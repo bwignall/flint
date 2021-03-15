@@ -29,10 +29,10 @@ lazy val formattingPreferences = {
 
 val _scalaVersion: String =
   sys.props.getOrElse("scala.version", default = "2.12.12")
-val _sparkVersion: String =
-  sys.props.getOrElse("spark.version", default = "3.1.1")
-//  sys.props.getOrElse("spark.version", default = "3.0.2")
-//sys.props.getOrElse("spark.version", default = "2.4.3")
+val _sparkVersion: String = sys.props.getOrElse(
+  "spark.version",
+  default = "3.1.1" // "3.0.2", "2.4.3"
+)
 
 lazy val compilationSettings = scalariformSettings ++ Seq(
   version := sys.props.getOrElse("version", default = "0.6.0-SNAPSHOT"),
