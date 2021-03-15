@@ -151,7 +151,7 @@ class CSVSpec extends TimeSeriesSuite {
 
   it should "correctly convert SQL TimestampType with explicit format" in {
     withResource("/timeseries/csv/TimeStampsWithHeader.csv") { source =>
-      val specifiedFormat = "yyyy-MM-dd HH:mm:ss.S"
+      val specifiedFormat = "yyyy-MM-dd HH:mm:ss.SSS"
       val timeseriesRdd = CSV.from(
         sqlContext,
         "file://" + source,
@@ -175,7 +175,7 @@ class CSVSpec extends TimeSeriesSuite {
   it should "correctly convert SQL TimestampType with specified format and explicit schema, V2" in {
     withResource("/timeseries/csv/TimeStampsWithHeaderV2.csv") { source =>
       val expectedSchema = Schema("time" -> TimestampType)
-      val specifiedFormat = "yyyy-MM-dd'T'HH:mm:ss.S"
+      val specifiedFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS"
 
       val timeseriesRdd =
         CSV.from(
@@ -201,7 +201,7 @@ class CSVSpec extends TimeSeriesSuite {
 
   it should "correctly convert SQL TimestampType with explicit format, V2" in {
     withResource("/timeseries/csv/TimeStampsWithHeaderV2.csv") { source =>
-      val specifiedFormat = "yyyy-MM-dd'T'HH:mm:ss.S"
+      val specifiedFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS"
 
       val timeseriesRdd = CSV.from(
         sqlContext,
@@ -225,7 +225,7 @@ class CSVSpec extends TimeSeriesSuite {
 
   it should "correctly convert SQL TimestampType with specified format, V2" in {
     withResource("/timeseries/csv/TimeStampsWithHeaderV2.csv") { source =>
-      val specifiedFormat = "yyyy-MM-dd'T'HH:mm:ss.S"
+      val specifiedFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS"
       val timeseriesRdd = CSV.from(
         sqlContext,
         "file://" + source,

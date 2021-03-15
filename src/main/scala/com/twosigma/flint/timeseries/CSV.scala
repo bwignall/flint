@@ -107,7 +107,7 @@ object CSV {
     ignoreTrailingWhiteSpace: Boolean = false,
     charset: String = Charset.forName("UTF-8").name(),
     schema: StructType = null,
-    dateFormat: String = "yyyy-MM-dd HH:mm:ss.S",
+    dateFormat: String = "yyyy-MM-dd HH:mm:ss.SSS",
     keepOriginTimeColumn: Boolean = false,
     codec: String = null
   ): TimeSeriesRDD = {
