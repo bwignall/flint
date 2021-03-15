@@ -107,7 +107,20 @@ class PartitionPreservingOperationSpec extends FlintSuite with FlintTestData {
     data.cache()
     data.count()
     // first node is WholeStageCodegen
-    assert(executedPlan(data).children.head.isInstanceOf[InMemoryTableScanExec])
+    if (data.sparkSession.version < "3.0.0") {
+      // first node is WholeStageCodegen
+      assert(
+        executedPlan(data).children.head.isInstanceOf[InMemoryTableScanExec]
+      )
+    } else {
+      val plan = executedPlan(data)
+      assert(plan.children.head.isInstanceOf[ColumnarToRowExec])
+      assert(plan.children.head.children.head.isInstanceOf[InputAdapter])
+      assert(
+        plan.children.head.children.head.children.head
+        .isInstanceOf[InMemoryTableScanExec]
+      )
+    }
     assert(leafExecutedPlan(data).isInstanceOf[InMemoryTableScanExec])
     data.unpersist()
 
@@ -115,11 +128,22 @@ class PartitionPreservingOperationSpec extends FlintSuite with FlintTestData {
     orderedData.cache()
     orderedData.count()
     // first node is WholeStageCodegen
-    assert(
-      executedPlan(orderedData).children.head
-      .isInstanceOf[InMemoryTableScanExec]
-    )
-    assert(leafExecutedPlan(orderedData).isInstanceOf[InMemoryTableScanExec])
+    if (data.sparkSession.version < "3.0.0") {
+      // first node is WholeStageCodegen
+      assert(
+        executedPlan(orderedData).children.head
+        .isInstanceOf[InMemoryTableScanExec]
+      )
+      assert(leafExecutedPlan(orderedData).isInstanceOf[InMemoryTableScanExec])
+    } else {
+      val plan = executedPlan(orderedData)
+      assert(plan.children.head.isInstanceOf[ColumnarToRowExec])
+      assert(plan.children.head.children.head.isInstanceOf[InputAdapter])
+      assert(
+        plan.children.head.children.head.children.head
+        .isInstanceOf[InMemoryTableScanExec]
+      )
+    }
     orderedData.unpersist()
   }
 
