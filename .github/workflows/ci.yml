@@ -19,11 +19,11 @@ jobs:
             jobtype: 5
           - os: ubuntu-18.04
             java: 8
-            spark: 2.4.3
+            spark: 3.0.2
             jobtype: 4
           - os: ubuntu-18.04
             java: 8
-            spark: 2.4.3
+            spark: 3.0.2
             jobtype: 5
     runs-on: ${{ matrix.os }}
     env:
