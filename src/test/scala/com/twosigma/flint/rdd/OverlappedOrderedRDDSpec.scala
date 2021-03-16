@@ -18,9 +18,9 @@ package com.twosigma.flint.rdd
 
 import com.twosigma.flint.SharedSparkContext
 import org.apache.spark.rdd.RDD
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
-class OverlappedOrderedRDDSpec extends FlatSpec with SharedSparkContext {
+class OverlappedOrderedRDDSpec extends AnyFlatSpec with SharedSparkContext {
 
   val numSlices: Int = 3
 

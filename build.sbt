@@ -33,6 +33,8 @@ val _sparkVersion: String = sys.props.getOrElse(
   "spark.version",
   default = "3.1.1" // "3.0.2", "2.4.3"
 )
+val _scalatestVersion: String = "3.2.5"
+val _scalacheckSubversion: String = "15"
 
 lazy val compilationSettings = scalariformSettings ++ Seq(
   version := sys.props.getOrElse("version", default = "0.6.0-SNAPSHOT"),
@@ -67,8 +69,9 @@ lazy val versions = new {
   val joda_time = "2.9.4"
   val httpclient = "4.3.2" // Note that newer versions need to be configured
   val spark = _sparkVersion
-  val scalatest = "3.0.8"
-  val scalacheck = "1.13.4"
+  val scalatest = _scalatestVersion
+  val scalatestplusscalacheck = _scalatestVersion + ".0"
+  val scalacheck = "1." + _scalacheckSubversion + ".2"
   val grizzled_slf4j = "1.3.0"
   // val arrow = "0.12.0"
   val jackson_module = "2.9.8"
@@ -92,6 +95,7 @@ lazy val dependencySettings = libraryDependencies ++= Seq(
   lazyDependencies.sparkML,
   lazyDependencies.sparkSQL,
   "org.scalatest" %% "scalatest" % versions.scalatest % "test",
+  "org.scalatestplus" %% ("scalacheck-1-" + _scalacheckSubversion) % versions.scalatestplusscalacheck % "test",
   "org.scalacheck" %% "scalacheck" % versions.scalacheck % "test",
   // These jackson modules are not directly used by Flint. We need to put it
   // there because Spark 2.3 uses Jackson 2.6 and Arrow uses Jackson
