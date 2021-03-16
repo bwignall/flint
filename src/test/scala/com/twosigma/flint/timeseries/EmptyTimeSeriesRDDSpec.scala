@@ -16,15 +16,11 @@
 
 package com.twosigma.flint.timeseries
 
-import java.util.concurrent.TimeUnit
-
-import org.apache.spark.sql.{ DataFrame, Row }
-import org.apache.spark.sql.types._
-import org.apache.spark.sql.functions.{ col, lit }
-import com.twosigma.flint.timeseries.Summarizers
-import com.twosigma.flint.timeseries.Clocks
-import com.twosigma.flint.timeseries.Windows
 import com.twosigma.flint.timeseries.summarize.summarizer.LagSumSummarizerFactory
+import org.apache.spark.sql.types._
+import org.apache.spark.sql.{ DataFrame, Row }
+
+import java.util.concurrent.TimeUnit
 
 class EmptyTimeSeriesRDDSpec extends TimeSeriesSuite {
   "TimeSeriesRDD" should "support operations on empty TimeSeriesRDD" in {
