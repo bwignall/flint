@@ -17,9 +17,9 @@
 package com.twosigma.flint.rdd.function.summarize.summarizer
 
 import breeze.linalg.{ DenseVector, DenseMatrix }
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
-class RegressionSummarizerSpec extends FlatSpec {
+class RegressionSummarizerSpec extends AnyFlatSpec {
 
   "RegressionSummarizer" should "transform from RegressRow correctly" in {
     val x: Array[RegressionRow] = Array(

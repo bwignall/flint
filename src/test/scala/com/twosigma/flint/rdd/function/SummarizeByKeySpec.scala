@@ -18,9 +18,9 @@ package com.twosigma.flint.rdd.function
 
 import com.twosigma.flint.rdd.function.group.SummarizeByKeyIterator
 import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.RowsSummarizer
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
-class SummarizeByKeySpec extends FlatSpec {
+class SummarizeByKeySpec extends AnyFlatSpec {
 
   val data = Array(
     (1000L, (1, 0.01)),

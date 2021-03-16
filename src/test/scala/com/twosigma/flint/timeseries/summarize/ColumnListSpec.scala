@@ -16,9 +16,9 @@
 
 package com.twosigma.flint.timeseries.summarize
 
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
-class ColumnListSpec extends FlatSpec {
+class ColumnListSpec extends AnyFlatSpec {
 
   "ColumnList" should "union column lists correctly" in {
     val allUnion = ColumnList.All ++ ColumnList.All

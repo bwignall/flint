@@ -16,9 +16,9 @@
 
 package com.twosigma.flint.rdd
 
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
-class RangeDependencySpec extends FlatSpec {
+class RangeDependencySpec extends AnyFlatSpec {
   // partition 0: [1, 1, 2, ..., 4]
   // partition 1: [4, ..., 4]
   // partition 2: [4, 4, 5, ..., 7]

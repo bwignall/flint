@@ -17,10 +17,10 @@
 package com.twosigma.flint.timeseries
 
 import com.twosigma.flint.timeseries.row.Schema
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 import org.apache.spark.sql.types._
 
-class SchemaSpec extends FlatSpec {
+class SchemaSpec extends AnyFlatSpec {
   "Schema" should "create a schema correctly" in {
     val schema = StructType(
       Array(

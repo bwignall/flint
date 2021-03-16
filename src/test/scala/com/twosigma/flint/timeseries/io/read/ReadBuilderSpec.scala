@@ -23,11 +23,11 @@ import com.twosigma.flint.SharedSparkContext
 import com.twosigma.flint.timeseries.io.read.ReadBuilder._
 import com.twosigma.flint.timeseries.time.TimeFormat
 import com.twosigma.flint.timeseries.time.TimeFormat.parseNano
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.concurrent.duration.Duration
 
-class ReadBuilderSpec extends FlatSpec with SharedSparkContext {
+class ReadBuilderSpec extends AnyFlatSpec with SharedSparkContext {
 
   behavior of "ReadBuilder"
 

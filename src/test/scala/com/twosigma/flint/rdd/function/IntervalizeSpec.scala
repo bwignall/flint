@@ -17,13 +17,13 @@
 package com.twosigma.flint.rdd.function
 
 import com.twosigma.flint.rdd.function.group.Intervalize
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 import com.twosigma.flint.SharedSparkContext
 import Intervalize._
 import com.twosigma.flint.rdd.{ KeyPartitioningType, OrderedRDD }
 
-class IntervalizeSpec extends FlatSpec with SharedSparkContext {
+class IntervalizeSpec extends AnyFlatSpec with SharedSparkContext {
 
   val data = Array(
     (1000L, (1, 0.01)),

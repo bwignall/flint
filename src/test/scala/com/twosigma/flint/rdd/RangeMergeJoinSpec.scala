@@ -18,9 +18,9 @@ package com.twosigma.flint.rdd
 
 import com.twosigma.flint.rdd.function.join.RangeMergeJoin
 import org.apache.spark.Partition
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
-class RangeMergeJoinSpec extends FlatSpec {
+class RangeMergeJoinSpec extends AnyFlatSpec {
   val thisSplits = IndexedSeq(
     RangeSplit(Split(0), CloseOpen(1, Some(2))),
     RangeSplit(Split(1), CloseOpen(2, Some(3))),

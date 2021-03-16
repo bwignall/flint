@@ -16,9 +16,9 @@
 
 package com.twosigma.flint.rdd.function.summarize.summarizer.regression
 
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
-class LagWindowSpec extends FlatSpec {
+class LagWindowSpec extends AnyFlatSpec {
 
   "LagWindow" should "give an `AbsoluteTimeLagWindow` as expect" in {
     val lagWindow = LagWindow.absolute(10L)

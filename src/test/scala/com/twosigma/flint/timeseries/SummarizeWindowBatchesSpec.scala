@@ -29,7 +29,7 @@ import org.apache.spark.sql.{ Row, SparkSession }
 import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.types._
-import org.scalatest.prop.PropertyChecks
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import scala.collection.JavaConverters._
 import java.util.concurrent.TimeUnit
@@ -44,7 +44,7 @@ import com.twosigma.flint.timeseries.ArrowTestUtils.fileFormatToRows
 class SummarizeWindowBatchesSpec
   extends MultiPartitionSuite
   with TimeSeriesTestData
-  with PropertyChecks
+  with ScalaCheckPropertyChecks
   with TimeTypeSuite {
 
   override val defaultResourceDir: String = "/timeseries/summarizewindows"

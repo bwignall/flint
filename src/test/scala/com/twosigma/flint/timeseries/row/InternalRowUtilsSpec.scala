@@ -33,10 +33,10 @@ import org.apache.spark.sql.types.{
   StructType
 }
 import org.apache.spark.unsafe.types.UTF8String
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.prop.TableDrivenPropertyChecks
 
-class InternalRowUtilsSpec extends FlatSpec with TableDrivenPropertyChecks {
+class InternalRowUtilsSpec extends AnyFlatSpec with TableDrivenPropertyChecks {
 
   val rows = Table(
     ("data", "schema"),

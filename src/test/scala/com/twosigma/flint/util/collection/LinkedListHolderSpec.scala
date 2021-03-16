@@ -16,11 +16,11 @@
 
 package com.twosigma.flint.util.collection
 
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 import java.util.{ LinkedList => JLinkedList }
 import scala.collection.JavaConverters._
 
-class LinkedListHolderSpec extends FlatSpec {
+class LinkedListHolderSpec extends AnyFlatSpec {
 
   "LinkedListHolder" should "dropWhile correctly" in {
     import Implicits._

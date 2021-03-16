@@ -22,14 +22,14 @@ import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.{
 }
 
 import scala.Serializable
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 import org.scalactic.{ Equality, TolerantNumerics }
 import com.twosigma.flint.SharedSparkContext
 import com.twosigma.flint.rdd.{ KeyPartitioningType, OrderedRDD }
 
 import scala.annotation.tailrec
 
-class SummarizationsSpec extends FlatSpec with SharedSparkContext {
+class SummarizationsSpec extends AnyFlatSpec with SharedSparkContext {
 
   val data = Array(
     (1000L, (1, 0.01)),

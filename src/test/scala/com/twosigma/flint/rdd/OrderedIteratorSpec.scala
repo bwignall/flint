@@ -16,9 +16,9 @@
 
 package com.twosigma.flint.rdd
 
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
-class OrderedIteratorSpec extends FlatSpec {
+class OrderedIteratorSpec extends AnyFlatSpec {
 
   "OrderedKeyValueIterator" should "iterate through an ordered collection correctly" in {
     val data = (1 to 10).map { x => (x, x) }.toArray

@@ -16,9 +16,9 @@
 
 package com.twosigma.flint.rdd
 
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
-class RangeSplitSpec extends FlatSpec {
+class RangeSplitSpec extends AnyFlatSpec {
 
   val rangeSplits = IndexedSeq(
     RangeSplit(Split(0), CloseOpen(2, Option(3))),

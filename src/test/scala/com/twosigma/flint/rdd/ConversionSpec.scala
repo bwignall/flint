@@ -22,13 +22,13 @@ import java.util.concurrent.LinkedBlockingDeque
 import com.twosigma.flint.SharedSparkContext
 import org.apache.spark.NarrowDependency
 import org.apache.spark.rdd.RDD
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.concurrent.TimeLimits
 import org.scalatest.time.{ Seconds, Span }
 
 import scala.concurrent.Future
 
-class ConversionSpec extends FlatSpec with SharedSparkContext with TimeLimits {
+class ConversionSpec extends AnyFlatSpec with SharedSparkContext with TimeLimits {
 
   var sortedRDDWithEmptyPartitions: RDD[(Long, (Int, Double))] = _
   var sortedNonNormalizedRDD: RDD[(Long, (Int, Double))] = _

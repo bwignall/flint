@@ -17,10 +17,10 @@
 package com.twosigma.flint.rdd.function.summarize
 
 import com.twosigma.flint.SharedSparkContext
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.tagobjects.Slow
 
-class TreeAggregateSpec extends FlatSpec with SharedSparkContext {
+class TreeAggregateSpec extends AnyFlatSpec with SharedSparkContext {
 
   "TreeAggregate" should "aggregate as RDD.aggregate in order for max op" taggedAs Slow in {
     val numOfPartitions = 1001

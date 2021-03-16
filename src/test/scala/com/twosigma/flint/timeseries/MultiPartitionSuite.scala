@@ -20,7 +20,7 @@ import com.twosigma.flint.rdd._
 import com.twosigma.flint.timeseries.time.types.TimeType
 import org.apache.spark.NarrowDependency
 import org.apache.spark.sql.catalyst.InternalRow
-import org.scalatest.prop.PropertyChecks
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import scala.collection.SortedMap
 import scala.collection.immutable.TreeMap
@@ -387,7 +387,9 @@ private[flint] object PartitionStrategy {
   }
 }
 
-class MultiPartitionSuite extends TimeSeriesSuite with PropertyChecks {
+class MultiPartitionSuite
+  extends TimeSeriesSuite
+  with ScalaCheckPropertyChecks {
   import PartitionStrategy._
   val NONE = Seq(Origin)
   val ALL = Seq(

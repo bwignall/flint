@@ -17,10 +17,10 @@
 package com.twosigma.flint.rdd.function.summarize
 
 import com.twosigma.flint.SharedSparkContext
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.tagobjects.Slow
 
-class TreeReduceSpec extends FlatSpec with SharedSparkContext {
+class TreeReduceSpec extends AnyFlatSpec with SharedSparkContext {
 
   "TreeReduce" should "reduce in order for max op" taggedAs Slow in {
     val numOfPartitions = 1023

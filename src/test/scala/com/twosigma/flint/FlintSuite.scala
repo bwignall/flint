@@ -20,10 +20,7 @@ import java.io.{ File, InputStream }
 import java.nio.file.{ Files, Path, StandardCopyOption }
 
 import org.apache.commons.io.FilenameUtils
-import org.scalatest.{ FlatSpec, PropSpec }
-import play.api.libs.json.{ JsValue, Json }
-
-import scala.io.Source
+import org.scalatest.flatspec.AnyFlatSpec
 
 object FlintSuite {
 
@@ -65,7 +62,7 @@ object FlintSuite {
   }
 }
 
-trait FlintSuite extends FlatSpec with SharedSparkContext {
+trait FlintSuite extends AnyFlatSpec with SharedSparkContext {
 
   /**
    * Access resources from either resource files or packaged resources from .jar

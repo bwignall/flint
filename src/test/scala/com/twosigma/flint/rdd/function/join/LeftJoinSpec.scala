@@ -16,12 +16,12 @@
 
 package com.twosigma.flint.rdd.function.join
 
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 import com.twosigma.flint.SharedSparkContext
 import com.twosigma.flint.rdd.{ KeyPartitioningType, OrderedRDD }
 
-class LeftJoinSpec extends FlatSpec with SharedSparkContext {
+class LeftJoinSpec extends AnyFlatSpec with SharedSparkContext {
 
   val left = Array(
     (1000L, (1, 0.01)),

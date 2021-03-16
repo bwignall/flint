@@ -20,9 +20,9 @@ import com.twosigma.flint.SharedSparkContext
 import com.twosigma.flint.rdd.function.summarize.summarizer.subtractable.RowsSummarizer
 import org.apache.spark.SparkException
 import org.apache.spark.rdd.RDD
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
-class OrderedRDDSpec extends FlatSpec with SharedSparkContext {
+class OrderedRDDSpec extends AnyFlatSpec with SharedSparkContext {
   val numSlices = 4
 
   /**

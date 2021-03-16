@@ -29,14 +29,14 @@ import com.twosigma.flint.timeseries.window.ShiftTimeWindow
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types._
 import org.scalatest.tagobjects.Slow
-import org.scalatest.prop.PropertyChecks
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import scala.util.Random
 
 class SummarizeWindowsSpec
   extends MultiPartitionSuite
   with TimeSeriesTestData
-  with PropertyChecks
+  with ScalaCheckPropertyChecks
   with TimeTypeSuite {
 
   override val defaultResourceDir: String = "/timeseries/summarizewindows"

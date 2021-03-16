@@ -18,9 +18,9 @@ package com.twosigma.flint.timeseries
 
 import com.twosigma.flint.timeseries.time.TimeFormat
 import org.joda.time.DateTimeZone
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
-class TimeFormatSpec extends FlatSpec {
+class TimeFormatSpec extends AnyFlatSpec {
 
   "TimeFormat" should "parse time correctly" in {
     assert(TimeFormat.parseNano("1970-01-01") == 0L)

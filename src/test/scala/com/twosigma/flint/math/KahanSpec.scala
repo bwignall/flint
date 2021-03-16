@@ -19,11 +19,11 @@ package com.twosigma.flint.math
 import java.math.BigDecimal
 
 import com.twosigma.flint.util.Timer
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.util.Random
 
-class KahanSpec extends FlatSpec {
+class KahanSpec extends AnyFlatSpec {
 
   "Kahan" should "sum correctly in wiki example" in {
     val kahan = new Kahan()

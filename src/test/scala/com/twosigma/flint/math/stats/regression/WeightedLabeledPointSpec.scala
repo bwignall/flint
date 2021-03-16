@@ -16,10 +16,10 @@
 
 package com.twosigma.flint.math.stats.regression
 
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 import breeze.linalg.DenseVector
 
-class WeightedLabeledPointSpec extends FlatSpec {
+class WeightedLabeledPointSpec extends AnyFlatSpec {
   "The WeightedLabeledPoint" should "print correctly" in {
     val point = WeightedLabeledPoint(1.0, 2.0, DenseVector(3.0, 4.0))
     assert(point.toString() == "1.0,2.0,3.0,4.0")

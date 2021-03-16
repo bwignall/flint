@@ -16,11 +16,11 @@
 
 package com.twosigma.flint.rdd
 
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.util.Random
 
-class RangeSpec extends FlatSpec {
+class RangeSpec extends AnyFlatSpec {
   "Range" should "intersect correctly for Range" in {
 
     // bounded CloseOpen vs bounded CloseOpen
